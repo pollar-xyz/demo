@@ -14,42 +14,37 @@ const CORE_CODE = `import { PollarClient } from '@pollar/core';
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
-// 1. quote
-const quote = await client.getRampsQuote({
-  direction: 'onramp',
-  amount: '100',
-  fiatCurrency: 'MXN',
-  country: 'MX',
-});
+// one entry per device / refresh-token family
+const sessions = await client.listSessions();
+// session.familyId, session.deviceLabel, session.current, ...
 
-// 2. create the ramp from a chosen quote
-const onramp = await client.createOnRamp({ /* quote selection */ });
-// onramp.content.paymentInstructions, onramp.content.id
+// revoke a single device
+await client.revokeSession(sessions[0].familyId);
 
-// 3. poll until it settles
-const status = await client.pollRampTransaction(onramp.content.id);`;
+// or sign out everywhere
+await client.logoutEverywhere();`;
 
 const REACT_CODE = `import { usePollar } from '@pollar/react';
 
-export function BuyCryptoButton() {
-  const { openRampModal, isAuthenticated } = usePollar();
+export function SessionsButton() {
+  const { openSessionsModal, isAuthenticated } = usePollar();
 
-  // openRampModal renders the whole quote-and-payment flow on top
-  // of client.getRampsQuote / createOnRamp / pollRampTransaction.
+  // openSessionsModal renders the list + revoke / sign-out-everywhere
+  // actions on top of client.listSessions / revokeSession.
   return (
     <button
-      onClick={openRampModal}
+      onClick={openSessionsModal}
       disabled={!isAuthenticated}
     >
-      Buy / sell crypto
+      Manage sessions
     </button>
   );
 }`;
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default function RampPage() {
-  const { openRampModal, isAuthenticated } = usePollar();
+export default function SessionsPage() {
+  const { openSessionsModal, isAuthenticated } = usePollar();
 
   return (
     <div className="w-full max-w-5xl">
@@ -58,24 +53,25 @@ export default function RampPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">Ramp</h1>
+            <h1 className="text-sm font-semibold">Sessions</h1>
             <p className="text-xs text-zinc-500 mt-1">
-              Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH).
-              Pollar renders the entire quote-and-payment flow inside a modal.
+              Review the active sessions for the signed-in user, revoke a single
+              device, or sign out everywhere. Pollar renders the list and actions
+              inside a modal.
             </p>
           </div>
 
           <button
-            onClick={openRampModal}
+            onClick={openSessionsModal}
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Ramp modal' : 'Connect wallet first'}
+            {isAuthenticated ? 'Open Sessions modal' : 'Connect wallet first'}
           </button>
 
           <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openRampModal()</code>
-            {' '}takes no arguments — country, currency and direction are picked inside the modal.
+            <code className="text-zinc-700 dark:text-zinc-300">openSessionsModal()</code>
+            {' '}takes no arguments — it lists the current user&apos;s sessions and handles revocation.
           </p>
         </div>
 

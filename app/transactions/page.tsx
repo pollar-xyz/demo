@@ -3,6 +3,7 @@
 import { usePollar } from '@pollar/react';
 import { contract, rpc } from '@stellar/stellar-sdk';
 import { useState } from 'react';
+import { CodePanel } from '../_components/CodePanels';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -320,7 +321,7 @@ function PathInput({ value, onChange }: { value: Asset[]; onChange: (v: Asset[])
 // ─── main page ────────────────────────────────────────────────────────────────
 
 export default function TransactionsPage() {
-  const { buildTx, isAuthenticated, transaction, openTransactionModal } = usePollar();
+  const { buildTx, signAndSubmitTx, isAuthenticated, tx, openTxModal } = usePollar();
 
   const [ op, setOp ] = useState<Op>('payment');
   const [ error, setError ] = useState<string | null>(null);
@@ -412,10 +413,17 @@ export default function TransactionsPage() {
     try {
       switch (op) {
         case 'create_account':
-          buildTx('create_account', { destination: caDestination.trim(), startingBalance: caStartingBalance.trim() }, buildOptions() as never);
+          buildTx('create_account', {
+            destination: caDestination.trim(),
+            startingBalance: caStartingBalance.trim(),
+          }, buildOptions() as never);
           break;
         case 'payment':
-          buildTx('payment', { destination: pyDestination.trim(), asset: pyAsset, amount: pyAmount.trim() }, buildOptions() as never);
+          buildTx('payment', {
+            destination: pyDestination.trim(),
+            asset: pyAsset,
+            amount: pyAmount.trim(),
+          }, buildOptions() as never);
           break;
         case 'path_payment_strict_send':
           buildTx('path_payment_strict_send', {
@@ -453,7 +461,7 @@ export default function TransactionsPage() {
   }
 
   // ── build live code preview ────────────────────────────────────────────────
-  function buildPreviewCode(): string {
+  function buildPreviewCode(): { react: string; core: string } {
     let params: Record<string, unknown> = {};
 
     switch (op) {
@@ -499,10 +507,13 @@ export default function TransactionsPage() {
     const paramsStr = serializeVal(params, 1);
     const opts = buildOptions();
     const optsStr = opts ? `, ${serializeVal(opts, 1)}` : '';
-    return `const { buildTx } = usePollar();\n\nawait buildTx('${op}', ${paramsStr}${optsStr});`;
+
+    const react = `const { buildTx } = usePollar();\n\nawait buildTx('${op}', ${paramsStr}${optsStr});`;
+    const core = `import { PollarClient } from '@pollar/core';\n\nconst client = new PollarClient({ apiKey, baseUrl });\nawait client.ready();\n\n// build → sign → submit in one call\nawait client.runTx('${op}', ${paramsStr}${optsStr});\n\n// …or run the steps yourself (see the React panel split):\n// const built = await client.buildTx('${op}', ${paramsStr}${optsStr});\n// await client.signAndSubmitTx(built.buildData.unsignedXdr);`;
+    return { react, core };
   }
 
-  const previewCode = buildPreviewCode();
+  const preview = buildPreviewCode();
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
@@ -730,7 +741,7 @@ export default function TransactionsPage() {
             <div className="space-y-1">
               <label className={lbl}>Memo <span className="ml-1 text-zinc-400">(optional)</span></label>
               <div className="flex gap-2 mb-2 flex-wrap">
-                {(['none', 'text', 'id'] as const).map(t => (
+                {([ 'none', 'text', 'id' ] as const).map(t => (
                   <button
                     key={t}
                     type="button"
@@ -756,20 +767,44 @@ export default function TransactionsPage() {
           {/* submit */}
           <div className="space-y-2 pt-2">
             {error && <p className="text-xs font-mono text-red-500">{error}</p>}
-            <button onClick={handleSubmit} disabled={!isAuthenticated} className={`${btn('primary')} w-full sm:w-auto`}>
-              {isAuthenticated ? 'Request Build' : 'Connect wallet to continue'}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={handleSubmit}
+                disabled={!isAuthenticated || tx.step === 'building' || tx.step === 'signing'}
+                className={`${btn('primary')} w-full sm:w-auto`}
+              >
+                {!isAuthenticated ? 'Connect wallet to continue'
+                  : tx.step === 'building' ? 'Building…'
+                  : '1. buildTx'}
+              </button>
+              {tx.step === 'built' && tx.buildData && (
+                <button
+                  onClick={() => signAndSubmitTx(tx.buildData.unsignedXdr)}
+                  className={`${btn('primary')} w-full sm:w-auto`}
+                >
+                  2. signAndSubmitTx
+                </button>
+              )}
+            </div>
+            <p className="text-[10px] font-mono text-zinc-400">
+              Tip: <code className="text-zinc-700 dark:text-zinc-300">openTxModal()</code> opens
+              a built-in modal that handles step 2 for you.
+            </p>
           </div>
 
         </div>
 
-        {/* ── right: live code preview + tx state ─────────────────────────── */}
+        {/* ── right: live code previews (core + react) + tx state ─────────── */}
         <div className="lg:sticky lg:top-6 space-y-4">
 
-          {/* code preview */}
+          {/* framework-agnostic core */}
+          <CodePanel sdk="@pollar/core" note="framework-agnostic" code={preview.core} />
+
+          {/* react code preview (split into build + submit steps) */}
           <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
-              <span className="text-xs font-mono text-zinc-400">TypeScript</span>
+              <span className="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-200">@pollar/react</span>
+              <span className="text-[10px] font-mono text-zinc-400">— hooks &amp; components</span>
             </div>
 
             {/* step 1 */}
@@ -779,20 +814,20 @@ export default function TransactionsPage() {
                 <span className="text-[10px] font-mono text-zinc-400">build transaction</span>
               </div>
               <pre className="px-4 pb-4 pt-1 text-xs font-mono text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed bg-white dark:bg-zinc-950">
-                {previewCode}
+                {preview.react}
               </pre>
             </div>
 
             {/* step 2 */}
-            <div className={transaction.step === 'idle' || transaction.step === 'building' ? 'opacity-40' : ''}>
+            <div className={tx.step === 'idle' || tx.step === 'building' ? 'opacity-40' : ''}>
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                 <span className="text-[10px] font-mono font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded px-1.5 py-0.5">2</span>
                 <span className="text-[10px] font-mono text-zinc-400">submit signed transaction</span>
               </div>
               <pre className="px-4 pb-4 pt-1 text-xs font-mono text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed bg-white dark:bg-zinc-950">
-                {'buildData' in transaction && transaction.buildData
-                  ? `const { submitTx } = usePollar();\n\nconst unsignedXdr =\n  '${transaction.buildData.unsignedXdr.slice(0, 60)}...';\n\n// sign with wallet, then:\nawait submitTx(signedXdr);`
-                  : `const { submitTx } = usePollar();\n\n// available after buildTx resolves\nawait submitTx(signedXdr);`
+                {'buildData' in tx && tx.buildData
+                  ? `const { signAndSubmitTx } = usePollar();\n\nconst unsignedXdr =\n  '${tx.buildData.unsignedXdr.slice(0, 60)}...';\n\nawait signAndSubmitTx(unsignedXdr);`
+                  : `const { signAndSubmitTx } = usePollar();\n\n// available after buildTx resolves\nawait signAndSubmitTx(unsignedXdr);`
                 }
               </pre>
             </div>
@@ -805,57 +840,57 @@ export default function TransactionsPage() {
                 <span className="text-xs font-mono text-zinc-400">transaction state</span>
                 <span
                   className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                    transaction.step === 'idle' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' :
-                      transaction.step === 'building' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 animate-pulse' :
-                        transaction.step === 'built' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' :
-                          transaction.step === 'signing' ? 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 animate-pulse' :
-                            transaction.step === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400' :
+                    tx.step === 'idle' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' :
+                      tx.step === 'building' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 animate-pulse' :
+                        tx.step === 'built' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' :
+                          tx.step === 'signing' ? 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 animate-pulse' :
+                            tx.step === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400' :
                               'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
                   }`}
                 >
-                  {transaction.step}
+                  {tx.step}
                 </span>
               </div>
-              {transaction.step !== 'idle' && (
-                <button onClick={openTransactionModal} className={btn('secondary')}>
+              {tx.step !== 'idle' && (
+                <button onClick={openTxModal} className={btn('secondary')}>
                   View modal
                 </button>
               )}
             </div>
 
             <div className="p-4 space-y-3 bg-white dark:bg-zinc-950 min-h-16">
-              {transaction.step === 'idle' && (
+              {tx.step === 'idle' && (
                 <p className="text-xs font-mono text-zinc-400">Submit a transaction to see its state here.</p>
               )}
 
-              {'buildData' in transaction && transaction.buildData && (
+              {'buildData' in tx && tx.buildData && (
                 <div className="space-y-2">
                   <p className="text-xs font-mono font-medium text-zinc-800 dark:text-zinc-200">
-                    {transaction.buildData.summary.title}
+                    {tx.buildData.summary.title}
                   </p>
                   <div className="space-y-0.5">
-                    {transaction.buildData.summary.lines.map((line, i) => (
+                    {tx.buildData.summary.lines.map((line, i) => (
                       <p key={i} className="text-xs font-mono text-zinc-500">{line}</p>
                     ))}
                   </div>
                   <p className="text-xs font-mono text-zinc-400">
-                    fee: {transaction.buildData.summary.fee} · {transaction.buildData.summary.network}
+                    fee: {tx.buildData.summary.fee} · {tx.buildData.summary.network}
                   </p>
                 </div>
               )}
 
-              {'hash' in transaction && transaction.hash && (
+              {'hash' in tx && tx.hash && (
                 <div>
                   <p className="text-xs font-mono text-zinc-400 mb-1">hash</p>
-                  <p className="text-xs font-mono text-green-600 dark:text-green-400 break-all">{transaction.hash}</p>
+                  <p className="text-xs font-mono text-green-600 dark:text-green-400 break-all">{tx.hash}</p>
                 </div>
               )}
 
-              {transaction.step === 'error' && transaction.details && (
+              {tx.step === 'error' && tx.details && (
                 <p className="text-xs font-mono text-red-500">
-                  {typeof transaction.details === 'string'
-                    ? transaction.details
-                    : JSON.stringify(transaction.details, null, 2)}
+                  {typeof tx.details === 'string'
+                    ? tx.details
+                    : JSON.stringify(tx.details, null, 2)}
                 </p>
               )}
             </div>

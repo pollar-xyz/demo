@@ -14,42 +14,36 @@ const CORE_CODE = `import { PollarClient } from '@pollar/core';
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
-// 1. quote
-const quote = await client.getRampsQuote({
-  direction: 'onramp',
-  amount: '100',
-  fiatCurrency: 'MXN',
-  country: 'MX',
-});
+// The receiving address is the connected wallet's public key.
+const auth = client.getAuthState();
+const address =
+  auth.step === 'authenticated'
+    ? auth.session.wallet?.publicKey
+    : null;
 
-// 2. create the ramp from a chosen quote
-const onramp = await client.createOnRamp({ /* quote selection */ });
-// onramp.content.paymentInstructions, onramp.content.id
-
-// 3. poll until it settles
-const status = await client.pollRampTransaction(onramp.content.id);`;
+// render \`address\` as text + a QR code however your platform does.`;
 
 const REACT_CODE = `import { usePollar } from '@pollar/react';
 
-export function BuyCryptoButton() {
-  const { openRampModal, isAuthenticated } = usePollar();
+export function ReceiveButton() {
+  const { openReceiveModal, isAuthenticated } = usePollar();
 
-  // openRampModal renders the whole quote-and-payment flow on top
-  // of client.getRampsQuote / createOnRamp / pollRampTransaction.
+  // openReceiveModal reads walletAddress from context and
+  // renders the address + QR for you.
   return (
     <button
-      onClick={openRampModal}
+      onClick={openReceiveModal}
       disabled={!isAuthenticated}
     >
-      Buy / sell crypto
+      Receive
     </button>
   );
 }`;
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
-export default function RampPage() {
-  const { openRampModal, isAuthenticated } = usePollar();
+export default function ReceivePage() {
+  const { openReceiveModal, isAuthenticated } = usePollar();
 
   return (
     <div className="w-full max-w-5xl">
@@ -58,24 +52,24 @@ export default function RampPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">Ramp</h1>
+            <h1 className="text-sm font-semibold">Receive</h1>
             <p className="text-xs text-zinc-500 mt-1">
-              Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH).
-              Pollar renders the entire quote-and-payment flow inside a modal.
+              Show the connected wallet&apos;s address and QR code so others can send
+              funds to it. Pollar renders the whole view inside a modal.
             </p>
           </div>
 
           <button
-            onClick={openRampModal}
+            onClick={openReceiveModal}
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Ramp modal' : 'Connect wallet first'}
+            {isAuthenticated ? 'Open Receive modal' : 'Connect wallet first'}
           </button>
 
           <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openRampModal()</code>
-            {' '}takes no arguments — country, currency and direction are picked inside the modal.
+            <code className="text-zinc-700 dark:text-zinc-300">openReceiveModal()</code>
+            {' '}takes no arguments — it reads the connected wallet address from context.
           </p>
         </div>
 

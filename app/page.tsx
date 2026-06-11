@@ -2,9 +2,15 @@ import Link from 'next/link';
 
 const PAGES = [
   { href: '/transactions', label: 'Transactions', desc: 'Invoke smart contracts and build Stellar operations.' },
-  { href: '/balance',      label: 'Balance',      desc: 'Fetch Stellar account balances by public key.'       },
-  { href: '/ramp',         label: 'Ramp',         desc: 'Buy and sell crypto with local payment methods.'     },
-  { href: '/kyc',          label: 'KYC',          desc: 'Verify your identity to unlock higher limits.'       },
+  { href: '/send', label: 'Send', desc: 'Transfer assets to another Stellar address.' },
+  { href: '/receive', label: 'Receive', desc: 'Show your address and QR code to receive funds.' },
+  { href: '/history', label: 'History', desc: 'List the wallet\'s past transactions.' },
+  { href: '/balance', label: 'Balance', desc: 'Fetch Stellar account balances by public key.' },
+  { href: '/ramp', label: 'Ramp', desc: 'Buy and sell crypto with local payment methods.' },
+  { href: '/kyc', label: 'KYC', desc: 'Verify your identity to unlock higher limits.' },
+  { href: '/escrow', label: 'Escrow', desc: 'Trustless Work escrows with automatic XDR signing.' },
+  { href: '/sessions', label: 'Sessions', desc: 'Review active sessions and revoke devices.' },
+  { href: '/distribution', label: 'Distribution', desc: 'List distribution rules and claim your share.' },
 ];
 
 export default function Home() {

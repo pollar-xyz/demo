@@ -4,15 +4,22 @@ import { PollarProvider, WalletButton } from '@pollar/react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import '@pollar/react/styles.css';
+import { trustlessWorkAdapter } from './escrow/adapter';
 
 const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
-// const BASE_URL = 'https://sdk.api.local.pollar.xyz';
+const BASE_URL = 'https://sdk.api.pollar.xyz';
 
 const NAV_LINKS = [
   { href: '/transactions', label: 'Transactions' },
+  { href: '/send', label: 'Send' },
+  { href: '/receive', label: 'Receive' },
+  { href: '/history', label: 'History' },
   { href: '/balance', label: 'Balance' },
   { href: '/ramp', label: 'Ramp' },
   { href: '/kyc', label: 'KYC' },
+  { href: '/escrow', label: 'Escrow' },
+  { href: '/sessions', label: 'Sessions' },
+  { href: '/distribution', label: 'Distribution' },
 ];
 
 export function Shell({ children }: { children: React.ReactNode }) {
@@ -21,7 +28,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const apiKey = searchParams.get('apiKey') ?? DEFAULT_API_KEY;
 
   return (
-    <PollarProvider config={{ apiKey }}>
+    <PollarProvider client={{ apiKey, baseUrl: BASE_URL }} adapters={{ escrow: trustlessWorkAdapter }}>
       <nav className="border-b border-zinc-200 dark:border-zinc-800 px-4 sm:px-6">
         {/* row 1: logo + wallet button */}
         <div className="flex items-center justify-between py-3">
