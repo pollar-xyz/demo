@@ -7,23 +7,23 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 
-const inp = 'w-full rounded border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-zinc-400 placeholder:text-zinc-400';
-const lbl = 'block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1';
+const inp = 'w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light';
+const lbl = 'block text-xs font-mono text-muted mb-1';
 const btn = (variant: 'primary' | 'secondary') =>
   variant === 'primary'
-    ? 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors'
-    : 'rounded border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors';
+    ? 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors'
+    : 'rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors';
 
 function Field({ label, required, children, note }: { label: string; required?: boolean; note?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
       <label className={lbl}>
         {label}
-        {required && <span className="ml-1 text-zinc-400">*</span>}
-        {!required && <span className="ml-1 text-zinc-400">(optional)</span>}
+        {required && <span className="ml-1 text-muted-light">*</span>}
+        {!required && <span className="ml-1 text-muted-light">(optional)</span>}
       </label>
       {children}
-      {note && <p className="text-xs text-zinc-400 mt-0.5">{note}</p>}
+      {note && <p className="text-xs text-muted-light mt-0.5">{note}</p>}
     </div>
   );
 }
@@ -50,20 +50,20 @@ function serializeVal(val: unknown, depth = 0): string {
 
 type Tab = 'deploy' | 'fund' | 'milestone' | 'dispute';
 const TABS: { value: Tab; label: string }[] = [
-  { value: 'deploy',    label: 'Deploy'    },
-  { value: 'fund',      label: 'Fund'      },
+  { value: 'deploy', label: 'Deploy'    },
+  { value: 'fund', label: 'Fund'      },
   { value: 'milestone', label: 'Milestone' },
-  { value: 'dispute',   label: 'Dispute'   },
+  { value: 'dispute', label: 'Dispute'   },
 ];
 
 const SETUP_NOTE = `// adapter.ts — register once in your app
 export const trustlessWorkAdapter: TrustlessWorkAdapter = {
   deployEscrow:     (p) => tw('/escrow/initialize-escrow', p),
-  fundEscrow:       (p) => tw('/escrow/fund-escrow',       p),
+  fundEscrow:       (p) => tw('/escrow/fund-escrow', p),
   approveMilestone: (p) => tw('/escrow/approve-milestone', p),
-  releaseFunds:     (p) => tw('/escrow/complete-escrow',   p),
-  initiateDispute:  (p) => tw('/escrow/dispute-escrow',    p),
-  resolveDispute:   (p) => tw('/escrow/resolute-dispute',  p),
+  releaseFunds:     (p) => tw('/escrow/complete-escrow', p),
+  initiateDispute:  (p) => tw('/escrow/dispute-escrow', p),
+  resolveDispute:   (p) => tw('/escrow/resolute-dispute', p),
 };
 
 // each adapter fn must return { unsignedTransaction: string }.
@@ -163,15 +163,15 @@ export default function EscrowPage() {
     switch (tab) {
       case 'deploy':
         params = {
-          engagementId:    engagementId || 'unique-id-001',
-          title:           title           || 'Web development contract',
-          description:     description     || '...',
-          approver:        approver        || walletAddress || 'G...',
+          engagementId: engagementId || 'unique-id-001',
+          title: title           || 'Web development contract',
+          description: description     || '...',
+          approver: approver        || walletAddress || 'G...',
           serviceProvider: serviceProvider || 'G...',
           platformAddress: platformAddress || 'G...',
-          amount:          amount          || '100',
-          platformFee:     platformFee     || '0',
-          signer:          walletAddress   || 'G...',
+          amount: amount          || '100',
+          platformFee: platformFee     || '0',
+          signer: walletAddress   || 'G...',
         };
         break;
       case 'fund':
@@ -179,9 +179,9 @@ export default function EscrowPage() {
         break;
       case 'milestone':
         params = {
-          contractId:     contractId     || 'C...',
+          contractId: contractId     || 'C...',
           milestoneIndex: milestoneIndex || '0',
-          signer:         walletAddress  || 'G...',
+          signer: walletAddress  || 'G...',
         };
         break;
       case 'dispute':
@@ -224,23 +224,23 @@ await client.signAndSubmitTx(unsignedTransaction);`;
         {/* ── left: form ────────────────────────────────────────────────── */}
         <div className="space-y-5">
           <div>
-            <h1 className="text-sm font-semibold">Escrow</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Escrow</h1>
+            <p className="text-sm text-muted mt-1.5">
               Trustless Work adapter — the SDK signs and submits the unsigned XDR with the
               connected wallet, so your code only deals with business params.
             </p>
           </div>
 
           {/* tabs */}
-          <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-800">
+          <div className="flex gap-1 border-b border-border">
             {TABS.map(t => (
               <button
                 key={t.value}
                 onClick={() => { setTab(t.value); setError(null); }}
                 className={`text-xs px-3 py-2 border-b-2 transition-colors ${
                   tab === t.value
-                    ? 'border-zinc-900 dark:border-zinc-100 text-zinc-900 dark:text-zinc-100 font-semibold'
-                    : 'border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300'
+                    ? 'border-primary text-primary font-semibold'
+                    : 'border-transparent text-muted-light hover:text-foreground'
                 }`}
               >
                 {t.label}
@@ -332,8 +332,8 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                   {inFlight === 'dispute' ? 'Signing…' : 'Initiate dispute'}
                 </button>
               </div>
-              <div className="pt-2 border-t border-zinc-100 dark:border-zinc-800 space-y-3">
-                <p className="text-xs font-mono text-zinc-400">Resolve dispute</p>
+              <div className="pt-2 border-t border-border space-y-3">
+                <p className="text-xs font-mono text-muted-light">Resolve dispute</p>
                 <div className="grid grid-cols-2 gap-3">
                   <Field label="Approver funds" required>
                     <input className={inp} value={approverFunds} onChange={e => setApproverFunds(e.target.value)} placeholder="50" />
@@ -355,7 +355,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
 
           {/* submit (only for deploy/fund — milestone/dispute have inline buttons) */}
           <div className="space-y-2 pt-1">
-            {error && <p className="text-xs font-mono text-red-500">{error}</p>}
+            {error && <p className="text-xs font-mono text-error">{error}</p>}
             {(tab === 'deploy' || tab === 'fund') && (
               <button
                 onClick={tab === 'deploy' ? handleDeploy : handleFund}
@@ -376,11 +376,11 @@ await client.signAndSubmitTx(unsignedTransaction);`;
         <div className="lg:sticky lg:top-6 space-y-4">
 
           {/* setup hint */}
-          <details className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden text-xs">
-            <summary className="cursor-pointer px-4 py-2.5 bg-zinc-50 dark:bg-zinc-900/60 border-b border-zinc-200 dark:border-zinc-800 font-mono text-zinc-400 select-none">
+          <details className="rounded-lg border border-border overflow-hidden text-xs">
+            <summary className="cursor-pointer px-4 py-2.5 bg-surface border-b border-border font-mono text-muted-light select-none">
               one-time adapter setup
             </summary>
-            <pre className="p-4 font-mono text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed bg-white dark:bg-zinc-950">
+            <pre className="p-4 font-mono text-foreground overflow-x-auto whitespace-pre leading-relaxed bg-white">
               {SETUP_NOTE}
             </pre>
           </details>
@@ -389,18 +389,18 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           <DualCode core={preview.core} react={preview.react} />
 
           {/* tx state (from usePollar) — shows the auto-sign-and-submit progress */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-zinc-400">tx.step</span>
+                <span className="text-xs font-mono text-muted-light">tx.step</span>
                 <span
                   className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                    tx.step === 'idle' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' :
-                    tx.step === 'building' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 animate-pulse' :
-                    tx.step === 'built' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' :
-                    tx.step === 'signing' ? 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 animate-pulse' :
-                    tx.step === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400' :
-                    'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+                    tx.step === 'idle' ? 'bg-surface text-muted-light' :
+                    tx.step === 'building' ? 'bg-surface text-muted animate-pulse' :
+                    tx.step === 'built' ? 'bg-primary-light text-primary' :
+                    tx.step === 'signing' ? 'bg-warning-light text-warning animate-pulse' :
+                    tx.step === 'success' ? 'bg-success-light text-success' :
+                    'bg-error-light text-error'
                   }`}
                 >
                   {tx.step}
@@ -412,18 +412,18 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                 </button>
               )}
             </div>
-            <div className="p-4 text-xs font-mono bg-white dark:bg-zinc-950 min-h-12">
+            <div className="p-4 text-xs font-mono bg-white min-h-12">
               {tx.step === 'idle' && (
-                <p className="text-zinc-400">Trigger an operation to see signing progress.</p>
+                <p className="text-muted-light">Trigger an operation to see signing progress.</p>
               )}
               {'hash' in tx && tx.hash && (
                 <div>
-                  <p className="text-zinc-400 mb-1">hash</p>
-                  <p className="text-green-600 dark:text-green-400 break-all">{tx.hash}</p>
+                  <p className="text-muted-light mb-1">hash</p>
+                  <p className="text-success break-all">{tx.hash}</p>
                 </div>
               )}
               {tx.step === 'error' && tx.details && (
-                <p className="text-red-500">
+                <p className="text-error">
                   {typeof tx.details === 'string' ? tx.details : JSON.stringify(tx.details, null, 2)}
                 </p>
               )}

@@ -5,7 +5,7 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
-const btn = 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors';
+const btn = 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors';
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -52,8 +52,8 @@ export default function ReceivePage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">Receive</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Receive</h1>
+            <p className="text-sm text-muted mt-1.5">
               Show the connected wallet&apos;s address and QR code so others can send
               funds to it. Pollar renders the whole view inside a modal.
             </p>
@@ -67,8 +67,8 @@ export default function ReceivePage() {
             {isAuthenticated ? 'Open Receive modal' : 'Connect wallet first'}
           </button>
 
-          <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openReceiveModal()</code>
+          <p className="text-xs font-mono text-muted-light">
+            <code className="text-foreground">openReceiveModal()</code>
             {' '}takes no arguments — it reads the connected wallet address from context.
           </p>
         </div>

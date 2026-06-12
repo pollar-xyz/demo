@@ -15,17 +15,35 @@ const PAGES = [
 
 export default function Home() {
   return (
-    <div className="w-full max-w-sm space-y-3">
-      {PAGES.map(({ href, label, desc }) => (
-        <Link
-          key={href}
-          href={href}
-          className="block rounded-lg border border-zinc-200 dark:border-zinc-800 p-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
-        >
-          <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">{label}</p>
-          <p className="text-xs text-zinc-500 mt-0.5">{desc}</p>
-        </Link>
-      ))}
+    <div className="w-full">
+      <div className="mb-8 sm:mb-10 space-y-3">
+        <div className="inline-flex items-center gap-2 text-xs sm:text-sm text-primary">
+          <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+          <span className="font-semibold">SDK demo — every feature, live on testnet</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight text-foreground">
+          Explore the <span className="text-primary">Pollar SDK</span>
+        </h1>
+        <p className="text-sm sm:text-base text-muted max-w-xl">
+          Each tab demonstrates one capability of @pollar/core and @pollar/react,
+          with the equivalent code side by side.
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {PAGES.map(({ href, label, desc }) => (
+          <Link
+            key={href}
+            href={href}
+            className="group block rounded-2xl border border-border bg-white p-5 sm:p-6 hover:border-primary transition-colors"
+          >
+            <p className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">{label}</p>
+            <p className="text-xs sm:text-sm text-muted mt-1.5">{desc}</p>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

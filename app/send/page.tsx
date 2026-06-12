@@ -5,7 +5,7 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
-const btn = 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors';
+const btn = 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors';
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -52,8 +52,8 @@ export default function SendPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">Send</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Send</h1>
+            <p className="text-sm text-muted mt-1.5">
               Transfer assets to another Stellar address. Pollar renders the
               asset picker, amount input, review and signing flow inside a modal.
             </p>
@@ -67,8 +67,8 @@ export default function SendPage() {
             {isAuthenticated ? 'Open Send modal' : 'Connect wallet first'}
           </button>
 
-          <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openSendModal()</code>
+          <p className="text-xs font-mono text-muted-light">
+            <code className="text-foreground">openSendModal()</code>
             {' '}takes no arguments — asset, amount and destination are picked inside the modal.
           </p>
         </div>

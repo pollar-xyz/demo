@@ -2,6 +2,8 @@
 // Every tab shows the same operation two ways:
 //   • @pollar/core  — framework-agnostic, plain TypeScript (works anywhere)
 //   • @pollar/react — the hooks + components layer built on top of core
+//
+// Styled after the landing page terminal: dark panel + traffic-light dots.
 
 export function CodePanel({
   sdk,
@@ -15,12 +17,15 @@ export function CodePanel({
   className?: string;
 }) {
   return (
-    <div className={`rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden ${className ?? ''}`}>
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
-        <span className="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-200">{sdk}</span>
-        {note && <span className="text-[10px] font-mono text-zinc-400">— {note}</span>}
+    <div className={`rounded-xl bg-[#1a1a1a] overflow-hidden ${className ?? ''}`}>
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/10">
+        <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+        <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+        <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+        <span className="ml-2 text-xs font-mono font-medium text-gray-300">{sdk}</span>
+        {note && <span className="text-[10px] font-mono text-gray-500">— {note}</span>}
       </div>
-      <pre className="p-4 text-xs font-mono text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed bg-white dark:bg-zinc-950">
+      <pre className="p-4 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
         {code}
       </pre>
     </div>

@@ -120,13 +120,13 @@ function serializeVal(val: unknown, depth = 0): string {
 
 // ─── shared input styles ──────────────────────────────────────────────────────
 
-const inp = 'w-full rounded border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-zinc-400 placeholder:text-zinc-400';
-const lbl = 'block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1';
-const hint = 'text-xs text-zinc-400 mt-0.5';
+const inp = 'w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light';
+const lbl = 'block text-xs font-mono text-muted mb-1';
+const hint = 'text-xs text-muted-light mt-0.5';
 const btn = (variant: 'primary' | 'secondary') =>
   variant === 'primary'
-    ? 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors'
-    : 'rounded border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors';
+    ? 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors'
+    : 'rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors';
 
 // ─── field wrapper ────────────────────────────────────────────────────────────
 
@@ -137,12 +137,12 @@ function Field({ label, required, note, error, children }: {
     <div className="space-y-1">
       <label className={lbl}>
         {label}
-        {required && <span className="ml-1 text-zinc-400">*</span>}
-        {!required && <span className="ml-1 text-zinc-400">(optional)</span>}
+        {required && <span className="ml-1 text-muted-light">*</span>}
+        {!required && <span className="ml-1 text-muted-light">(optional)</span>}
       </label>
       {children}
       {note && <p className={hint}>{note}</p>}
-      {error && <p className="text-xs font-mono text-red-500">{error}</p>}
+      {error && <p className="text-xs font-mono text-error">{error}</p>}
     </div>
   );
 }
@@ -266,7 +266,7 @@ function TrustAssetInput({ value, onChange }: {
       )}
 
       {isPool && (
-        <div className="space-y-3 pl-3 border-l border-zinc-200 dark:border-zinc-700">
+        <div className="space-y-3 pl-3 border-l border-border">
           <AssetInput
             label="Asset A"
             required
@@ -307,7 +307,7 @@ function PathInput({ value, onChange }: { value: Asset[]; onChange: (v: Asset[])
             <button
               type="button"
               onClick={() => remove(i)}
-              className="mt-5 text-xs text-zinc-400 hover:text-red-500"
+              className="mt-5 text-xs text-muted-light hover:text-error"
             >✕
             </button>
           </div>
@@ -654,7 +654,7 @@ export default function TransactionsPage() {
                     {icFetching ? 'Fetching…' : 'Fetch methods'}
                   </button>
                 </div>
-                {icFetchError && <p className="text-xs font-mono text-red-500 mt-1">{icFetchError}</p>}
+                {icFetchError && <p className="text-xs font-mono text-error mt-1">{icFetchError}</p>}
               </Field>
 
               {icMethods.length > 0 && (
@@ -687,7 +687,7 @@ export default function TransactionsPage() {
                             checked={(icFields[param.name] as boolean) ?? false}
                             onChange={e => setIcFields(f => ({ ...f, [param.name]: e.target.checked }))}
                           />
-                          <span className="text-xs font-mono text-zinc-500">{(icFields[param.name] as boolean) ? 'true' : 'false'}</span>
+                          <span className="text-xs font-mono text-muted">{(icFields[param.name] as boolean) ? 'true' : 'false'}</span>
                         </label>
                       ) : param.kind === 'json' ? (
                         <textarea
@@ -716,8 +716,8 @@ export default function TransactionsPage() {
           )}
 
           {/* options */}
-          <div className="space-y-3 pt-2 border-t border-zinc-100 dark:border-zinc-800">
-            <p className="text-xs font-mono text-zinc-400">Options</p>
+          <div className="space-y-3 pt-2 border-t border-border">
+            <p className="text-xs font-mono text-muted-light">Options</p>
             <Field label="Timeout" note="Transaction timeout in seconds.">
               <input
                 className={inp}
@@ -739,7 +739,7 @@ export default function TransactionsPage() {
               />
             </Field>
             <div className="space-y-1">
-              <label className={lbl}>Memo <span className="ml-1 text-zinc-400">(optional)</span></label>
+              <label className={lbl}>Memo <span className="ml-1 text-muted-light">(optional)</span></label>
               <div className="flex gap-2 mb-2 flex-wrap">
                 {([ 'none', 'text', 'id' ] as const).map(t => (
                   <button
@@ -766,7 +766,7 @@ export default function TransactionsPage() {
 
           {/* submit */}
           <div className="space-y-2 pt-2">
-            {error && <p className="text-xs font-mono text-red-500">{error}</p>}
+            {error && <p className="text-xs font-mono text-error">{error}</p>}
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={handleSubmit}
@@ -786,8 +786,8 @@ export default function TransactionsPage() {
                 </button>
               )}
             </div>
-            <p className="text-[10px] font-mono text-zinc-400">
-              Tip: <code className="text-zinc-700 dark:text-zinc-300">openTxModal()</code> opens
+            <p className="text-[10px] font-mono text-muted-light">
+              Tip: <code className="text-foreground">openTxModal()</code> opens
               a built-in modal that handles step 2 for you.
             </p>
           </div>
@@ -801,19 +801,22 @@ export default function TransactionsPage() {
           <CodePanel sdk="@pollar/core" note="framework-agnostic" code={preview.core} />
 
           {/* react code preview (split into build + submit steps) */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
-              <span className="text-xs font-mono font-medium text-zinc-700 dark:text-zinc-200">@pollar/react</span>
-              <span className="text-[10px] font-mono text-zinc-400">— hooks &amp; components</span>
+          <div className="rounded-xl bg-[#1a1a1a] overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/10">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
+              <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+              <span className="ml-2 text-xs font-mono font-medium text-gray-300">@pollar/react</span>
+              <span className="text-[10px] font-mono text-gray-500">— hooks &amp; components</span>
             </div>
 
             {/* step 1 */}
-            <div className="border-b border-zinc-100 dark:border-zinc-800">
+            <div className="border-b border-white/10">
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
-                <span className="text-[10px] font-mono font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded px-1.5 py-0.5">1</span>
-                <span className="text-[10px] font-mono text-zinc-400">build transaction</span>
+                <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">1</span>
+                <span className="text-[10px] font-mono text-gray-500">build transaction</span>
               </div>
-              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed bg-white dark:bg-zinc-950">
+              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
                 {preview.react}
               </pre>
             </div>
@@ -821,10 +824,10 @@ export default function TransactionsPage() {
             {/* step 2 */}
             <div className={tx.step === 'idle' || tx.step === 'building' ? 'opacity-40' : ''}>
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
-                <span className="text-[10px] font-mono font-medium bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded px-1.5 py-0.5">2</span>
-                <span className="text-[10px] font-mono text-zinc-400">submit signed transaction</span>
+                <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">2</span>
+                <span className="text-[10px] font-mono text-gray-500">submit signed transaction</span>
               </div>
-              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-zinc-700 dark:text-zinc-300 overflow-x-auto whitespace-pre leading-relaxed bg-white dark:bg-zinc-950">
+              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
                 {'buildData' in tx && tx.buildData
                   ? `const { signAndSubmitTx } = usePollar();\n\nconst unsignedXdr =\n  '${tx.buildData.unsignedXdr.slice(0, 60)}...';\n\nawait signAndSubmitTx(unsignedXdr);`
                   : `const { signAndSubmitTx } = usePollar();\n\n// available after buildTx resolves\nawait signAndSubmitTx(unsignedXdr);`
@@ -834,18 +837,18 @@ export default function TransactionsPage() {
           </div>
 
           {/* transaction state */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-mono text-zinc-400">transaction state</span>
+                <span className="text-xs font-mono text-muted-light">transaction state</span>
                 <span
                   className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                    tx.step === 'idle' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' :
-                      tx.step === 'building' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 animate-pulse' :
-                        tx.step === 'built' ? 'bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400' :
-                          tx.step === 'signing' ? 'bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-400 animate-pulse' :
-                            tx.step === 'success' ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400' :
-                              'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+                    tx.step === 'idle' ? 'bg-surface text-muted-light' :
+                      tx.step === 'building' ? 'bg-surface text-muted animate-pulse' :
+                        tx.step === 'built' ? 'bg-primary-light text-primary' :
+                          tx.step === 'signing' ? 'bg-warning-light text-warning animate-pulse' :
+                            tx.step === 'success' ? 'bg-success-light text-success' :
+                              'bg-error-light text-error'
                   }`}
                 >
                   {tx.step}
@@ -858,22 +861,22 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            <div className="p-4 space-y-3 bg-white dark:bg-zinc-950 min-h-16">
+            <div className="p-4 space-y-3 bg-white min-h-16">
               {tx.step === 'idle' && (
-                <p className="text-xs font-mono text-zinc-400">Submit a transaction to see its state here.</p>
+                <p className="text-xs font-mono text-muted-light">Submit a transaction to see its state here.</p>
               )}
 
               {'buildData' in tx && tx.buildData && (
                 <div className="space-y-2">
-                  <p className="text-xs font-mono font-medium text-zinc-800 dark:text-zinc-200">
+                  <p className="text-xs font-mono font-medium text-foreground">
                     {tx.buildData.summary.title}
                   </p>
                   <div className="space-y-0.5">
                     {tx.buildData.summary.lines.map((line, i) => (
-                      <p key={i} className="text-xs font-mono text-zinc-500">{line}</p>
+                      <p key={i} className="text-xs font-mono text-muted">{line}</p>
                     ))}
                   </div>
-                  <p className="text-xs font-mono text-zinc-400">
+                  <p className="text-xs font-mono text-muted-light">
                     fee: {tx.buildData.summary.fee} · {tx.buildData.summary.network}
                   </p>
                 </div>
@@ -881,13 +884,13 @@ export default function TransactionsPage() {
 
               {'hash' in tx && tx.hash && (
                 <div>
-                  <p className="text-xs font-mono text-zinc-400 mb-1">hash</p>
-                  <p className="text-xs font-mono text-green-600 dark:text-green-400 break-all">{tx.hash}</p>
+                  <p className="text-xs font-mono text-muted-light mb-1">hash</p>
+                  <p className="text-xs font-mono text-success break-all">{tx.hash}</p>
                 </div>
               )}
 
               {tx.step === 'error' && tx.details && (
-                <p className="text-xs font-mono text-red-500">
+                <p className="text-xs font-mono text-error">
                   {typeof tx.details === 'string'
                     ? tx.details
                     : JSON.stringify(tx.details, null, 2)}

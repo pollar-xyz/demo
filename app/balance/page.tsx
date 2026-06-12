@@ -6,11 +6,11 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── shared styles ────────────────────────────────────────────────────────────
 
-const inp = 'w-full rounded border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-zinc-400 placeholder:text-zinc-400';
+const inp = 'w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light';
 const btn = (variant: 'primary' | 'secondary') =>
   variant === 'primary'
-    ? 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors'
-    : 'rounded border border-zinc-200 dark:border-zinc-700 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 disabled:opacity-40 transition-colors';
+    ? 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors'
+    : 'rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors';
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
@@ -127,8 +127,8 @@ if (walletBalance.step === 'loaded') {
         {/* ── left: form + result ───────────────────────────────────────── */}
         <div className="space-y-5">
           <div>
-            <h1 className="text-sm font-semibold">Balance</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Balance</h1>
+            <p className="text-sm text-muted mt-1.5">
               Read Stellar balances reactively from <code className="font-mono">walletBalance</code>.
               Use <code className="font-mono">refreshWalletBalance()</code> for the connected wallet,
               or <code className="font-mono">getClient().refreshBalance(pk)</code> for any address.
@@ -137,7 +137,7 @@ if (walletBalance.step === 'loaded') {
 
           {/* lookup any address */}
           <div className="space-y-2">
-            <label className="block text-xs font-mono text-zinc-500 dark:text-zinc-400">Look up any address</label>
+            <label className="block text-xs font-mono text-muted">Look up any address</label>
             <div className="flex gap-2">
               <input
                 className={inp}
@@ -167,26 +167,26 @@ if (walletBalance.step === 'loaded') {
                 {inFlight && !usingCustomKey ? 'Loading…' : 'Use my wallet'}
               </button>
               {walletAddress && (
-                <p className="text-[10px] font-mono text-zinc-400 truncate">{walletAddress}</p>
+                <p className="text-[10px] font-mono text-muted-light truncate">{walletAddress}</p>
               )}
             </div>
           )}
 
           {/* error from our wrapper */}
           {lastError && (
-            <p className="text-xs font-mono text-red-500">{lastError}</p>
+            <p className="text-xs font-mono text-error">{lastError}</p>
           )}
 
           {/* reactive state */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
-              <span className="text-xs font-mono text-zinc-400">walletBalance.step</span>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
+              <span className="text-xs font-mono text-muted-light">walletBalance.step</span>
               <span
                 className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                  walletBalance.step === 'idle' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' :
-                  walletBalance.step === 'loading' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 animate-pulse' :
-                  walletBalance.step === 'loaded' ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400' :
-                  'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+                  walletBalance.step === 'idle' ? 'bg-surface text-muted-light' :
+                  walletBalance.step === 'loading' ? 'bg-surface text-muted animate-pulse' :
+                  walletBalance.step === 'loaded' ? 'bg-success-light text-success' :
+                  'bg-error-light text-error'
                 }`}
               >
                 {walletBalance.step}
@@ -194,33 +194,33 @@ if (walletBalance.step === 'loaded') {
             </div>
 
             {stateMessage && (
-              <p className="px-4 py-3 text-xs font-mono text-zinc-400">{stateMessage}</p>
+              <p className="px-4 py-3 text-xs font-mono text-muted-light">{stateMessage}</p>
             )}
 
             {balances && balances.length === 0 && (
-              <p className="px-4 py-3 text-xs font-mono text-zinc-400">No balances found.</p>
+              <p className="px-4 py-3 text-xs font-mono text-muted-light">No balances found.</p>
             )}
 
             {balances && balances.length > 0 && (
               <table className="w-full text-xs font-mono">
                 <thead>
-                  <tr className="border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
-                    <th className="text-left px-4 py-2 text-zinc-400 font-medium">Asset</th>
-                    <th className="text-right px-4 py-2 text-zinc-400 font-medium">Balance</th>
-                    <th className="text-right px-4 py-2 text-zinc-400 font-medium">Available</th>
+                  <tr className="border-b border-border bg-surface">
+                    <th className="text-left px-4 py-2 text-muted-light font-medium">Asset</th>
+                    <th className="text-right px-4 py-2 text-muted-light font-medium">Balance</th>
+                    <th className="text-right px-4 py-2 text-muted-light font-medium">Available</th>
                   </tr>
                 </thead>
                 <tbody>
                   {balances.map((b, i) => (
-                    <tr key={i} className="border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-                      <td className="px-4 py-2.5 text-zinc-700 dark:text-zinc-300">
+                    <tr key={i} className="border-b border-border last:border-0">
+                      <td className="px-4 py-2.5 text-foreground">
                         {b.type === 'native' ? 'XLM' : b.code}
                         {'issuer' in b && b.issuer && (
-                          <span className="block text-[10px] text-zinc-400 truncate max-w-40">{b.issuer}</span>
+                          <span className="block text-[10px] text-muted-light truncate max-w-40">{b.issuer}</span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-right text-zinc-700 dark:text-zinc-300">{b.balance}</td>
-                      <td className="px-4 py-2.5 text-right text-zinc-400">{b.available}</td>
+                      <td className="px-4 py-2.5 text-right text-foreground">{b.balance}</td>
+                      <td className="px-4 py-2.5 text-right text-muted-light">{b.available}</td>
                     </tr>
                   ))}
                 </tbody>

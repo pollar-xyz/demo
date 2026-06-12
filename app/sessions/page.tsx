@@ -5,7 +5,7 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
-const btn = 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors';
+const btn = 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors';
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -53,8 +53,8 @@ export default function SessionsPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">Sessions</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Sessions</h1>
+            <p className="text-sm text-muted mt-1.5">
               Review the active sessions for the signed-in user, revoke a single
               device, or sign out everywhere. Pollar renders the list and actions
               inside a modal.
@@ -69,8 +69,8 @@ export default function SessionsPage() {
             {isAuthenticated ? 'Open Sessions modal' : 'Connect wallet first'}
           </button>
 
-          <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openSessionsModal()</code>
+          <p className="text-xs font-mono text-muted-light">
+            <code className="text-foreground">openSessionsModal()</code>
             {' '}takes no arguments — it lists the current user&apos;s sessions and handles revocation.
           </p>
         </div>

@@ -5,7 +5,7 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
-const btn = 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors';
+const btn = 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors';
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -60,8 +60,8 @@ export default function HistoryPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">History</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">History</h1>
+            <p className="text-sm text-muted mt-1.5">
               List the connected wallet&apos;s past transactions with pagination.
               Pollar renders the list inside a modal, and also exposes the loading
               state through <code className="font-mono">usePollar().txHistory</code>.
@@ -76,8 +76,8 @@ export default function HistoryPage() {
             {isAuthenticated ? 'Open History modal' : 'Connect wallet first'}
           </button>
 
-          <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openTxHistoryModal()</code>
+          <p className="text-xs font-mono text-muted-light">
+            <code className="text-foreground">openTxHistoryModal()</code>
             {' '}takes no arguments — pagination is handled inside the modal.
           </p>
         </div>
@@ -87,34 +87,34 @@ export default function HistoryPage() {
           <DualCode core={CORE_CODE} react={REACT_CODE} />
 
           {/* live txHistory state */}
-          <div className="rounded-lg border border-zinc-200 dark:border-zinc-800 overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/60">
-              <span className="text-xs font-mono text-zinc-400">txHistory.step</span>
+          <div className="rounded-lg border border-border overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-surface">
+              <span className="text-xs font-mono text-muted-light">txHistory.step</span>
               <span
                 className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                  txHistory.step === 'idle' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' :
-                  txHistory.step === 'loading' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 animate-pulse' :
-                  txHistory.step === 'loaded' ? 'bg-green-50 dark:bg-green-950 text-green-600 dark:text-green-400' :
-                  'bg-red-50 dark:bg-red-950 text-red-600 dark:text-red-400'
+                  txHistory.step === 'idle' ? 'bg-surface text-muted-light' :
+                  txHistory.step === 'loading' ? 'bg-surface text-muted animate-pulse' :
+                  txHistory.step === 'loaded' ? 'bg-success-light text-success' :
+                  'bg-error-light text-error'
                 }`}
               >
                 {txHistory.step}
               </span>
             </div>
-            <div className="p-4 text-xs font-mono bg-white dark:bg-zinc-950 min-h-12">
+            <div className="p-4 text-xs font-mono bg-white min-h-12">
               {txHistory.step === 'idle' && (
-                <p className="text-zinc-400">Open the modal to load history.</p>
+                <p className="text-muted-light">Open the modal to load history.</p>
               )}
               {txHistory.step === 'loading' && (
-                <p className="text-zinc-400">Loading…</p>
+                <p className="text-muted-light">Loading…</p>
               )}
               {txHistory.step === 'loaded' && (
-                <p className="text-zinc-600 dark:text-zinc-300">
+                <p className="text-muted">
                   {recordCount} record{recordCount === 1 ? '' : 's'} loaded.
                 </p>
               )}
               {txHistory.step === 'error' && (
-                <p className="text-red-500">{txHistory.message}</p>
+                <p className="text-error">{txHistory.message}</p>
               )}
             </div>
           </div>

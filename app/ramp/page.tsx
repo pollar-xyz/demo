@@ -5,7 +5,7 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
-const btn = 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors';
+const btn = 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors';
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -58,8 +58,8 @@ export default function RampPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-sm font-semibold">Ramp</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Ramp</h1>
+            <p className="text-sm text-muted mt-1.5">
               Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH).
               Pollar renders the entire quote-and-payment flow inside a modal.
             </p>
@@ -73,8 +73,8 @@ export default function RampPage() {
             {isAuthenticated ? 'Open Ramp modal' : 'Connect wallet first'}
           </button>
 
-          <p className="text-xs font-mono text-zinc-400">
-            <code className="text-zinc-700 dark:text-zinc-300">openRampModal()</code>
+          <p className="text-xs font-mono text-muted-light">
+            <code className="text-foreground">openRampModal()</code>
             {' '}takes no arguments — country, currency and direction are picked inside the modal.
           </p>
         </div>

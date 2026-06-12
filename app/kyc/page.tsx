@@ -7,9 +7,9 @@ import { DualCode } from '../_components/CodePanels';
 
 // ─── shared styles ────────────────────────────────────────────────────────────
 
-const inp = 'w-full rounded border border-zinc-200 dark:border-zinc-700 bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-zinc-400 placeholder:text-zinc-400';
-const lbl = 'block text-xs font-mono text-zinc-500 dark:text-zinc-400 mb-1';
-const btn = 'rounded bg-zinc-900 dark:bg-zinc-50 px-4 py-2 text-xs font-medium text-white dark:text-zinc-900 hover:bg-zinc-700 dark:hover:bg-zinc-200 disabled:opacity-40 transition-colors';
+const inp = 'w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light';
+const lbl = 'block text-xs font-mono text-muted mb-1';
+const btn = 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors';
 
 const LEVELS: KycLevel[] = [ 'basic', 'intermediate', 'enhanced' ];
 
@@ -73,8 +73,8 @@ openKycModal({
         {/* ── left: form ─────────────────────────────────────────────────── */}
         <div className="space-y-5">
           <div>
-            <h1 className="text-sm font-semibold">KYC</h1>
-            <p className="text-xs text-zinc-500 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">KYC</h1>
+            <p className="text-sm text-muted mt-1.5">
               Verify the user&apos;s identity. Pollar renders the entire provider-selection
               and verification flow inside a modal.
             </p>
@@ -102,8 +102,8 @@ openKycModal({
                   onClick={() => setLevel(l)}
                   className={`text-xs px-3 py-1.5 rounded border transition-colors ${
                     level === l
-                      ? 'bg-zinc-900 dark:bg-zinc-50 border-zinc-900 dark:border-zinc-50 text-white dark:text-zinc-900 font-medium'
-                      : 'border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800'
+                      ? 'bg-primary border-primary text-white font-medium'
+                      : 'border-border text-muted hover:bg-surface'
                   }`}
                 >
                   {l}
@@ -113,7 +113,7 @@ openKycModal({
           </div>
 
           <div className="flex items-center gap-3 pt-1">
-            <span className="text-xs font-mono text-zinc-400">current status</span>
+            <span className="text-xs font-mono text-muted-light">current status</span>
             <KycStatus status={status} />
           </div>
 
