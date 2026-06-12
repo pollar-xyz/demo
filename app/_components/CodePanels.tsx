@@ -12,7 +12,7 @@ import type { ReactNode } from 'react';
 const TOKEN =
   /(\/\/.*)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*`)|\b(import|export|from|const|let|var|await|async|new|return|if|else|for|of|in|function|type|interface|true|false|null|undefined)\b|(=>)|(\b\d+(?:\.\d+)?\b)|(\b[A-Z][\w$]*\b)|([a-zA-Z_$][\w$]*(?=\())/g;
 
-function highlight(code: string): ReactNode[] {
+export function highlight(code: string): ReactNode[] {
   const out: ReactNode[] = [];
   let last = 0;
   for (const m of code.matchAll(TOKEN)) {

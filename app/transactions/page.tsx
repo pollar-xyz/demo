@@ -3,7 +3,7 @@
 import { usePollar } from '@pollar/react';
 import { contract, rpc } from '@stellar/stellar-sdk';
 import { useState } from 'react';
-import { CodePanel } from '../_components/CodePanels';
+import { CodePanel, highlight } from '../_components/CodePanels';
 import { Select } from '../_components/Select';
 import { useI18n } from '../_i18n/LanguageProvider';
 
@@ -800,23 +800,23 @@ export default function TransactionsPage() {
           <CodePanel sdk="@pollar/core" note="framework-agnostic" code={preview.core} />
 
           {/* react code preview (split into build + submit steps) */}
-          <div className="rounded-xl bg-[#1a1a1a] overflow-hidden">
-            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/10">
+          <div className="rounded-xl bg-surface border border-border dark:bg-[#1a1a1a] dark:border-transparent overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border dark:border-white/10">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
               <div className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
               <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-              <span className="ml-2 text-xs font-mono font-medium text-gray-300">@pollar/react</span>
-              <span className="text-[10px] font-mono text-gray-500">— hooks &amp; components</span>
+              <span className="ml-2 text-xs font-mono font-medium text-gray-600 dark:text-gray-300">@pollar/react</span>
+              <span className="text-[10px] font-mono text-muted-light">— hooks &amp; components</span>
             </div>
 
             {/* step 1 */}
-            <div className="border-b border-white/10">
+            <div className="border-b border-border dark:border-white/10">
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                 <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">1</span>
-                <span className="text-[10px] font-mono text-gray-500">{tr.transactions.buildStep}</span>
+                <span className="text-[10px] font-mono text-muted-light">{tr.transactions.buildStep}</span>
               </div>
-              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
-                {preview.react}
+              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
+                {highlight(preview.react)}
               </pre>
             </div>
 
@@ -824,13 +824,13 @@ export default function TransactionsPage() {
             <div className={tx.step === 'idle' || tx.step === 'building' ? 'opacity-40' : ''}>
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                 <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">2</span>
-                <span className="text-[10px] font-mono text-gray-500">{tr.transactions.submitStep}</span>
+                <span className="text-[10px] font-mono text-muted-light">{tr.transactions.submitStep}</span>
               </div>
-              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
-                {'buildData' in tx && tx.buildData
+              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
+                {highlight('buildData' in tx && tx.buildData
                   ? `const { signAndSubmitTx } = usePollar();\n\nconst unsignedXdr =\n  '${tx.buildData.unsignedXdr.slice(0, 60)}...';\n\nawait signAndSubmitTx(unsignedXdr);`
                   : `const { signAndSubmitTx } = usePollar();\n\n// available after buildTx resolves\nawait signAndSubmitTx(unsignedXdr);`
-                }
+                )}
               </pre>
             </div>
           </div>
