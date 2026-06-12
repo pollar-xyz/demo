@@ -1,14 +1,12 @@
 'use client';
 
 // Lightweight i18n: a context that holds the active locale and hands out the
-// matching dictionary. Persisted in localStorage; falls back to the browser
-// language on first visit. State starts as 'en' so SSR and the first client
-// render match — the stored locale is applied right after hydration.
+// matching dictionary. The initial locale is resolved server-side (cookie or
+// Accept-Language, see locale.ts) so SSR and the client render the same
+// language. Switching writes the cookie back so the next request matches too.
 
 import { createContext, useContext, useEffect, useState } from 'react';
-import { DICTIONARIES, LOCALES, type Dictionary, type Locale } from './translations';
-
-const STORAGE_KEY = 'pollar-demo-locale';
+import { DICTIONARIES, LOCALE_COOKIE, type Dictionary, type Locale } from './translations';
 
 type I18nContextValue = {
   locale: Locale;
@@ -18,25 +16,14 @@ type I18nContextValue = {
 
 const I18nContext = createContext<I18nContextValue | null>(null);
 
-function isLocale(value: string | null): value is Locale {
-  return value !== null && (LOCALES as readonly string[]).includes(value);
-}
-
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>('en');
-
-  useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = localStorage.getItem(STORAGE_KEY);
-    } catch {}
-    const browser = navigator.language.slice(0, 2).toLowerCase();
-    const initial = isLocale(stored) ? stored : isLocale(browser) ? browser : null;
-    // setState here is intentional: SSR always renders 'en', and the stored
-    // locale can only be applied after hydration without a markup mismatch.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (initial && initial !== 'en') setLocaleState(initial);
-  }, []);
+export function LanguageProvider({
+  initialLocale,
+  children,
+}: {
+  initialLocale: Locale;
+  children: React.ReactNode;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
 
   useEffect(() => {
     document.documentElement.lang = locale;
@@ -44,9 +31,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   function setLocale(next: Locale) {
     setLocaleState(next);
-    try {
-      localStorage.setItem(STORAGE_KEY, next);
-    } catch {}
+    document.cookie = `${LOCALE_COOKIE}=${next}; path=/; max-age=31536000; samesite=lax`;
   }
 
   return (

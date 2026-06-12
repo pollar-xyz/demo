@@ -37,7 +37,9 @@ function ThemeToggle() {
   }, []);
 
   function toggle() {
-    const next = !dark;
+    // Read from the DOM, not state — two instances render (mobile + desktop)
+    // and only the DOM class is shared between them.
+    const next = !document.documentElement.classList.contains('dark');
     setDark(next);
     document.documentElement.classList.toggle('dark', next);
     try {
@@ -76,6 +78,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const isCustomKey = customKey !== null;
 
   const [keyModalOpen, setKeyModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  // Close the mobile menu when navigating to another tab.
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
@@ -101,7 +109,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <span className="text-lg sm:text-xl font-bold text-foreground">Pollar</span>
               <span className="hidden sm:inline-block rounded-md bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">Demo</span>
             </Link>
-            <div className="flex items-center gap-2 sm:gap-3">
+            {/* desktop controls */}
+            <div className="hidden sm:flex items-center gap-3">
               <button
                 onClick={() => setKeyModalOpen(true)}
                 title={t.shell.apiKeyTitle}
@@ -118,7 +127,50 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
               <WalletButton />
             </div>
+            {/* mobile: everything collapses behind the hamburger */}
+            <button
+              type="button"
+              onClick={() => setMenuOpen(o => !o)}
+              aria-label={menuOpen ? t.shell.closeMenu : t.shell.openMenu}
+              aria-expanded={menuOpen}
+              className="sm:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface transition-colors"
+            >
+              {menuOpen ? (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
+                </svg>
+              )}
+            </button>
           </div>
+          {/* mobile menu panel */}
+          {menuOpen && (
+            <div className="sm:hidden flex flex-col gap-3 border-t border-border py-3">
+              <WalletButton />
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    setKeyModalOpen(true);
+                    setMenuOpen(false);
+                  }}
+                  title={t.shell.apiKeyTitle}
+                  className="flex flex-1 h-9 items-center justify-center gap-1.5 rounded-lg border border-border px-2.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface transition-colors"
+                >
+                  <span
+                    className={`inline-block h-1.5 w-1.5 rounded-full ${
+                      isCustomKey ? 'bg-success' : 'bg-muted-light'
+                    }`}
+                  />
+                  {t.shell.apiKey}
+                </button>
+                <LanguageSwitcher />
+                <ThemeToggle />
+              </div>
+            </div>
+          )}
           {/* row 2: feature tabs (scrollable on mobile) */}
           <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
             {NAV_LINKS.map(({ href, key }) => (

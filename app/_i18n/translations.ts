@@ -35,6 +35,8 @@ export const en = {
     switchToLight: 'Switch to light mode',
     switchToDark: 'Switch to dark mode',
     changeLanguage: 'Change language',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
   },
 
   home: {
@@ -303,6 +305,8 @@ export const es: Dictionary = {
     switchToLight: 'Cambiar a modo claro',
     switchToDark: 'Cambiar a modo oscuro',
     changeLanguage: 'Cambiar idioma',
+    openMenu: 'Abrir menú',
+    closeMenu: 'Cerrar menú',
   },
 
   home: {
@@ -569,6 +573,8 @@ export const pt: Dictionary = {
     switchToLight: 'Mudar para o modo claro',
     switchToDark: 'Mudar para o modo escuro',
     changeLanguage: 'Alterar idioma',
+    openMenu: 'Abrir menu',
+    closeMenu: 'Fechar menu',
   },
 
   home: {
@@ -804,5 +810,7 @@ export const pt: Dictionary = {
 
 export const LOCALES = ['en', 'es', 'pt'] as const;
 export type Locale = (typeof LOCALES)[number];
+
+export const LOCALE_COOKIE = 'pollar-demo-locale';
 
 export const DICTIONARIES: Record<Locale, Dictionary> = { en, es, pt };
