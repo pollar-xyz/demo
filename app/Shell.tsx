@@ -1,12 +1,13 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { PollarProvider, WalletButton } from '@pollar/react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import '@pollar/react/styles.css';
 import { trustlessWorkAdapter } from './escrow/adapter';
+import { ApiKeyModal } from './_components/ApiKeyModal';
 
 const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
@@ -63,13 +64,32 @@ function ThemeToggle() {
 export function Shell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
-  const apiKey = searchParams.get('apiKey') ?? DEFAULT_API_KEY;
+  const router = useRouter();
+
+  const customKey = searchParams.get('apiKey');
+  const apiKey = customKey ?? DEFAULT_API_KEY;
+  const isCustomKey = customKey !== null;
+
+  const [keyModalOpen, setKeyModalOpen] = useState(false);
+
+  // Write the key into the URL so PollarProvider picks it up on remount.
+  function applyApiKey(next: string) {
+    const params = new URLSearchParams(Array.from(searchParams.entries()));
+    const trimmed = next.trim();
+    if (trimmed) params.set('apiKey', trimmed);
+    else params.delete('apiKey');
+    const qs = params.toString();
+    router.push(qs ? `${pathname}?${qs}` : pathname);
+    setKeyModalOpen(false);
+  }
 
   return (
-    <PollarProvider client={{ apiKey, baseUrl: BASE_URL }} adapters={{ escrow: trustlessWorkAdapter }}>
+    // `key` forces a fresh PollarProvider (and a new client) whenever the
+    // API key changes — the client is otherwise locked at first render.
+    <PollarProvider key={apiKey} client={{ apiKey, baseUrl: BASE_URL }} adapters={{ escrow: trustlessWorkAdapter }}>
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          {/* row 1: logo + wallet button */}
+          {/* row 1: logo + api key + theme + wallet button */}
           <div className="flex items-center justify-between py-3">
             <Link href="/" className="flex items-center gap-2 sm:gap-3">
               <Image src="/logo.png" alt="Pollar" width={40} height={40} className="w-8 h-8 sm:w-9 sm:h-9" />
@@ -77,6 +97,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <span className="hidden sm:inline-block rounded-md bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">Demo</span>
             </Link>
             <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                onClick={() => setKeyModalOpen(true)}
+                title="Use your own publishable API key"
+                className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface transition-colors"
+              >
+                <span
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${
+                    isCustomKey ? 'bg-green-500' : 'bg-gray-300'
+                  }`}
+                />
+                API key
+              </button>
               <ThemeToggle />
               <WalletButton />
             </div>
@@ -102,6 +134,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
         {children}
       </main>
+
+      {keyModalOpen && (
+        <ApiKeyModal
+          currentKey={apiKey}
+          isCustom={isCustomKey}
+          onClose={() => setKeyModalOpen(false)}
+          onSave={applyApiKey}
+        />
+      )}
     </PollarProvider>
   );
 }
