@@ -101,7 +101,7 @@ export default function HistoryPage() {
                 {txHistory.step}
               </span>
             </div>
-            <div className="p-4 text-xs font-mono bg-white min-h-12">
+            <div className="p-4 text-xs font-mono bg-background min-h-12">
               {txHistory.step === 'idle' && (
                 <p className="text-muted-light">Open the modal to load history.</p>
               )}

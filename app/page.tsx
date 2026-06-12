@@ -37,7 +37,7 @@ export default function Home() {
           <Link
             key={href}
             href={href}
-            className="group block rounded-2xl border border-border bg-white p-5 sm:p-6 hover:border-primary transition-colors"
+            className="group block rounded-2xl border border-border bg-background p-5 sm:p-6 hover:border-primary transition-colors"
           >
             <p className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">{label}</p>
             <p className="text-xs sm:text-sm text-muted mt-1.5">{desc}</p>

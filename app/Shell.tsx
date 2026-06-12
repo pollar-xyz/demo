@@ -4,6 +4,7 @@ import { PollarProvider, WalletButton } from '@pollar/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import '@pollar/react/styles.css';
 import { trustlessWorkAdapter } from './escrow/adapter';
 
@@ -23,6 +24,42 @@ const NAV_LINKS = [
   { href: '/distribution', label: 'Distribution' },
 ];
 
+function ThemeToggle() {
+  const [dark, setDark] = useState(false);
+
+  useEffect(() => {
+    setDark(document.documentElement.classList.contains('dark'));
+  }, []);
+
+  function toggle() {
+    const next = !dark;
+    setDark(next);
+    document.documentElement.classList.toggle('dark', next);
+    try {
+      localStorage.setItem('pollar-demo-theme', next ? 'dark' : 'light');
+    } catch {}
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface transition-colors"
+    >
+      {dark ? (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5m-15 0H3m15.36 6.36l-1.06-1.06M6.7 6.7 5.64 5.64m12.72 0-1.06 1.06M6.7 17.3l-1.06 1.06M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+      ) : (
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75 9.75 9.75 0 018.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25 9.75 9.75 0 0012.75 21a9.753 9.753 0 009.002-5.998z" />
+        </svg>
+      )}
+    </button>
+  );
+}
+
 export function Shell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -30,7 +67,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   return (
     <PollarProvider client={{ apiKey, baseUrl: BASE_URL }} adapters={{ escrow: trustlessWorkAdapter }}>
-      <header className="bg-white/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
+      <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* row 1: logo + wallet button */}
           <div className="flex items-center justify-between py-3">
@@ -39,7 +76,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <span className="text-lg sm:text-xl font-bold text-foreground">Pollar</span>
               <span className="hidden sm:inline-block rounded-md bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">Demo</span>
             </Link>
-            <WalletButton />
+            <div className="flex items-center gap-2 sm:gap-3">
+              <ThemeToggle />
+              <WalletButton />
+            </div>
           </div>
           {/* row 2: feature tabs (scrollable on mobile) */}
           <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">

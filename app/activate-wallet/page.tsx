@@ -77,7 +77,7 @@ export default function ActivateWalletPage() {
         </div>
 
         {/* step 1 — secret key */}
-        <section className="rounded-lg border border-border bg-white p-5 mb-4">
+        <section className="rounded-lg border border-border bg-background p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="text-xs font-mono font-semibold text-muted-light">STEP 1</span>
             <span className="text-sm font-medium text-foreground">Enter your secret API key</span>
@@ -133,7 +133,7 @@ export default function ActivateWalletPage() {
 
         {/* step 2 — activate */}
         <section
-          className={`rounded-lg border border-border bg-white p-5 transition-opacity ${
+          className={`rounded-lg border border-border bg-background p-5 transition-opacity ${
             confirmed ? 'opacity-100' : 'opacity-40 pointer-events-none select-none'
           }`}
         >

@@ -4,6 +4,7 @@ import { usePollar } from '@pollar/react';
 import { contract, rpc } from '@stellar/stellar-sdk';
 import { useState } from 'react';
 import { CodePanel } from '../_components/CodePanels';
+import { Select } from '../_components/Select';
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -526,9 +527,11 @@ export default function TransactionsPage() {
           {/* operation selector */}
           <div>
             <label className={lbl}>Operation type</label>
-            <select value={op} onChange={e => switchOp(e.target.value as Op)} className={inp}>
-              {OPS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
+            <Select
+              value={op}
+              onChange={v => switchOp(v as Op)}
+              options={OPS}
+            />
           </div>
 
           {/* ── create_account ────────────────────────────────────────────── */}
@@ -659,20 +662,17 @@ export default function TransactionsPage() {
 
               {icMethods.length > 0 && (
                 <Field label="Select a method" required>
-                  <select
+                  <Select
                     value={icMethod}
-                    onChange={e => {
-                      setIcMethod(e.target.value);
+                    onChange={v => {
+                      setIcMethod(v);
                       setIcFields({});
                     }}
-                    className={inp}
-                  >
-                    {icMethods.map(m => (
-                      <option key={m.name} value={m.name}>
-                        {m.name}{m.params.length > 0 ? ` (${m.params.map(p => `${p.name}: ${p.argType}`).join(', ')})` : ' ()'}
-                      </option>
-                    ))}
-                  </select>
+                    options={icMethods.map(m => ({
+                      value: m.name,
+                      label: `${m.name}${m.params.length > 0 ? ` (${m.params.map(p => `${p.name}: ${p.argType}`).join(', ')})` : ' ()'}`,
+                    }))}
+                  />
                 </Field>
               )}
 
@@ -861,7 +861,7 @@ export default function TransactionsPage() {
               )}
             </div>
 
-            <div className="p-4 space-y-3 bg-white min-h-16">
+            <div className="p-4 space-y-3 bg-background min-h-16">
               {tx.step === 'idle' && (
                 <p className="text-xs font-mono text-muted-light">Submit a transaction to see its state here.</p>
               )}

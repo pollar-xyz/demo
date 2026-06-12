@@ -380,7 +380,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
             <summary className="cursor-pointer px-4 py-2.5 bg-surface border-b border-border font-mono text-muted-light select-none">
               one-time adapter setup
             </summary>
-            <pre className="p-4 font-mono text-foreground overflow-x-auto whitespace-pre leading-relaxed bg-white">
+            <pre className="p-4 font-mono text-foreground overflow-x-auto whitespace-pre leading-relaxed bg-background">
               {SETUP_NOTE}
             </pre>
           </details>
@@ -412,7 +412,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                 </button>
               )}
             </div>
-            <div className="p-4 text-xs font-mono bg-white min-h-12">
+            <div className="p-4 text-xs font-mono bg-background min-h-12">
               {tx.step === 'idle' && (
                 <p className="text-muted-light">Trigger an operation to see signing progress.</p>
               )}
