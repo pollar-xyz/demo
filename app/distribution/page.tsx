@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
@@ -43,6 +44,7 @@ export function DistributionButton() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function DistributionPage() {
+  const { t } = useI18n();
   const { openDistributionRulesModal, isAuthenticated } = usePollar();
 
   return (
@@ -52,10 +54,9 @@ export default function DistributionPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Distribution</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.distribution.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              List the distribution rules the user is eligible for and claim their
-              share. Pollar renders the rule list and claim actions inside a modal.
+              {t.distribution.desc}
             </p>
           </div>
 
@@ -64,12 +65,12 @@ export default function DistributionPage() {
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Distribution modal' : 'Connect wallet first'}
+            {isAuthenticated ? t.distribution.open : t.common.connectWalletFirst}
           </button>
 
           <p className="text-xs font-mono text-muted-light">
             <code className="text-foreground">openDistributionRulesModal()</code>
-            {' '}takes no arguments — it loads the user&apos;s rules and handles claiming.
+            {' '}{t.distribution.note}
           </p>
         </div>
 

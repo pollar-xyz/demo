@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePollar } from '@pollar/react';
 import { useEscrow } from './adapter';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 
@@ -15,12 +16,13 @@ const btn = (variant: 'primary' | 'secondary') =>
     : 'rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors';
 
 function Field({ label, required, children, note }: { label: string; required?: boolean; note?: string; children: React.ReactNode }) {
+  const { t } = useI18n();
   return (
     <div className="space-y-1">
       <label className={lbl}>
         {label}
         {required && <span className="ml-1 text-muted-light">*</span>}
-        {!required && <span className="ml-1 text-muted-light">(optional)</span>}
+        {!required && <span className="ml-1 text-muted-light">{t.common.optional}</span>}
       </label>
       {children}
       {note && <p className="text-xs text-muted-light mt-0.5">{note}</p>}
@@ -49,12 +51,7 @@ function serializeVal(val: unknown, depth = 0): string {
 // ─── operation tabs ───────────────────────────────────────────────────────────
 
 type Tab = 'deploy' | 'fund' | 'milestone' | 'dispute';
-const TABS: { value: Tab; label: string }[] = [
-  { value: 'deploy', label: 'Deploy'    },
-  { value: 'fund', label: 'Fund'      },
-  { value: 'milestone', label: 'Milestone' },
-  { value: 'dispute', label: 'Dispute'   },
-];
+const TABS: Tab[] = [ 'deploy', 'fund', 'milestone', 'dispute' ];
 
 const SETUP_NOTE = `// adapter.ts — register once in your app
 export const trustlessWorkAdapter: TrustlessWorkAdapter = {
@@ -75,6 +72,7 @@ export const useEscrow =
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function EscrowPage() {
+  const { t } = useI18n();
   const { walletAddress, isAuthenticated, tx, openTxModal } = usePollar();
   const escrow = useEscrow();
 
@@ -105,7 +103,7 @@ export default function EscrowPage() {
     try {
       await fn();
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unknown error');
+      setError(e instanceof Error ? e.message : t.common.unknownError);
     } finally {
       setInFlight(null);
     }
@@ -224,26 +222,25 @@ await client.signAndSubmitTx(unsignedTransaction);`;
         {/* ── left: form ────────────────────────────────────────────────── */}
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Escrow</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.escrow.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              Trustless Work adapter — the SDK signs and submits the unsigned XDR with the
-              connected wallet, so your code only deals with business params.
+              {t.escrow.desc}
             </p>
           </div>
 
           {/* tabs */}
           <div className="flex gap-1 border-b border-border">
-            {TABS.map(t => (
+            {TABS.map(value => (
               <button
-                key={t.value}
-                onClick={() => { setTab(t.value); setError(null); }}
+                key={value}
+                onClick={() => { setTab(value); setError(null); }}
                 className={`text-xs px-3 py-2 border-b-2 transition-colors ${
-                  tab === t.value
+                  tab === value
                     ? 'border-primary text-primary font-semibold'
                     : 'border-transparent text-muted-light hover:text-foreground'
                 }`}
               >
-                {t.label}
+                {t.escrow.tabs[value]}
               </button>
             ))}
           </div>
@@ -251,29 +248,29 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           {/* ── deploy ────────────────────────────────────────────────────── */}
           {tab === 'deploy' && (
             <div className="space-y-3">
-              <Field label="Engagement ID" required>
+              <Field label={t.escrow.engagementId} required>
                 <input className={inp} value={engagementId} onChange={e => setEngagementId(e.target.value)} placeholder="unique-id-001" spellCheck={false} />
               </Field>
-              <Field label="Title" required>
+              <Field label={t.escrow.titleField} required>
                 <input className={inp} value={title} onChange={e => setTitle(e.target.value)} placeholder="Web development contract" />
               </Field>
-              <Field label="Description">
+              <Field label={t.escrow.description}>
                 <input className={inp} value={description} onChange={e => setDescription(e.target.value)} placeholder="Full-stack web app..." />
               </Field>
-              <Field label="Approver" required note="Defaults to your wallet address.">
+              <Field label={t.escrow.approver} required note={t.escrow.approverNote}>
                 <input className={inp} value={approver} onChange={e => setApprover(e.target.value)} placeholder={walletAddress || 'G...'} spellCheck={false} />
               </Field>
-              <Field label="Service provider" required>
+              <Field label={t.escrow.serviceProvider} required>
                 <input className={inp} value={serviceProvider} onChange={e => setServiceProvider(e.target.value)} placeholder="G..." spellCheck={false} />
               </Field>
-              <Field label="Platform address" required>
+              <Field label={t.escrow.platformAddress} required>
                 <input className={inp} value={platformAddress} onChange={e => setPlatformAddress(e.target.value)} placeholder="G..." spellCheck={false} />
               </Field>
               <div className="grid grid-cols-2 gap-3">
-                <Field label="Amount (USDC)" required>
+                <Field label={t.escrow.amountUsdc} required>
                   <input className={inp} value={amount} onChange={e => setAmount(e.target.value)} placeholder="100" />
                 </Field>
-                <Field label="Platform fee %" required>
+                <Field label={t.escrow.platformFee} required>
                   <input className={inp} value={platformFee} onChange={e => setPlatformFee(e.target.value)} placeholder="0" />
                 </Field>
               </div>
@@ -283,7 +280,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           {/* ── fund ──────────────────────────────────────────────────────── */}
           {tab === 'fund' && (
             <div className="space-y-3">
-              <Field label="Contract ID" required note="The escrow contract address returned after deployment.">
+              <Field label={t.escrow.contractId} required note={t.escrow.contractIdNote}>
                 <input className={inp} value={contractId} onChange={e => setContractId(e.target.value)} placeholder="C..." spellCheck={false} />
               </Field>
             </div>
@@ -292,10 +289,10 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           {/* ── milestone ─────────────────────────────────────────────────── */}
           {tab === 'milestone' && (
             <div className="space-y-3">
-              <Field label="Contract ID" required>
+              <Field label={t.escrow.contractId} required>
                 <input className={inp} value={contractId} onChange={e => setContractId(e.target.value)} placeholder="C..." spellCheck={false} />
               </Field>
-              <Field label="Milestone index" required>
+              <Field label={t.escrow.milestoneIndex} required>
                 <input className={inp} type="number" value={milestoneIndex} onChange={e => setMilestoneIndex(e.target.value)} placeholder="0" min={0} />
               </Field>
               <div className="flex gap-2 pt-1">
@@ -304,14 +301,14 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                   disabled={!isAuthenticated || inFlight !== null}
                   className={btn('secondary')}
                 >
-                  {inFlight === 'approve' ? 'Signing…' : 'Approve milestone'}
+                  {inFlight === 'approve' ? t.escrow.signing : t.escrow.approveMilestone}
                 </button>
                 <button
                   onClick={handleReleaseFunds}
                   disabled={!isAuthenticated || inFlight !== null}
                   className={btn('secondary')}
                 >
-                  {inFlight === 'release' ? 'Signing…' : 'Release funds'}
+                  {inFlight === 'release' ? t.escrow.signing : t.escrow.releaseFunds}
                 </button>
               </div>
             </div>
@@ -320,7 +317,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           {/* ── dispute ───────────────────────────────────────────────────── */}
           {tab === 'dispute' && (
             <div className="space-y-3">
-              <Field label="Contract ID" required>
+              <Field label={t.escrow.contractId} required>
                 <input className={inp} value={contractId} onChange={e => setContractId(e.target.value)} placeholder="C..." spellCheck={false} />
               </Field>
               <div className="flex gap-2 pt-1">
@@ -329,16 +326,16 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                   disabled={!isAuthenticated || inFlight !== null}
                   className={btn('secondary')}
                 >
-                  {inFlight === 'dispute' ? 'Signing…' : 'Initiate dispute'}
+                  {inFlight === 'dispute' ? t.escrow.signing : t.escrow.initiateDispute}
                 </button>
               </div>
               <div className="pt-2 border-t border-border space-y-3">
-                <p className="text-xs font-mono text-muted-light">Resolve dispute</p>
+                <p className="text-xs font-mono text-muted-light">{t.escrow.resolveDispute}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <Field label="Approver funds" required>
+                  <Field label={t.escrow.approverFunds} required>
                     <input className={inp} value={approverFunds} onChange={e => setApproverFunds(e.target.value)} placeholder="50" />
                   </Field>
-                  <Field label="Service provider funds" required>
+                  <Field label={t.escrow.serviceProviderFunds} required>
                     <input className={inp} value={serviceProviderFunds} onChange={e => setServiceProviderFunds(e.target.value)} placeholder="50" />
                   </Field>
                 </div>
@@ -347,7 +344,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                   disabled={!isAuthenticated || inFlight !== null}
                   className={`${btn('primary')} w-full sm:w-auto`}
                 >
-                  {inFlight === 'resolve' ? 'Signing…' : 'Resolve dispute'}
+                  {inFlight === 'resolve' ? t.escrow.signing : t.escrow.resolveDispute}
                 </button>
               </div>
             </div>
@@ -363,10 +360,10 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                 className={`${btn('primary')} w-full sm:w-auto`}
               >
                 {!isAuthenticated
-                  ? 'Connect wallet to continue'
-                  : inFlight === 'deploy' ? 'Signing…'
-                  : inFlight === 'fund' ? 'Signing…'
-                  : tab === 'deploy' ? 'Deploy escrow' : 'Fund escrow'}
+                  ? t.common.connectWalletToContinue
+                  : inFlight === 'deploy' ? t.escrow.signing
+                  : inFlight === 'fund' ? t.escrow.signing
+                  : tab === 'deploy' ? t.escrow.deployEscrow : t.escrow.fundEscrow}
               </button>
             )}
           </div>
@@ -378,7 +375,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           {/* setup hint */}
           <details className="rounded-lg border border-border overflow-hidden text-xs">
             <summary className="cursor-pointer px-4 py-2.5 bg-surface border-b border-border font-mono text-muted-light select-none">
-              one-time adapter setup
+              {t.escrow.setupSummary}
             </summary>
             <pre className="p-4 font-mono text-foreground overflow-x-auto whitespace-pre leading-relaxed bg-background">
               {SETUP_NOTE}
@@ -408,13 +405,13 @@ await client.signAndSubmitTx(unsignedTransaction);`;
               </div>
               {tx.step !== 'idle' && (
                 <button onClick={openTxModal} className={btn('secondary')}>
-                  View modal
+                  {t.common.viewModal}
                 </button>
               )}
             </div>
             <div className="p-4 text-xs font-mono bg-background min-h-12">
               {tx.step === 'idle' && (
-                <p className="text-muted-light">Trigger an operation to see signing progress.</p>
+                <p className="text-muted-light">{t.escrow.txIdle}</p>
               )}
               {'hash' in tx && tx.hash && (
                 <div>

@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
@@ -43,6 +44,7 @@ export function SendButton() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function SendPage() {
+  const { t } = useI18n();
   const { openSendModal, isAuthenticated } = usePollar();
 
   return (
@@ -52,10 +54,9 @@ export default function SendPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Send</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.send.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              Transfer assets to another Stellar address. Pollar renders the
-              asset picker, amount input, review and signing flow inside a modal.
+              {t.send.desc}
             </p>
           </div>
 
@@ -64,12 +65,12 @@ export default function SendPage() {
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Send modal' : 'Connect wallet first'}
+            {isAuthenticated ? t.send.open : t.common.connectWalletFirst}
           </button>
 
           <p className="text-xs font-mono text-muted-light">
             <code className="text-foreground">openSendModal()</code>
-            {' '}takes no arguments — asset, amount and destination are picked inside the modal.
+            {' '}{t.send.note}
           </p>
         </div>
 

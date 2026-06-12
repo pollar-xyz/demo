@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
@@ -44,6 +45,7 @@ export function SessionsButton() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function SessionsPage() {
+  const { t } = useI18n();
   const { openSessionsModal, isAuthenticated } = usePollar();
 
   return (
@@ -53,11 +55,9 @@ export default function SessionsPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Sessions</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.sessions.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              Review the active sessions for the signed-in user, revoke a single
-              device, or sign out everywhere. Pollar renders the list and actions
-              inside a modal.
+              {t.sessions.desc}
             </p>
           </div>
 
@@ -66,12 +66,12 @@ export default function SessionsPage() {
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Sessions modal' : 'Connect wallet first'}
+            {isAuthenticated ? t.sessions.open : t.common.connectWalletFirst}
           </button>
 
           <p className="text-xs font-mono text-muted-light">
             <code className="text-foreground">openSessionsModal()</code>
-            {' '}takes no arguments — it lists the current user&apos;s sessions and handles revocation.
+            {' '}{t.sessions.note}
           </p>
         </div>
 

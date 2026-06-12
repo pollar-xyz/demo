@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
@@ -49,6 +50,7 @@ export function BuyCryptoButton() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function RampPage() {
+  const { t } = useI18n();
   const { openRampModal, isAuthenticated } = usePollar();
 
   return (
@@ -58,10 +60,9 @@ export default function RampPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Ramp</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.ramp.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH).
-              Pollar renders the entire quote-and-payment flow inside a modal.
+              {t.ramp.desc}
             </p>
           </div>
 
@@ -70,12 +71,12 @@ export default function RampPage() {
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Ramp modal' : 'Connect wallet first'}
+            {isAuthenticated ? t.ramp.open : t.common.connectWalletFirst}
           </button>
 
           <p className="text-xs font-mono text-muted-light">
             <code className="text-foreground">openRampModal()</code>
-            {' '}takes no arguments — country, currency and direction are picked inside the modal.
+            {' '}{t.ramp.note}
           </p>
         </div>
 

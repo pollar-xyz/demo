@@ -2,25 +2,17 @@
 
 import { clientEnv } from '@/lib/env';
 import { useState } from 'react';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 type ActivateResult =
   | { ok: true; publicKey: string; amount: number }
   | { ok: false; code: string; status: number };
 
-const ERROR_MESSAGES: Record<string, string> = {
-  API_KEY_NOT_FOUND: 'Secret key not found or invalid.',
-  API_KEY_TYPE_NOT_ALLOWED: 'This key is a publishable key. You must use a secret key (sec_...).',
-  WALLET_NOT_FOUND: 'Wallet not found in the database.',
-  FORBIDDEN: 'This wallet does not belong to your application.',
-  WALLET_ALREADY_FUNDED: 'This wallet is already active on Stellar.',
-  APP_WALLET_NOT_FOUND: 'Your application does not have a funding wallet configured.',
-  FUND_XLM_FAILED: 'Failed to send XLM to the wallet. Please try again.',
-};
-
 const input =
   'w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm outline-none focus:border-primary font-mono';
 
 export default function ActivateWalletPage() {
+  const { t } = useI18n();
   const [ secretKey, setSecretKey ] = useState('');
   const [ confirmed, setConfirmed ] = useState(false);
   const [ publicKey, setPublicKey ] = useState('');
@@ -69,24 +61,22 @@ export default function ActivateWalletPage() {
         <div className="mb-8">
           <p className="text-xs font-mono text-muted-light mb-1">demo / activate-wallet</p>
           <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Activate KYC-verified wallet
+            {t.activateWallet.title}
           </h1>
           <p className="mt-2 text-sm text-muted">
-            Simulates the server-side activation step after a user has passed KYC.
+            {t.activateWallet.subtitle}
           </p>
         </div>
 
         {/* step 1 — secret key */}
         <section className="rounded-lg border border-border bg-background p-5 mb-4">
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-mono font-semibold text-muted-light">STEP 1</span>
-            <span className="text-sm font-medium text-foreground">Enter your secret API key</span>
+            <span className="text-xs font-mono font-semibold text-muted-light">{t.activateWallet.step1}</span>
+            <span className="text-sm font-medium text-foreground">{t.activateWallet.step1Title}</span>
           </div>
 
           <div className="rounded border border-warning-border bg-warning-light px-3 py-2 text-xs text-warning mb-4 leading-relaxed">
-            <strong>Demo only.</strong> In a real integration you should <strong>never</strong> handle secret keys on
-            the
-            frontend. This call must be made exclusively from your backend server.
+            <strong>{t.activateWallet.warnStrong}</strong>{t.activateWallet.warnMid}<strong>{t.activateWallet.warnNever}</strong>{t.activateWallet.warnEnd}
           </div>
 
           <div className="flex gap-2">
@@ -111,7 +101,7 @@ export default function ActivateWalletPage() {
                   setResult(null);
                 }}
               >
-                edit
+                {t.activateWallet.edit}
               </button>
             ) : (
               <button
@@ -119,14 +109,14 @@ export default function ActivateWalletPage() {
                 onClick={handleConfirmKey}
                 disabled={!secretKey.trim()}
               >
-                confirm
+                {t.activateWallet.confirm}
               </button>
             )}
           </div>
 
           {confirmed && (
             <p className="mt-2 text-xs text-success font-mono">
-              ✓ key set — not persisted, will clear on refresh
+              {t.activateWallet.keySet}
             </p>
           )}
         </section>
@@ -138,17 +128,16 @@ export default function ActivateWalletPage() {
           }`}
         >
           <div className="flex items-center gap-2 mb-3">
-            <span className="text-xs font-mono font-semibold text-muted-light">STEP 2</span>
-            <span className="text-sm font-medium text-foreground">Activate wallet</span>
+            <span className="text-xs font-mono font-semibold text-muted-light">{t.activateWallet.step2}</span>
+            <span className="text-sm font-medium text-foreground">{t.activateWallet.step2Title}</span>
           </div>
 
           <p className="text-xs text-muted mb-4">
-            Provide the public key of a wallet that has already passed KYC. The server will fund it with XLM on
-            Stellar so it becomes active.
+            {t.activateWallet.step2Desc}
           </p>
 
           <div className="mb-3">
-            <label className="block text-xs text-muted mb-1">Public key (G...)</label>
+            <label className="block text-xs text-muted mb-1">{t.activateWallet.publicKeyLabel}</label>
             <input
               className={input}
               placeholder="GABC...XYZ"
@@ -166,7 +155,7 @@ export default function ActivateWalletPage() {
             onClick={handleActivate}
             disabled={loading || !publicKey.trim()}
           >
-            {loading ? 'Activating…' : 'Activate wallet'}
+            {loading ? t.activateWallet.activating : t.activateWallet.activate}
           </button>
 
           {/* result */}
@@ -180,9 +169,9 @@ export default function ActivateWalletPage() {
             >
               {result.ok ? (
                 <>
-                  <p className="font-semibold mb-1">✓ Wallet activated</p>
+                  <p className="font-semibold mb-1">{t.activateWallet.activated}</p>
                   <p>publicKey: {result.publicKey}</p>
-                  <p>amount funded: {result.amount} XLM</p>
+                  <p>{t.activateWallet.amountFunded} {result.amount} XLM</p>
                 </>
               ) : (
                 <>
@@ -192,7 +181,7 @@ export default function ActivateWalletPage() {
                       <span className="ml-2 font-normal text-muted-light">HTTP {result.status}</span>
                     )}
                   </p>
-                  <p>{ERROR_MESSAGES[result.code] ?? 'An unexpected error occurred.'}</p>
+                  <p>{t.activateWallet.errors[result.code] ?? t.activateWallet.unexpectedError}</p>
                 </>
               )}
             </div>
@@ -202,7 +191,7 @@ export default function ActivateWalletPage() {
         {/* endpoint reference */}
         <details className="mt-6 text-xs font-mono text-muted-light">
           <summary className="cursor-pointer hover:text-foreground select-none">
-            endpoint reference
+            {t.activateWallet.endpointRef}
           </summary>
           <div className="mt-3 rounded border border-border bg-surface p-3 space-y-1 leading-relaxed">
             <p>
@@ -223,7 +212,7 @@ export default function ActivateWalletPage() {
 
         <div className="mt-8 text-xs text-muted-light">
           <a href="/" className="underline underline-offset-2 hover:text-foreground">
-            ← back to main demo
+            {t.activateWallet.back}
           </a>
         </div>
       </main>

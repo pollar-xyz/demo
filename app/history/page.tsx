@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
@@ -48,6 +49,7 @@ export function HistoryButton() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function HistoryPage() {
+  const { t } = useI18n();
   const { openTxHistoryModal, txHistory, isAuthenticated } = usePollar();
 
   const recordCount =
@@ -60,11 +62,9 @@ export default function HistoryPage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">History</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.history.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              List the connected wallet&apos;s past transactions with pagination.
-              Pollar renders the list inside a modal, and also exposes the loading
-              state through <code className="font-mono">usePollar().txHistory</code>.
+              {t.history.descPre}<code className="font-mono">usePollar().txHistory</code>{t.history.descPost}
             </p>
           </div>
 
@@ -73,12 +73,12 @@ export default function HistoryPage() {
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open History modal' : 'Connect wallet first'}
+            {isAuthenticated ? t.history.open : t.common.connectWalletFirst}
           </button>
 
           <p className="text-xs font-mono text-muted-light">
             <code className="text-foreground">openTxHistoryModal()</code>
-            {' '}takes no arguments — pagination is handled inside the modal.
+            {' '}{t.history.note}
           </p>
         </div>
 
@@ -103,14 +103,14 @@ export default function HistoryPage() {
             </div>
             <div className="p-4 text-xs font-mono bg-background min-h-12">
               {txHistory.step === 'idle' && (
-                <p className="text-muted-light">Open the modal to load history.</p>
+                <p className="text-muted-light">{t.history.idle}</p>
               )}
               {txHistory.step === 'loading' && (
-                <p className="text-muted-light">Loading…</p>
+                <p className="text-muted-light">{t.common.loading}</p>
               )}
               {txHistory.step === 'loaded' && (
                 <p className="text-muted">
-                  {recordCount} record{recordCount === 1 ? '' : 's'} loaded.
+                  {t.history.recordsLoaded(recordCount ?? 0)}
                 </p>
               )}
               {txHistory.step === 'error' && (

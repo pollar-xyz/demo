@@ -8,24 +8,28 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import '@pollar/react/styles.css';
 import { trustlessWorkAdapter } from './escrow/adapter';
 import { ApiKeyModal } from './_components/ApiKeyModal';
+import { LanguageSwitcher } from './_components/LanguageSwitcher';
+import { useI18n } from './_i18n/LanguageProvider';
+import type { Dictionary } from './_i18n/translations';
 
 const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
 
-const NAV_LINKS = [
-  { href: '/transactions', label: 'Transactions' },
-  { href: '/send', label: 'Send' },
-  { href: '/receive', label: 'Receive' },
-  { href: '/history', label: 'History' },
-  { href: '/balance', label: 'Balance' },
-  { href: '/ramp', label: 'Ramp' },
-  { href: '/kyc', label: 'KYC' },
-  { href: '/escrow', label: 'Escrow' },
-  { href: '/sessions', label: 'Sessions' },
-  { href: '/distribution', label: 'Distribution' },
+const NAV_LINKS: { href: string; key: keyof Dictionary['nav'] }[] = [
+  { href: '/transactions', key: 'transactions' },
+  { href: '/send', key: 'send' },
+  { href: '/receive', key: 'receive' },
+  { href: '/history', key: 'history' },
+  { href: '/balance', key: 'balance' },
+  { href: '/ramp', key: 'ramp' },
+  { href: '/kyc', key: 'kyc' },
+  { href: '/escrow', key: 'escrow' },
+  { href: '/sessions', key: 'sessions' },
+  { href: '/distribution', key: 'distribution' },
 ];
 
 function ThemeToggle() {
+  const { t } = useI18n();
   const [dark, setDark] = useState(false);
 
   useEffect(() => {
@@ -45,7 +49,7 @@ function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+      aria-label={dark ? t.shell.switchToLight : t.shell.switchToDark}
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface transition-colors"
     >
       {dark ? (
@@ -62,6 +66,7 @@ function ThemeToggle() {
 }
 
 export function Shell({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
@@ -99,23 +104,24 @@ export function Shell({ children }: { children: React.ReactNode }) {
             <div className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={() => setKeyModalOpen(true)}
-                title="Use your own publishable API key"
+                title={t.shell.apiKeyTitle}
                 className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-surface transition-colors"
               >
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    isCustomKey ? 'bg-green-500' : 'bg-gray-300'
+                    isCustomKey ? 'bg-success' : 'bg-muted-light'
                   }`}
                 />
-                API key
+                {t.shell.apiKey}
               </button>
+              <LanguageSwitcher />
               <ThemeToggle />
               <WalletButton />
             </div>
           </div>
           {/* row 2: feature tabs (scrollable on mobile) */}
           <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
-            {NAV_LINKS.map(({ href, label }) => (
+            {NAV_LINKS.map(({ href, key }) => (
               <Link
                 key={href}
                 href={href}
@@ -125,7 +131,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                     : 'border-transparent text-muted hover:text-foreground'
                 }`}
               >
-                {label}
+                {t.nav[key]}
               </Link>
             ))}
           </nav>

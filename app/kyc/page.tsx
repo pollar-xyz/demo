@@ -4,6 +4,7 @@ import { usePollar, KycStatus } from '@pollar/react';
 import type { KycStatus as KycStatusValue, KycLevel } from '@pollar/core';
 import { useState } from 'react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── shared styles ────────────────────────────────────────────────────────────
 
@@ -16,6 +17,7 @@ const LEVELS: KycLevel[] = [ 'basic', 'intermediate', 'enhanced' ];
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function KycPage() {
+  const { t } = useI18n();
   const { openKycModal, isAuthenticated } = usePollar();
 
   const [ status, setStatus ] = useState<KycStatusValue>('none');
@@ -73,15 +75,14 @@ openKycModal({
         {/* ── left: form ─────────────────────────────────────────────────── */}
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">KYC</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.kyc.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              Verify the user&apos;s identity. Pollar renders the entire provider-selection
-              and verification flow inside a modal.
+              {t.kyc.desc}
             </p>
           </div>
 
           <div>
-            <label className={lbl}>Country (ISO 3166-1 alpha-2)</label>
+            <label className={lbl}>{t.kyc.countryLabel}</label>
             <input
               className={inp}
               value={country}
@@ -93,7 +94,7 @@ openKycModal({
           </div>
 
           <div>
-            <label className={lbl}>Level</label>
+            <label className={lbl}>{t.kyc.levelLabel}</label>
             <div className="flex gap-2 flex-wrap">
               {LEVELS.map(l => (
                 <button
@@ -113,7 +114,7 @@ openKycModal({
           </div>
 
           <div className="flex items-center gap-3 pt-1">
-            <span className="text-xs font-mono text-muted-light">current status</span>
+            <span className="text-xs font-mono text-muted-light">{t.kyc.currentStatus}</span>
             <KycStatus status={status} />
           </div>
 
@@ -122,7 +123,7 @@ openKycModal({
             disabled={!isAuthenticated || !country}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Start KYC' : 'Connect wallet first'}
+            {isAuthenticated ? t.kyc.start : t.common.connectWalletFirst}
           </button>
         </div>
 

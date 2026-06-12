@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
 
@@ -43,6 +44,7 @@ export function ReceiveButton() {
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function ReceivePage() {
+  const { t } = useI18n();
   const { openReceiveModal, isAuthenticated } = usePollar();
 
   return (
@@ -52,10 +54,9 @@ export default function ReceivePage() {
         {/* ── left: action ───────────────────────────────────────────────── */}
         <div className="space-y-4">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">Receive</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.receive.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              Show the connected wallet&apos;s address and QR code so others can send
-              funds to it. Pollar renders the whole view inside a modal.
+              {t.receive.desc}
             </p>
           </div>
 
@@ -64,12 +65,12 @@ export default function ReceivePage() {
             disabled={!isAuthenticated}
             className={`${btn} w-full sm:w-auto`}
           >
-            {isAuthenticated ? 'Open Receive modal' : 'Connect wallet first'}
+            {isAuthenticated ? t.receive.open : t.common.connectWalletFirst}
           </button>
 
           <p className="text-xs font-mono text-muted-light">
             <code className="text-foreground">openReceiveModal()</code>
-            {' '}takes no arguments — it reads the connected wallet address from context.
+            {' '}{t.receive.note}
           </p>
         </div>
 
