@@ -224,7 +224,22 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.escrow.title}</h1>
             <p className="text-sm text-muted mt-1.5">
-              {t.escrow.desc}
+              {/* every locale's desc contains the literal "Trustless Work" — link it */}
+              {t.escrow.desc.split('Trustless Work').map((part, i) => (
+                <span key={i}>
+                  {i > 0 && (
+                    <a
+                      href="https://www.trustlesswork.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-bold text-foreground hover:text-primary hover:underline"
+                    >
+                      Trustless Work
+                    </a>
+                  )}
+                  {part}
+                </span>
+              ))}
             </p>
           </div>
 

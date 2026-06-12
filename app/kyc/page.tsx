@@ -4,6 +4,7 @@ import { usePollar, KycStatus } from '@pollar/react';
 import type { KycStatus as KycStatusValue, KycLevel } from '@pollar/core';
 import { useState } from 'react';
 import { DualCode } from '../_components/CodePanels';
+import { ComingSoon } from '../_components/ComingSoon';
 import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── shared styles ────────────────────────────────────────────────────────────
@@ -69,18 +70,20 @@ openKycModal({
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
-    <div className="w-full max-w-5xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <div className="w-full max-w-5xl space-y-5">
+      {/* header stays readable above the coming-soon blur */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.kyc.title}</h1>
+        <p className="text-sm text-muted mt-1.5">
+          {t.kyc.desc}
+        </p>
+      </div>
+
+      <ComingSoon>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
 
         {/* ── left: form ─────────────────────────────────────────────────── */}
         <div className="space-y-5">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.kyc.title}</h1>
-            <p className="text-sm text-muted mt-1.5">
-              {t.kyc.desc}
-            </p>
-          </div>
-
           <div>
             <label className={lbl}>{t.kyc.countryLabel}</label>
             <input
@@ -132,7 +135,8 @@ openKycModal({
           <DualCode core={coreCode} react={reactCode} />
         </div>
 
-      </div>
+        </div>
+      </ComingSoon>
     </div>
   );
 }

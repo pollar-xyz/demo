@@ -2,6 +2,7 @@
 
 import { usePollar } from '@pollar/react';
 import { DualCode } from '../_components/CodePanels';
+import { ComingSoon } from '../_components/ComingSoon';
 import { useI18n } from '../_i18n/LanguageProvider';
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
@@ -54,38 +55,41 @@ export default function RampPage() {
   const { openRampModal, isAuthenticated } = usePollar();
 
   return (
-    <div className="w-full max-w-5xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+    <div className="w-full max-w-5xl space-y-5">
+      {/* header stays readable above the coming-soon blur */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.ramp.title}</h1>
+        <p className="text-sm text-muted mt-1.5">
+          {t.ramp.desc}
+        </p>
+      </div>
 
-        {/* ── left: action ───────────────────────────────────────────────── */}
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.ramp.title}</h1>
-            <p className="text-sm text-muted mt-1.5">
-              {t.ramp.desc}
+      <ComingSoon>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+
+          {/* ── left: action ─────────────────────────────────────────────── */}
+          <div className="space-y-4">
+            <button
+              onClick={openRampModal}
+              disabled={!isAuthenticated}
+              className={`${btn} w-full sm:w-auto`}
+            >
+              {isAuthenticated ? t.ramp.open : t.common.connectWalletFirst}
+            </button>
+
+            <p className="text-xs font-mono text-muted-light">
+              <code className="text-foreground">openRampModal()</code>
+              {' '}{t.ramp.note}
             </p>
           </div>
 
-          <button
-            onClick={openRampModal}
-            disabled={!isAuthenticated}
-            className={`${btn} w-full sm:w-auto`}
-          >
-            {isAuthenticated ? t.ramp.open : t.common.connectWalletFirst}
-          </button>
+          {/* ── right: code previews (core + react) ──────────────────────── */}
+          <div className="lg:sticky lg:top-6">
+            <DualCode core={CORE_CODE} react={REACT_CODE} />
+          </div>
 
-          <p className="text-xs font-mono text-muted-light">
-            <code className="text-foreground">openRampModal()</code>
-            {' '}{t.ramp.note}
-          </p>
         </div>
-
-        {/* ── right: code previews (core + react) ──────────────────────── */}
-        <div className="lg:sticky lg:top-6">
-          <DualCode core={CORE_CODE} react={REACT_CODE} />
-        </div>
-
-      </div>
+      </ComingSoon>
     </div>
   );
 }

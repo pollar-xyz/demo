@@ -14,6 +14,8 @@ export const en = {
     optional: '(optional)',
     cancel: 'Cancel',
     save: 'Save',
+    comingSoon: 'Coming soon',
+    comingSoonDesc: 'This feature will be available shortly.',
   },
 
   nav: {
@@ -284,6 +286,8 @@ export const es: Dictionary = {
     optional: '(opcional)',
     cancel: 'Cancelar',
     save: 'Guardar',
+    comingSoon: 'Próximamente',
+    comingSoonDesc: 'Esta funcionalidad estará disponible pronto.',
   },
 
   nav: {
@@ -552,6 +556,8 @@ export const pt: Dictionary = {
     optional: '(opcional)',
     cancel: 'Cancelar',
     save: 'Salvar',
+    comingSoon: 'Em breve',
+    comingSoonDesc: 'Esta funcionalidade estará disponível em breve.',
   },
 
   nav: {
