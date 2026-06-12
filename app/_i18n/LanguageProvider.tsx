@@ -1,12 +1,17 @@
-'use client';
+"use client";
 
 // Lightweight i18n: a context that holds the active locale and hands out the
 // matching dictionary. The initial locale is resolved server-side (cookie or
 // Accept-Language, see locale.ts) so SSR and the client render the same
 // language. Switching writes the cookie back so the next request matches too.
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { DICTIONARIES, LOCALE_COOKIE, type Dictionary, type Locale } from './translations';
+import { createContext, useContext, useEffect, useState } from "react";
+import {
+  DICTIONARIES,
+  LOCALE_COOKIE,
+  type Dictionary,
+  type Locale,
+} from "./translations";
 
 type I18nContextValue = {
   locale: Locale;
@@ -35,7 +40,9 @@ export function LanguageProvider({
   }
 
   return (
-    <I18nContext.Provider value={{ locale, setLocale, t: DICTIONARIES[locale] }}>
+    <I18nContext.Provider
+      value={{ locale, setLocale, t: DICTIONARIES[locale] }}
+    >
       {children}
     </I18nContext.Provider>
   );
@@ -43,6 +50,6 @@ export function LanguageProvider({
 
 export function useI18n(): I18nContextValue {
   const ctx = useContext(I18nContext);
-  if (!ctx) throw new Error('useI18n must be used within a LanguageProvider');
+  if (!ctx) throw new Error("useI18n must be used within a LanguageProvider");
   return ctx;
 }

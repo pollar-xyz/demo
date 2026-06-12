@@ -1,5 +1,5 @@
-import { cookies, headers } from 'next/headers';
-import { LOCALE_COOKIE, LOCALES, type Locale } from './translations';
+import { cookies, headers } from "next/headers";
+import { LOCALE_COOKIE, LOCALES, type Locale } from "./translations";
 
 function isLocale(value: string | undefined): value is Locale {
   return value !== undefined && (LOCALES as readonly string[]).includes(value);
@@ -12,10 +12,10 @@ export async function resolveLocale(): Promise<Locale> {
   const stored = (await cookies()).get(LOCALE_COOKIE)?.value;
   if (isLocale(stored)) return stored;
 
-  const acceptLanguage = (await headers()).get('accept-language') ?? '';
-  for (const part of acceptLanguage.split(',')) {
-    const lang = part.split(';')[0]!.trim().slice(0, 2).toLowerCase();
+  const acceptLanguage = (await headers()).get("accept-language") ?? "";
+  for (const part of acceptLanguage.split(",")) {
+    const lang = part.split(";")[0]!.trim().slice(0, 2).toLowerCase();
     if (isLocale(lang)) return lang;
   }
-  return 'en';
+  return "en";
 }

@@ -1,51 +1,50 @@
-'use client';
+"use client";
 
-import { PollarProvider, WalletButton } from '@pollar/react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import '@pollar/react/styles.css';
-import { useEffect, useState } from 'react';
-import { ApiKeyModal } from './_components/ApiKeyModal';
-import { LanguageSwitcher } from './_components/LanguageSwitcher';
-import { useI18n } from './_i18n/LanguageProvider';
-import type { Dictionary } from './_i18n/translations';
-import { trustlessWorkAdapter } from './escrow/adapter';
+import { PollarProvider, WalletButton } from "@pollar/react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import "@pollar/react/styles.css";
+import { useEffect, useState } from "react";
+import { ApiKeyModal } from "./_components/ApiKeyModal";
+import { LanguageSwitcher } from "./_components/LanguageSwitcher";
+import { useI18n } from "./_i18n/LanguageProvider";
+import type { Dictionary } from "./_i18n/translations";
+import { trustlessWorkAdapter } from "./escrow/adapter";
 
-const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
-const BASE_URL = 'https://sdk.api.pollar.xyz';
+const DEFAULT_API_KEY = "pub_testnet_703470595eb6cb72c18651b1455fdc34";
+const BASE_URL = "https://sdk.api.pollar.xyz";
 
-const NAV_LINKS: { href: string; key: keyof Dictionary['nav'] }[] = [
-  { href: '/transactions', key: 'transactions' },
-  { href: '/send', key: 'send' },
-  { href: '/receive', key: 'receive' },
-  { href: '/history', key: 'history' },
-  { href: '/balance', key: 'balance' },
-  { href: '/ramp', key: 'ramp' },
-  { href: '/kyc', key: 'kyc' },
-  { href: '/escrow', key: 'escrow' },
-  { href: '/sessions', key: 'sessions' },
-  { href: '/distribution', key: 'distribution' },
+const NAV_LINKS: { href: string; key: keyof Dictionary["nav"] }[] = [
+  { href: "/transactions", key: "transactions" },
+  { href: "/send", key: "send" },
+  { href: "/receive", key: "receive" },
+  { href: "/history", key: "history" },
+  { href: "/balance", key: "balance" },
+  { href: "/ramp", key: "ramp" },
+  { href: "/kyc", key: "kyc" },
+  { href: "/escrow", key: "escrow" },
+  { href: "/sessions", key: "sessions" },
+  { href: "/distribution", key: "distribution" },
 ];
 
 function ThemeToggle() {
   const { t } = useI18n();
-  const [ dark, setDark ] = useState(false);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'));
+    setDark(document.documentElement.classList.contains("dark"));
   }, []);
 
   function toggle() {
     // Read from the DOM, not state — two instances render (mobile + desktop)
     // and only the DOM class is shared between them.
-    const next = !document.documentElement.classList.contains('dark');
+    const next = !document.documentElement.classList.contains("dark");
     setDark(next);
-    document.documentElement.classList.toggle('dark', next);
+    document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem('pollar-demo-theme', next ? 'dark' : 'light');
-    } catch {
-    }
+      localStorage.setItem("pollar-demo-theme", next ? "dark" : "light");
+    } catch {}
   }
 
   return (
@@ -56,7 +55,13 @@ function ThemeToggle() {
       className="flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface transition-colors"
     >
       {dark ? (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -64,7 +69,13 @@ function ThemeToggle() {
           />
         </svg>
       ) : (
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -82,24 +93,24 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const customKey = searchParams.get('apiKey');
+  const customKey = searchParams.get("apiKey");
   const apiKey = customKey ?? DEFAULT_API_KEY;
   const isCustomKey = customKey !== null;
 
-  const [ keyModalOpen, setKeyModalOpen ] = useState(false);
-  const [ menuOpen, setMenuOpen ] = useState(false);
+  const [keyModalOpen, setKeyModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Close the mobile menu when navigating to another tab.
   useEffect(() => {
     setMenuOpen(false);
-  }, [ pathname ]);
+  }, [pathname]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     const trimmed = next.trim();
-    if (trimmed) params.set('apiKey', trimmed);
-    else params.delete('apiKey');
+    if (trimmed) params.set("apiKey", trimmed);
+    else params.delete("apiKey");
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
     setKeyModalOpen(false);
@@ -108,15 +119,29 @@ export function Shell({ children }: { children: React.ReactNode }) {
   return (
     // `key` forces a fresh PollarProvider (and a new client) whenever the
     // API key changes — the client is otherwise locked at first render.
-    <PollarProvider key={apiKey} client={{ apiKey, baseUrl: BASE_URL }} adapters={{ escrow: trustlessWorkAdapter }}>
+    <PollarProvider
+      key={apiKey}
+      client={{ apiKey, baseUrl: BASE_URL }}
+      adapters={{ escrow: trustlessWorkAdapter }}
+    >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* row 1: logo + api key + theme + wallet button */}
           <div className="flex items-center justify-between py-3">
             <Link href="/" className="flex items-center gap-2 sm:gap-3">
-              <Image src="/logo.png" alt="Pollar" width={40} height={40} className="w-8 h-8 sm:w-9 sm:h-9" />
-              <span className="text-lg sm:text-xl font-bold text-foreground">Pollar</span>
-              <span className="hidden sm:inline-block rounded-md bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">Demo</span>
+              <Image
+                src="/logo.png"
+                alt="Pollar"
+                width={40}
+                height={40}
+                className="w-8 h-8 sm:w-9 sm:h-9"
+              />
+              <span className="text-lg sm:text-xl font-bold text-foreground">
+                Pollar
+              </span>
+              <span className="hidden sm:inline-block rounded-md bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary uppercase tracking-wider">
+                Demo
+              </span>
             </Link>
             {/* desktop controls */}
             <div className="hidden sm:flex items-center gap-3">
@@ -127,7 +152,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               >
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    isCustomKey ? 'bg-success' : 'bg-muted-light'
+                    isCustomKey ? "bg-success" : "bg-muted-light"
                   }`}
                 />
                 {t.shell.apiKey}
@@ -139,17 +164,33 @@ export function Shell({ children }: { children: React.ReactNode }) {
             {/* mobile: everything collapses behind the hamburger */}
             <button
               type="button"
-              onClick={() => setMenuOpen(o => !o)}
+              onClick={() => setMenuOpen((o) => !o)}
               aria-label={menuOpen ? t.shell.closeMenu : t.shell.openMenu}
               aria-expanded={menuOpen}
               className="sm:hidden flex h-9 w-9 items-center justify-center rounded-lg border border-border text-muted hover:text-foreground hover:bg-surface transition-colors"
             >
               {menuOpen ? (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -174,7 +215,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 >
                   <span
                     className={`inline-block h-1.5 w-1.5 rounded-full ${
-                      isCustomKey ? 'bg-success' : 'bg-muted-light'
+                      isCustomKey ? "bg-success" : "bg-muted-light"
                     }`}
                   />
                   {t.shell.apiKey}
@@ -192,8 +233,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 href={href}
                 className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
                   pathname === href
-                    ? 'border-primary text-primary font-semibold'
-                    : 'border-transparent text-muted hover:text-foreground'
+                    ? "border-primary text-primary font-semibold"
+                    : "border-transparent text-muted hover:text-foreground"
                 }`}
               >
                 {t.nav[key]}

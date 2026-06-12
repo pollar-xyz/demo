@@ -1,14 +1,17 @@
-import { type AdapterFn } from '@pollar/core';
-import { createPollarAdapterHook } from '@pollar/react';
+import { type AdapterFn } from "@pollar/core";
+import { createPollarAdapterHook } from "@pollar/react";
 
 // ─── Trustless Work API ───────────────────────────────────────────────────────
 
-const TW_API = 'https://dev.api.trustlesswork.com';
+const TW_API = "https://dev.api.trustlesswork.com";
 
-async function tw<T>(path: string, body: T): Promise<{ unsignedTransaction: string }> {
+async function tw<T>(
+  path: string,
+  body: T,
+): Promise<{ unsignedTransaction: string }> {
   const res = await fetch(`${TW_API}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -74,25 +77,20 @@ export type TrustlessWorkAdapter = {
 // ─── adapter implementation ───────────────────────────────────────────────────
 
 export const trustlessWorkAdapter: TrustlessWorkAdapter = {
-  deployEscrow: (params) =>
-    tw('/escrow/initialize-escrow', params),
+  deployEscrow: (params) => tw("/escrow/initialize-escrow", params),
 
-  fundEscrow: (params) =>
-    tw('/escrow/fund-escrow', params),
+  fundEscrow: (params) => tw("/escrow/fund-escrow", params),
 
-  approveMilestone: (params) =>
-    tw('/escrow/approve-milestone', params),
+  approveMilestone: (params) => tw("/escrow/approve-milestone", params),
 
-  releaseFunds: (params) =>
-    tw('/escrow/complete-escrow', params),
+  releaseFunds: (params) => tw("/escrow/complete-escrow", params),
 
-  initiateDispute: (params) =>
-    tw('/escrow/dispute-escrow', params),
+  initiateDispute: (params) => tw("/escrow/dispute-escrow", params),
 
-  resolveDispute: (params) =>
-    tw('/escrow/resolute-dispute', params),
+  resolveDispute: (params) => tw("/escrow/resolute-dispute", params),
 };
 
 // ─── hook ─────────────────────────────────────────────────────────────────────
 
-export const useEscrow = createPollarAdapterHook<TrustlessWorkAdapter>('escrow');
+export const useEscrow =
+  createPollarAdapterHook<TrustlessWorkAdapter>("escrow");

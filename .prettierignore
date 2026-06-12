@@ -1,0 +1,15 @@
+# Build output
+.next/
+out/
+build/
+
+# Dependencies
+node_modules/
+.yalc/
+yalc.lock
+
+# Lockfiles
+pnpm-lock.yaml
+
+# Generated
+next-env.d.ts

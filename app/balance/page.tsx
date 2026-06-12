@@ -1,31 +1,45 @@
-'use client';
+"use client";
 
-import { usePollar } from '@pollar/react';
-import { useState } from 'react';
-import { DualCode } from '../_components/CodePanels';
-import { useI18n } from '../_i18n/LanguageProvider';
+import { usePollar } from "@pollar/react";
+import type { WalletBalanceContent } from "@pollar/core";
+import { useState } from "react";
+import { DualCode } from "../_components/CodePanels";
+import { useI18n } from "../_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
 
-const inp = 'w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light';
-const btn = (variant: 'primary' | 'secondary') =>
-  variant === 'primary'
-    ? 'rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors'
-    : 'rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors';
+const inp =
+  "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light";
+const btn = (variant: "primary" | "secondary") =>
+  variant === "primary"
+    ? "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
+    : "rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors";
 
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function BalancePage() {
   const { t } = useI18n();
-  const { walletBalance, refreshWalletBalance, getClient, walletAddress, isAuthenticated } = usePollar();
+  const {
+    walletBalance,
+    refreshWalletBalance,
+    getClient,
+    walletAddress,
+    isAuthenticated,
+  } = usePollar();
 
-  const [ publicKey, setPublicKey ] = useState('');
-  const [ lastError, setLastError ] = useState<string | null>(null);
-  const [ inFlight, setInFlight ] = useState(false);
+  const [publicKey, setPublicKey] = useState("");
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [inFlight, setInFlight] = useState(false);
+  // arbitrary-address lookups now return data directly (getWalletBalance),
+  // so — unlike the connected wallet — they don't drive reactive state.
+  const [customResult, setCustomResult] = useState<WalletBalanceContent | null>(
+    null,
+  );
 
   // ── actions ─────────────────────────────────────────────────────────────────
   async function fetchOwnWallet() {
     setLastError(null);
+    setCustomResult(null);
     setInFlight(true);
     try {
       await refreshWalletBalance();
@@ -41,9 +55,12 @@ export default function BalancePage() {
     setInFlight(true);
     try {
       // for an arbitrary address, drop down to the underlying client.
-      // (refreshWalletBalance() always targets the connected wallet.)
-      await getClient().refreshBalance(publicKey.trim());
+      // getWalletBalance() returns the content directly (no reactive state),
+      // since refreshWalletBalance() only ever targets the connected wallet.
+      const content = await getClient().getWalletBalance(publicKey.trim());
+      setCustomResult(content);
     } catch (e) {
+      setCustomResult(null);
       setLastError(e instanceof Error ? e.message : t.common.unknownError);
     } finally {
       setInFlight(false);
@@ -53,12 +70,35 @@ export default function BalancePage() {
   // ── derived ─────────────────────────────────────────────────────────────────
   const trimmedKey = publicKey.trim();
   const usingCustomKey = trimmedKey.length > 0;
-  const balances = walletBalance.step === 'loaded' ? walletBalance.data.balances : null;
+
+  // own-wallet lookups read reactive `walletBalance`; custom-address lookups
+  // read the directly-returned `customResult`.
+  const step = usingCustomKey
+    ? inFlight
+      ? "loading"
+      : lastError
+        ? "error"
+        : customResult
+          ? "loaded"
+          : "idle"
+    : walletBalance.step;
+  const balances = usingCustomKey
+    ? (customResult?.balances ?? null)
+    : walletBalance.step === "loaded"
+      ? walletBalance.data.balances
+      : null;
   const stateMessage =
-    walletBalance.step === 'idle' ? t.balance.idle :
-    walletBalance.step === 'loading' ? t.common.loading :
-    walletBalance.step === 'error' ? walletBalance.message :
-    null;
+    step === "idle"
+      ? t.balance.idle
+      : step === "loading"
+        ? t.common.loading
+        : step === "error"
+          ? usingCustomKey
+            ? lastError
+            : walletBalance.step === "error"
+              ? walletBalance.message
+              : null
+          : null;
 
   // ── live code previews ──────────────────────────────────────────────────────
   const coreCode = usingCustomKey
@@ -67,16 +107,12 @@ export default function BalancePage() {
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
-// fetch any account by public key
-await client.refreshBalance('${trimmedKey || 'G...'}');
+// fetch any account by public key — returns the data directly
+const { balances } = await client.getWalletBalance('${trimmedKey || "G..."}');
 
-// then read the reactive state
-const state = client.getWalletBalanceState();
-if (state.step === 'loaded') {
-  state.data.balances.forEach(b => {
-    console.log(b.code, b.balance);
-  });
-}`
+balances.forEach(b => {
+  console.log(b.code, b.balance);
+});`
     : `import { PollarClient } from '@pollar/core';
 
 const client = new PollarClient({ apiKey, baseUrl });
@@ -96,17 +132,15 @@ if (state.step === 'loaded') {
   const reactCode = usingCustomKey
     ? `import { usePollar } from '@pollar/react';
 
-const { walletBalance, getClient } = usePollar();
+const { getClient } = usePollar();
 
-// for an arbitrary address, drop down to the underlying client
-await getClient().refreshBalance('${trimmedKey || 'G...'}');
+// for an arbitrary address, drop down to the underlying client.
+// getWalletBalance() returns the content directly (no reactive state).
+const { balances } = await getClient().getWalletBalance('${trimmedKey || "G..."}');
 
-// then read the reactive state
-if (walletBalance.step === 'loaded') {
-  walletBalance.data.balances.forEach(b => {
-    console.log(b.code, b.balance);
-  });
-}`
+balances.forEach(b => {
+  console.log(b.code, b.balance);
+});`
     : `import { usePollar } from '@pollar/react';
 
 const { walletBalance, refreshWalletBalance } = usePollar();
@@ -125,36 +159,46 @@ if (walletBalance.step === 'loaded') {
   return (
     <div className="w-full max-w-5xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-
         {/* ── left: form + result ───────────────────────────────────────── */}
         <div className="space-y-5">
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">{t.balance.title}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              {t.balance.title}
+            </h1>
             <p className="text-sm text-muted mt-1.5">
-              {t.balance.desc1}<code className="font-mono">walletBalance</code>
-              {t.balance.desc2}<code className="font-mono">refreshWalletBalance()</code>
-              {t.balance.desc3}<code className="font-mono">getClient().refreshBalance(pk)</code>
+              {t.balance.desc1}
+              <code className="font-mono">walletBalance</code>
+              {t.balance.desc2}
+              <code className="font-mono">refreshWalletBalance()</code>
+              {t.balance.desc3}
+              <code className="font-mono">
+                getClient().getWalletBalance(pk)
+              </code>
               {t.balance.desc4}
             </p>
           </div>
 
           {/* lookup any address */}
           <div className="space-y-2">
-            <label className="block text-xs font-mono text-muted">{t.balance.lookupLabel}</label>
+            <label className="block text-xs font-mono text-muted">
+              {t.balance.lookupLabel}
+            </label>
             <div className="flex gap-2">
               <input
                 className={inp}
                 value={publicKey}
-                onChange={e => setPublicKey(e.target.value)}
+                onChange={(e) => setPublicKey(e.target.value)}
                 placeholder="G..."
                 spellCheck={false}
               />
               <button
                 onClick={fetchByPublicKey}
                 disabled={inFlight || !usingCustomKey}
-                className={`${btn('primary')} shrink-0`}
+                className={`${btn("primary")} shrink-0`}
               >
-                {inFlight && usingCustomKey ? t.common.loading : t.balance.fetch}
+                {inFlight && usingCustomKey
+                  ? t.common.loading
+                  : t.balance.fetch}
               </button>
             </div>
           </div>
@@ -165,12 +209,16 @@ if (walletBalance.step === 'loaded') {
               <button
                 onClick={fetchOwnWallet}
                 disabled={inFlight}
-                className={btn('secondary')}
+                className={btn("secondary")}
               >
-                {inFlight && !usingCustomKey ? t.common.loading : t.balance.useMyWallet}
+                {inFlight && !usingCustomKey
+                  ? t.common.loading
+                  : t.balance.useMyWallet}
               </button>
               {walletAddress && (
-                <p className="text-[10px] font-mono text-muted-light truncate">{walletAddress}</p>
+                <p className="text-[10px] font-mono text-muted-light truncate">
+                  {walletAddress}
+                </p>
               )}
             </div>
           )}
@@ -183,47 +231,71 @@ if (walletBalance.step === 'loaded') {
           {/* reactive state */}
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
-              <span className="text-xs font-mono text-muted-light">walletBalance.step</span>
+              <span className="text-xs font-mono text-muted-light">
+                {usingCustomKey ? "getWalletBalance()" : "walletBalance.step"}
+              </span>
               <span
                 className={`text-xs font-mono px-1.5 py-0.5 rounded ${
-                  walletBalance.step === 'idle' ? 'bg-surface text-muted-light' :
-                  walletBalance.step === 'loading' ? 'bg-surface text-muted animate-pulse' :
-                  walletBalance.step === 'loaded' ? 'bg-success-light text-success' :
-                  'bg-error-light text-error'
+                  step === "idle"
+                    ? "bg-surface text-muted-light"
+                    : step === "loading"
+                      ? "bg-surface text-muted animate-pulse"
+                      : step === "loaded"
+                        ? "bg-success-light text-success"
+                        : "bg-error-light text-error"
                 }`}
               >
-                {walletBalance.step}
+                {step}
               </span>
             </div>
 
             {stateMessage && (
-              <p className="px-4 py-3 text-xs font-mono text-muted-light">{stateMessage}</p>
+              <p className="px-4 py-3 text-xs font-mono text-muted-light">
+                {stateMessage}
+              </p>
             )}
 
             {balances && balances.length === 0 && (
-              <p className="px-4 py-3 text-xs font-mono text-muted-light">{t.balance.noBalances}</p>
+              <p className="px-4 py-3 text-xs font-mono text-muted-light">
+                {t.balance.noBalances}
+              </p>
             )}
 
             {balances && balances.length > 0 && (
               <table className="w-full text-xs font-mono">
                 <thead>
                   <tr className="border-b border-border bg-surface">
-                    <th className="text-left px-4 py-2 text-muted-light font-medium">{t.balance.assetCol}</th>
-                    <th className="text-right px-4 py-2 text-muted-light font-medium">{t.balance.balanceCol}</th>
-                    <th className="text-right px-4 py-2 text-muted-light font-medium">{t.balance.availableCol}</th>
+                    <th className="text-left px-4 py-2 text-muted-light font-medium">
+                      {t.balance.assetCol}
+                    </th>
+                    <th className="text-right px-4 py-2 text-muted-light font-medium">
+                      {t.balance.balanceCol}
+                    </th>
+                    <th className="text-right px-4 py-2 text-muted-light font-medium">
+                      {t.balance.availableCol}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {balances.map((b, i) => (
-                    <tr key={i} className="border-b border-border last:border-0">
+                    <tr
+                      key={i}
+                      className="border-b border-border last:border-0"
+                    >
                       <td className="px-4 py-2.5 text-foreground">
-                        {b.type === 'native' ? 'XLM' : b.code}
-                        {'issuer' in b && b.issuer && (
-                          <span className="block text-[10px] text-muted-light truncate max-w-40">{b.issuer}</span>
+                        {b.type === "native" ? "XLM" : b.code}
+                        {"issuer" in b && b.issuer && (
+                          <span className="block text-[10px] text-muted-light truncate max-w-40">
+                            {b.issuer}
+                          </span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-right text-foreground">{b.balance}</td>
-                      <td className="px-4 py-2.5 text-right text-muted-light">{b.available}</td>
+                      <td className="px-4 py-2.5 text-right text-foreground">
+                        {b.balance}
+                      </td>
+                      <td className="px-4 py-2.5 text-right text-muted-light">
+                        {b.available}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -236,7 +308,6 @@ if (walletBalance.step === 'loaded') {
         <div className="lg:sticky lg:top-6">
           <DualCode core={coreCode} react={reactCode} />
         </div>
-
       </div>
     </div>
   );

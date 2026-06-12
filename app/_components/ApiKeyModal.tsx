@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useI18n } from '../_i18n/LanguageProvider';
+import { useState } from "react";
+import { useI18n } from "../_i18n/LanguageProvider";
 
 // Modal for swapping the publishable API key the demo runs against.
 // The key is written to the `?apiKey=` query param (see Shell) so the
@@ -19,34 +19,39 @@ export function ApiKeyModal({
   onSave: (key: string) => void;
 }) {
   const { t } = useI18n();
-  const [value, setValue] = useState(isCustom ? currentKey : '');
+  const [value, setValue] = useState(isCustom ? currentKey : "");
 
   const trimmed = value.trim();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* backdrop */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       {/* dialog */}
       <div className="relative w-full max-w-md rounded-xl border border-border bg-background shadow-xl">
         <div className="px-5 py-4 border-b border-border">
-          <h2 className="text-sm font-semibold text-foreground">{t.apiKeyModal.title}</h2>
-          <p className="text-xs text-muted mt-1">
-            {t.apiKeyModal.subtitle}
-          </p>
+          <h2 className="text-sm font-semibold text-foreground">
+            {t.apiKeyModal.title}
+          </h2>
+          <p className="text-xs text-muted mt-1">{t.apiKeyModal.subtitle}</p>
         </div>
 
         <div className="px-5 py-4 space-y-3">
           <div className="space-y-1">
-            <label className="block text-xs font-mono text-muted">{t.apiKeyModal.keyLabel}</label>
+            <label className="block text-xs font-mono text-muted">
+              {t.apiKeyModal.keyLabel}
+            </label>
             <input
               autoFocus
               value={value}
-              onChange={e => setValue(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && trimmed) onSave(trimmed);
-                if (e.key === 'Escape') onClose();
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && trimmed) onSave(trimmed);
+                if (e.key === "Escape") onClose();
               }}
               placeholder="pub_testnet_..."
               spellCheck={false}
@@ -55,7 +60,9 @@ export function ApiKeyModal({
           </div>
 
           <p className="text-xs text-muted-light leading-relaxed">
-            {t.apiKeyModal.storedNote1}<code className="font-mono text-muted">?apiKey=…</code>{t.apiKeyModal.storedNote2}
+            {t.apiKeyModal.storedNote1}
+            <code className="font-mono text-muted">?apiKey=…</code>
+            {t.apiKeyModal.storedNote2}
           </p>
 
           <div className="rounded-lg bg-surface border border-border px-3 py-2.5">
@@ -77,7 +84,7 @@ export function ApiKeyModal({
         <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-2">
           {isCustom ? (
             <button
-              onClick={() => onSave('')}
+              onClick={() => onSave("")}
               className="text-xs font-medium text-muted hover:text-foreground transition-colors"
             >
               {t.apiKeyModal.reset}
