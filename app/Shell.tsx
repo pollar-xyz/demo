@@ -1,16 +1,16 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { PollarProvider, WalletButton } from '@pollar/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import '@pollar/react/styles.css';
-import { trustlessWorkAdapter } from './escrow/adapter';
+import { useEffect, useState } from 'react';
 import { ApiKeyModal } from './_components/ApiKeyModal';
 import { LanguageSwitcher } from './_components/LanguageSwitcher';
 import { useI18n } from './_i18n/LanguageProvider';
 import type { Dictionary } from './_i18n/translations';
+import { trustlessWorkAdapter } from './escrow/adapter';
 
 const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
@@ -30,7 +30,7 @@ const NAV_LINKS: { href: string; key: keyof Dictionary['nav'] }[] = [
 
 function ThemeToggle() {
   const { t } = useI18n();
-  const [dark, setDark] = useState(false);
+  const [ dark, setDark ] = useState(false);
 
   useEffect(() => {
     setDark(document.documentElement.classList.contains('dark'));
@@ -44,7 +44,8 @@ function ThemeToggle() {
     document.documentElement.classList.toggle('dark', next);
     try {
       localStorage.setItem('pollar-demo-theme', next ? 'dark' : 'light');
-    } catch {}
+    } catch {
+    }
   }
 
   return (
@@ -56,11 +57,19 @@ function ThemeToggle() {
     >
       {dark ? (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1.5m0 15V21m9-9h-1.5m-15 0H3m15.36 6.36l-1.06-1.06M6.7 6.7 5.64 5.64m12.72 0-1.06 1.06M6.7 17.3l-1.06 1.06M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M12 3v1.5m0 15V21m9-9h-1.5m-15 0H3m15.36 6.36l-1.06-1.06M6.7 6.7 5.64 5.64m12.72 0-1.06 1.06M6.7 17.3l-1.06 1.06M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
         </svg>
       ) : (
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21.752 15.002A9.718 9.718 0 0118 15.75 9.75 9.75 0 018.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25 9.75 9.75 0 0012.75 21a9.753 9.753 0 009.002-5.998z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M21.752 15.002A9.718 9.718 0 0118 15.75 9.75 9.75 0 018.25 6c0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25 9.75 9.75 0 0012.75 21a9.753 9.753 0 009.002-5.998z"
+          />
         </svg>
       )}
     </button>
@@ -77,13 +86,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const apiKey = customKey ?? DEFAULT_API_KEY;
   const isCustomKey = customKey !== null;
 
-  const [keyModalOpen, setKeyModalOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [ keyModalOpen, setKeyModalOpen ] = useState(false);
+  const [ menuOpen, setMenuOpen ] = useState(false);
 
   // Close the mobile menu when navigating to another tab.
   useEffect(() => {
     setMenuOpen(false);
-  }, [pathname]);
+  }, [ pathname ]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
@@ -141,7 +150,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </svg>
               ) : (
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5"
+                  />
                 </svg>
               )}
             </button>
