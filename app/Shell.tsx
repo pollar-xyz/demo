@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import "@pollar/react/styles.css";
 import { useEffect, useState } from "react";
 import { ApiKeyModal } from "./_components/ApiKeyModal";
+import { OriginNotAllowedModal } from "./_components/OriginNotAllowedModal";
 import { LanguageSwitcher } from "./_components/LanguageSwitcher";
 import { useI18n } from "./_i18n/LanguageProvider";
 import type { Dictionary } from "./_i18n/translations";
@@ -26,6 +27,7 @@ const NAV_LINKS: { href: string; key: keyof Dictionary["nav"] }[] = [
   { href: "/escrow", key: "escrow" },
   { href: "/sessions", key: "sessions" },
   { href: "/distribution", key: "distribution" },
+  { href: "/lumenwipe", key: "lumenwipe" },
 ];
 
 function ThemeToggle() {
@@ -99,11 +101,38 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const [keyModalOpen, setKeyModalOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [originBlocked, setOriginBlocked] = useState(false);
 
   // Close the mobile menu when navigating to another tab.
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  // The SDK fetches `/applications/config` internally and doesn't surface its
+  // error, so when a custom key is in use we probe the same endpoint with the
+  // same auth header (`x-pollar-api-key`). A 403 ORIGIN_NOT_ALLOWED means this
+  // page's origin isn't registered in the app's allowed domains — prompt the
+  // user to add it in the dashboard.
+  useEffect(() => {
+    if (!isCustomKey) return;
+    const controller = new AbortController();
+    fetch(`${BASE_URL}/v1/applications/config`, {
+      headers: { "x-pollar-api-key": apiKey },
+      signal: controller.signal,
+    })
+      .then(async (res) => {
+        if (res.status !== 403) {
+          setOriginBlocked(false);
+          return;
+        }
+        const body = await res.json().catch(() => null);
+        setOriginBlocked(body?.code === "ORIGIN_NOT_ALLOWED");
+      })
+      .catch(() => {
+        // network/abort errors are unrelated to the origin check — ignore.
+      });
+    return () => controller.abort();
+  }, [apiKey, isCustomKey]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
@@ -253,6 +282,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
           isCustom={isCustomKey}
           onClose={() => setKeyModalOpen(false)}
           onSave={applyApiKey}
+        />
+      )}
+
+      {originBlocked && isCustomKey && (
+        <OriginNotAllowedModal
+          origin={typeof window !== "undefined" ? window.location.origin : ""}
+          onClose={() => setOriginBlocked(false)}
         />
       )}
     </PollarProvider>

@@ -29,6 +29,7 @@ export const en = {
     escrow: "Escrow",
     sessions: "Sessions",
     distribution: "Distribution",
+    lumenwipe: "LumenWipe",
   },
 
   shell: {
@@ -58,6 +59,7 @@ export const en = {
       escrow: "Trustless Work escrows with automatic XDR signing.",
       sessions: "Review active sessions and revoke devices.",
       distribution: "List distribution rules and claim your share.",
+      lumenwipe: "Close a Stellar account and merge its balance out.",
     },
   },
 
@@ -72,6 +74,18 @@ export const en = {
     noKey1: "Don't have one? Grab your publishable key from ",
     noKey2: " → API keys.",
     reset: "Reset to default",
+  },
+
+  originModal: {
+    title: "Domain not allowed",
+    subtitle:
+      "The Pollar SDK couldn't load its config because this domain isn't in your app's allowed origins.",
+    originLabel: "Origin to add",
+    instructions1: "Open your app in ",
+    instructions2:
+      " → Build → Domains, add the origin above, then reload this page.",
+    openDashboard: "Open dashboard",
+    dismiss: "Dismiss",
   },
 
   send: {
@@ -90,13 +104,75 @@ export const en = {
 
   history: {
     title: "History",
-    descPre:
-      "List the connected wallet's past transactions with pagination. Pollar renders the list inside a modal, and also exposes the loading state through ",
-    descPost: ".",
+    desc: "List the connected wallet's past transactions with pagination. The loading state is exposed reactively, so your UI can react as the data arrives.",
     open: "Open History modal",
     note: "takes no arguments — pagination is handled inside the modal.",
     idle: "Open the modal to load history.",
     recordsLoaded: (n: number) => `${n} record${n === 1 ? "" : "s"} loaded.`,
+    coreOpen: "Run fetchTxHistory()",
+    coreNote:
+      "imperative fetch via getClient() — drives the same txHistory state.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — the list, pagination, loading and empty states are all rendered for you.",
+    coreDesc:
+      "Fetch the records imperatively and handle the raw response yourself. No UI is rendered — you read the state and build your own.",
+    rawResponse: "Raw response",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "fetchTxHistory(params?)",
+        tag: "async",
+        params:
+          "params?: { network?: 'testnet' | 'mainnet'; limit?: number; offset?: number }. Every field is optional — omit the whole object to use the session defaults; pass limit + offset to paginate.",
+        returns:
+          "Promise<void> — it doesn't return the data; it writes the result into the reactive state, which you then read with getTxHistoryState().",
+      },
+      {
+        fn: "getTxHistoryState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "TxHistoryState — a discriminated union on step: 'idle' | 'loading' | 'loaded' | 'error'. data (records, total, limit, offset) exists only when step === 'loaded'.",
+      },
+      {
+        fn: "onTxHistoryStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: TxHistoryState) => void — invoked on every state transition.",
+        returns:
+          "() => void — an unsubscribe function; call it to stop listening. The react hook's txHistory is built on top of this.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openTxHistoryModal()",
+        tag: "sync",
+        params:
+          "No arguments — fetching, pagination and rendering all happen inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "txHistory",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type TxHistoryState read from usePollar().",
+        returns:
+          "Re-renders your component whenever it changes. Mirrors getClient().getTxHistoryState(): step plus data when loaded.",
+      },
+    ],
   },
 
   sessions: {
@@ -131,18 +207,89 @@ export const en = {
 
   balance: {
     title: "Balance",
-    desc1: "Read Stellar balances reactively from ",
-    desc2: ". Use ",
-    desc3: " for the connected wallet, or ",
-    desc4: " for any address.",
+    desc: "Read a Stellar account's balances — the connected wallet's, or any address by public key.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal showing the connected wallet's balances, fully rendered.",
+    coreDesc:
+      "Fetch balances yourself and render the raw response — the connected wallet via refreshBalance(), or any address via getWalletBalance(pk).",
+    open: "Open Balance modal",
+    modalNote:
+      "takes no arguments — it reads the connected wallet and renders the table for you.",
     lookupLabel: "Look up any address",
     fetch: "Fetch",
     useMyWallet: "Use my wallet",
+    coreNote:
+      "the connected wallet drives the reactive walletBalance state; an arbitrary address returns the data directly.",
     idle: "Submit a request to load balances.",
     noBalances: "No balances found.",
     assetCol: "Asset",
     balanceCol: "Balance",
     availableCol: "Available",
+    rawResponse: "Raw response",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "refreshBalance()",
+        tag: "async",
+        params:
+          "No arguments — the wallet and network are resolved server-side from the session.",
+        returns:
+          "Promise<void> — writes the connected wallet's balances into the reactive state; read it with getWalletBalanceState().",
+      },
+      {
+        fn: "getWalletBalance(publicKey, network?)",
+        tag: "async",
+        params:
+          "publicKey: string (a G… address); network?: 'testnet' | 'mainnet' — defaults to the client's current network.",
+        returns:
+          "Promise<WalletBalanceContent> — returns the balances directly (no reactive state); use it for any arbitrary address.",
+      },
+      {
+        fn: "getWalletBalanceState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "WalletBalanceState — a discriminated union on step: 'idle' | 'loading' | 'loaded' | 'error'. data.balances exists only when step === 'loaded'.",
+      },
+      {
+        fn: "onWalletBalanceStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: WalletBalanceState) => void — invoked on every state transition.",
+        returns:
+          "() => void — an unsubscribe function. The react hook's walletBalance is built on top of this.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openWalletBalanceModal()",
+        tag: "sync",
+        params:
+          "No arguments — it reads the connected wallet and renders the balances table inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "walletBalance",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type WalletBalanceState read from usePollar().",
+        returns:
+          "Re-renders your component whenever it changes. Mirrors getClient().getWalletBalanceState(): step plus data when loaded.",
+      },
+    ],
   },
 
   escrow: {
@@ -277,6 +424,69 @@ export const en = {
       FUND_XLM_FAILED: "Failed to send XLM to the wallet. Please try again.",
     } as Record<string, string>,
   },
+
+  lumenwipe: {
+    title: "LumenWipe",
+    intro:
+      "Plan and build the transactions that close a Stellar account and merge its remaining XLM into a destination. The API returns an ordered plan and the unsigned XDR for each step — you sign locally and submit yourself.",
+    creditPre: "This tab is a live demo of the public ",
+    creditApi: "LumenWipe API",
+    creditMid: ". All credit to the LumenWipe team — see ",
+    creditPost: " for the original service and documentation.",
+
+    network: "Network",
+    account: "Account to close",
+    accountNote: "Source account (G…). It must exist on the selected network.",
+    destination: "Destination",
+    destinationNote: "Where the XLM goes — a wallet or exchange address (G…).",
+    memo: "Memo",
+    memoNote: "Required by memo-enforcing exchanges.",
+    memoType: "Memo type",
+    getPlan: "Get plan",
+    gettingPlan: "Getting plan…",
+
+    planTitle: "Plan",
+    executable: "Executable",
+    notExecutable: "Not executable",
+    mediatorRequired: "Mediator required",
+    requiresMemo: "Requires memo",
+    blockers: "Blockers",
+    steps: "Steps",
+    noSteps: "No steps — the account is already closed.",
+    buildXdr: "Build XDR",
+    building: "Building…",
+    unsignedXdr: "Unsigned XDR",
+    copy: "Copy",
+    copied: "Copied",
+    fee: "fee",
+    ops: "ops",
+    cosignNote: "Needs the mediator co-signature (exchange merge).",
+    useMyWallet: "Use my wallet",
+    myWallet: "My wallet",
+    swap: "Swap account ↔ destination",
+    signWithPollar: "Sign & submit with Pollar",
+    signing: "Signing…",
+    submitted: "Submitted:",
+    ownAccountHint:
+      "This is your connected wallet — sign each step with Pollar.",
+    networkMismatch:
+      "Your wallet is on a different network — switch the selector to match it to sign.",
+    cosignManual:
+      "Mediator co-sign required — sign and submit this step manually.",
+
+    safetyTitle: "Read-only & non-custodial",
+    safety1:
+      "The API is read-only. Never send a secret key (S…) — only public keys (G…).",
+    safety2:
+      "Responses contain unsigned transaction envelopes. Decode and verify every XDR before signing it in your own environment.",
+
+    loopTitle: "The wind-down loop",
+    refTitle: "Step types",
+
+    requestFailed:
+      "Request failed. Check the account, destination and network.",
+    emptyFields: "Enter both an account and a destination.",
+  },
 };
 
 export type Dictionary = typeof en;
@@ -308,6 +518,7 @@ export const es: Dictionary = {
     escrow: "Escrow",
     sessions: "Sesiones",
     distribution: "Distribución",
+    lumenwipe: "LumenWipe",
   },
 
   shell: {
@@ -338,6 +549,7 @@ export const es: Dictionary = {
       escrow: "Escrows de Trustless Work con firma automática de XDR.",
       sessions: "Revisa las sesiones activas y revoca dispositivos.",
       distribution: "Lista las reglas de distribución y reclama tu parte.",
+      lumenwipe: "Cierra una cuenta Stellar y transfiere su saldo restante.",
     },
   },
 
@@ -352,6 +564,18 @@ export const es: Dictionary = {
     noKey1: "¿No tienes una? Obtén tu clave publicable en ",
     noKey2: " → API keys.",
     reset: "Restablecer al valor por defecto",
+  },
+
+  originModal: {
+    title: "Dominio no permitido",
+    subtitle:
+      "El SDK de Pollar no pudo cargar su configuración porque este dominio no está en los orígenes permitidos de tu aplicación.",
+    originLabel: "Origen a agregar",
+    instructions1: "Abre tu aplicación en ",
+    instructions2:
+      " → Build → Domains, agrega el origen de arriba y recarga esta página.",
+    openDashboard: "Abrir dashboard",
+    dismiss: "Cerrar",
   },
 
   send: {
@@ -370,14 +594,76 @@ export const es: Dictionary = {
 
   history: {
     title: "Historial",
-    descPre:
-      "Lista las transacciones pasadas de la billetera conectada con paginación. Pollar renderiza la lista dentro de un modal y también expone el estado de carga a través de ",
-    descPost: ".",
+    desc: "Lista las transacciones pasadas de la billetera conectada con paginación. El estado de carga se expone de forma reactiva, para que tu UI reaccione a medida que llegan los datos.",
     open: "Abrir modal de historial",
     note: "no recibe argumentos: la paginación se maneja dentro del modal.",
     idle: "Abre el modal para cargar el historial.",
     recordsLoaded: (n: number) =>
       `${n} ${n === 1 ? "registro cargado" : "registros cargados"}.`,
+    coreOpen: "Ejecutar fetchTxHistory()",
+    coreNote:
+      "fetch imperativo vía getClient(): alimenta el mismo estado txHistory.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: la lista, la paginación y los estados de carga y vacío ya vienen renderizados.",
+    coreDesc:
+      "Obtén los registros de forma imperativa y maneja el response crudo tú mismo. No renderiza UI: lees el estado y armas la tuya.",
+    rawResponse: "Response crudo",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "fetchTxHistory(params?)",
+        tag: "async",
+        params:
+          "params?: { network?: 'testnet' | 'mainnet'; limit?: number; offset?: number }. Todos los campos son opcionales: omite el objeto para usar los valores por defecto de la sesión, o pasa limit + offset para paginar.",
+        returns:
+          "Promise<void>: no retorna los datos; escribe el resultado en el estado reactivo, que luego lees con getTxHistoryState().",
+      },
+      {
+        fn: "getTxHistoryState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "TxHistoryState: una unión discriminada por step ('idle' | 'loading' | 'loaded' | 'error'). data (records, total, limit, offset) solo existe cuando step === 'loaded'.",
+      },
+      {
+        fn: "onTxHistoryStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: TxHistoryState) => void — se invoca en cada transición de estado.",
+        returns:
+          "() => void: una función para cancelar la suscripción; llámala para dejar de escuchar. El txHistory del hook de react se construye sobre esto.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openTxHistoryModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: el fetch, la paginación y el render ocurren dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "txHistory",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo TxHistoryState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar tu componente cada vez que cambia. Refleja getClient().getTxHistoryState(): step y data cuando ya cargó.",
+      },
+    ],
   },
 
   sessions: {
@@ -412,18 +698,89 @@ export const es: Dictionary = {
 
   balance: {
     title: "Saldo",
-    desc1: "Lee los saldos de Stellar de forma reactiva desde ",
-    desc2: ". Usa ",
-    desc3: " para la billetera conectada, o ",
-    desc4: " para cualquier dirección.",
+    desc: "Lee los saldos de una cuenta de Stellar: la de la billetera conectada o la de cualquier dirección por clave pública.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado con los saldos de la billetera conectada, ya renderizados.",
+    coreDesc:
+      "Obtén los saldos tú mismo y renderiza el response crudo: la billetera conectada con refreshBalance(), o cualquier dirección con getWalletBalance(pk).",
+    open: "Abrir modal de saldo",
+    modalNote:
+      "no recibe argumentos: lee la billetera conectada y renderiza la tabla por ti.",
     lookupLabel: "Consultar cualquier dirección",
     fetch: "Consultar",
     useMyWallet: "Usar mi billetera",
+    coreNote:
+      "la billetera conectada alimenta el estado reactivo walletBalance; una dirección arbitraria devuelve los datos directamente.",
     idle: "Envía una solicitud para cargar los saldos.",
     noBalances: "No se encontraron saldos.",
     assetCol: "Activo",
     balanceCol: "Saldo",
     availableCol: "Disponible",
+    rawResponse: "Response crudo",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "refreshBalance()",
+        tag: "async",
+        params:
+          "Sin argumentos: la billetera y la red se resuelven en el servidor a partir de la sesión.",
+        returns:
+          "Promise<void>: escribe los saldos de la billetera conectada en el estado reactivo; léelo con getWalletBalanceState().",
+      },
+      {
+        fn: "getWalletBalance(publicKey, network?)",
+        tag: "async",
+        params:
+          "publicKey: string (una dirección G…); network?: 'testnet' | 'mainnet', por defecto la red actual del cliente.",
+        returns:
+          "Promise<WalletBalanceContent>: devuelve los saldos directamente (sin estado reactivo); úsalo para cualquier dirección arbitraria.",
+      },
+      {
+        fn: "getWalletBalanceState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "WalletBalanceState: una unión discriminada por step ('idle' | 'loading' | 'loaded' | 'error'). data.balances solo existe cuando step === 'loaded'.",
+      },
+      {
+        fn: "onWalletBalanceStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: WalletBalanceState) => void — se invoca en cada transición de estado.",
+        returns:
+          "() => void: una función para cancelar la suscripción. El walletBalance del hook de react se construye sobre esto.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openWalletBalanceModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: lee la billetera conectada y renderiza la tabla de saldos dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "walletBalance",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo WalletBalanceState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar tu componente cada vez que cambia. Refleja getClient().getWalletBalanceState(): step y data cuando ya cargó.",
+      },
+    ],
   },
 
   escrow: {
@@ -562,6 +919,69 @@ export const es: Dictionary = {
         "No se pudo enviar XLM a la billetera. Inténtalo de nuevo.",
     },
   },
+
+  lumenwipe: {
+    title: "LumenWipe",
+    intro:
+      "Planifica y construye las transacciones que cierran una cuenta Stellar y transfieren su XLM restante a un destino. La API devuelve un plan ordenado y el XDR sin firmar de cada paso — tú lo firmas localmente y lo envías.",
+    creditPre: "Esta pestaña es una demo en vivo de la API pública de ",
+    creditApi: "LumenWipe",
+    creditMid: ". Todo el crédito al equipo de LumenWipe — visita ",
+    creditPost: " para ver el servicio original y la documentación.",
+
+    network: "Red",
+    account: "Cuenta a cerrar",
+    accountNote: "Cuenta origen (G…). Debe existir en la red seleccionada.",
+    destination: "Destino",
+    destinationNote:
+      "A dónde va el XLM — una billetera o dirección de exchange (G…).",
+    memo: "Memo",
+    memoNote: "Requerido por exchanges que exigen memo.",
+    memoType: "Tipo de memo",
+    getPlan: "Obtener plan",
+    gettingPlan: "Obteniendo plan…",
+
+    planTitle: "Plan",
+    executable: "Ejecutable",
+    notExecutable: "No ejecutable",
+    mediatorRequired: "Requiere mediador",
+    requiresMemo: "Requiere memo",
+    blockers: "Bloqueos",
+    steps: "Pasos",
+    noSteps: "Sin pasos — la cuenta ya está cerrada.",
+    buildXdr: "Construir XDR",
+    building: "Construyendo…",
+    unsignedXdr: "XDR sin firmar",
+    copy: "Copiar",
+    copied: "Copiado",
+    fee: "comisión",
+    ops: "ops",
+    cosignNote: "Requiere la co-firma del mediador (merge a exchange).",
+    useMyWallet: "Usar mi billetera",
+    myWallet: "Mi billetera",
+    swap: "Intercambiar cuenta ↔ destino",
+    signWithPollar: "Firmar y enviar con Pollar",
+    signing: "Firmando…",
+    submitted: "Enviado:",
+    ownAccountHint:
+      "Esta es tu billetera conectada — firma cada paso con Pollar.",
+    networkMismatch:
+      "Tu billetera está en otra red — cambia el selector para que coincida y poder firmar.",
+    cosignManual:
+      "Requiere co-firma del mediador — firma y envía este paso manualmente.",
+
+    safetyTitle: "Solo lectura y no custodial",
+    safety1:
+      "La API es de solo lectura. Nunca envíes una clave secreta (S…) — solo claves públicas (G…).",
+    safety2:
+      "Las respuestas contienen sobres de transacción sin firmar. Decodifica y verifica cada XDR antes de firmarlo en tu propio entorno.",
+
+    loopTitle: "El bucle de cierre",
+    refTitle: "Tipos de paso",
+
+    requestFailed: "La solicitud falló. Revisa la cuenta, el destino y la red.",
+    emptyFields: "Ingresa una cuenta y un destino.",
+  },
 };
 
 export const pt: Dictionary = {
@@ -591,6 +1011,7 @@ export const pt: Dictionary = {
     escrow: "Escrow",
     sessions: "Sessões",
     distribution: "Distribuição",
+    lumenwipe: "LumenWipe",
   },
 
   shell: {
@@ -621,6 +1042,7 @@ export const pt: Dictionary = {
       escrow: "Escrows da Trustless Work com assinatura automática de XDR.",
       sessions: "Revise as sessões ativas e revogue dispositivos.",
       distribution: "Liste as regras de distribuição e resgate sua parte.",
+      lumenwipe: "Encerre uma conta Stellar e transfira o saldo restante.",
     },
   },
 
@@ -635,6 +1057,18 @@ export const pt: Dictionary = {
     noKey1: "Não tem uma? Obtenha sua chave publicável em ",
     noKey2: " → API keys.",
     reset: "Restaurar o padrão",
+  },
+
+  originModal: {
+    title: "Domínio não permitido",
+    subtitle:
+      "O SDK da Pollar não conseguiu carregar sua configuração porque este domínio não está nas origens permitidas do seu aplicativo.",
+    originLabel: "Origem a adicionar",
+    instructions1: "Abra seu aplicativo em ",
+    instructions2:
+      " → Build → Domains, adicione a origem acima e recarregue esta página.",
+    openDashboard: "Abrir dashboard",
+    dismiss: "Fechar",
   },
 
   send: {
@@ -653,14 +1087,76 @@ export const pt: Dictionary = {
 
   history: {
     title: "Histórico",
-    descPre:
-      "Liste as transações anteriores da carteira conectada com paginação. A Pollar renderiza a lista dentro de um modal e também expõe o estado de carregamento por meio de ",
-    descPost: ".",
+    desc: "Liste as transações anteriores da carteira conectada com paginação. O estado de carregamento é exposto de forma reativa, para que sua UI reaja à medida que os dados chegam.",
     open: "Abrir modal de histórico",
     note: "não recebe argumentos — a paginação é tratada dentro do modal.",
     idle: "Abra o modal para carregar o histórico.",
     recordsLoaded: (n: number) =>
       `${n} ${n === 1 ? "registro carregado" : "registros carregados"}.`,
+    coreOpen: "Executar fetchTxHistory()",
+    coreNote:
+      "fetch imperativo via getClient() — alimenta o mesmo estado txHistory.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: a lista, a paginação e os estados de carregamento e vazio já vêm renderizados.",
+    coreDesc:
+      "Busque os registros de forma imperativa e trate o response cru você mesmo. Não renderiza UI: você lê o estado e monta a sua.",
+    rawResponse: "Response cru",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "fetchTxHistory(params?)",
+        tag: "async",
+        params:
+          "params?: { network?: 'testnet' | 'mainnet'; limit?: number; offset?: number }. Todos os campos são opcionais: omita o objeto para usar os padrões da sessão, ou passe limit + offset para paginar.",
+        returns:
+          "Promise<void>: não retorna os dados; grava o resultado no estado reativo, que você depois lê com getTxHistoryState().",
+      },
+      {
+        fn: "getTxHistoryState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "TxHistoryState: uma união discriminada por step ('idle' | 'loading' | 'loaded' | 'error'). data (records, total, limit, offset) só existe quando step === 'loaded'.",
+      },
+      {
+        fn: "onTxHistoryStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: TxHistoryState) => void — invocado a cada transição de estado.",
+        returns:
+          "() => void: uma função para cancelar a inscrição; chame-a para parar de escutar. O txHistory do hook do react é construído sobre isto.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openTxHistoryModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: o fetch, a paginação e o render acontecem dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+      {
+        fn: "txHistory",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo TxHistoryState lido de usePollar().",
+        returns:
+          "Re-renderiza seu componente sempre que muda. Reflete getClient().getTxHistoryState(): step e data quando carregado.",
+      },
+    ],
   },
 
   sessions: {
@@ -695,18 +1191,89 @@ export const pt: Dictionary = {
 
   balance: {
     title: "Saldo",
-    desc1: "Leia os saldos da Stellar de forma reativa a partir de ",
-    desc2: ". Use ",
-    desc3: " para a carteira conectada, ou ",
-    desc4: " para qualquer endereço.",
+    desc: "Leia os saldos de uma conta Stellar: a da carteira conectada ou a de qualquer endereço pela chave pública.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado com os saldos da carteira conectada, já renderizados.",
+    coreDesc:
+      "Busque os saldos você mesmo e renderize o response cru: a carteira conectada com refreshBalance(), ou qualquer endereço com getWalletBalance(pk).",
+    open: "Abrir modal de saldo",
+    modalNote:
+      "não recebe argumentos — ele lê a carteira conectada e renderiza a tabela para você.",
     lookupLabel: "Consultar qualquer endereço",
     fetch: "Consultar",
     useMyWallet: "Usar minha carteira",
+    coreNote:
+      "a carteira conectada alimenta o estado reativo walletBalance; um endereço arbitrário retorna os dados diretamente.",
     idle: "Envie uma solicitação para carregar os saldos.",
     noBalances: "Nenhum saldo encontrado.",
     assetCol: "Ativo",
     balanceCol: "Saldo",
     availableCol: "Disponível",
+    rawResponse: "Response cru",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "refreshBalance()",
+        tag: "async",
+        params:
+          "Sem argumentos — a carteira e a rede são resolvidas no servidor a partir da sessão.",
+        returns:
+          "Promise<void>: grava os saldos da carteira conectada no estado reativo; leia-o com getWalletBalanceState().",
+      },
+      {
+        fn: "getWalletBalance(publicKey, network?)",
+        tag: "async",
+        params:
+          "publicKey: string (um endereço G…); network?: 'testnet' | 'mainnet', padrão é a rede atual do cliente.",
+        returns:
+          "Promise<WalletBalanceContent>: retorna os saldos diretamente (sem estado reativo); use-o para qualquer endereço arbitrário.",
+      },
+      {
+        fn: "getWalletBalanceState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "WalletBalanceState: uma união discriminada por step ('idle' | 'loading' | 'loaded' | 'error'). data.balances só existe quando step === 'loaded'.",
+      },
+      {
+        fn: "onWalletBalanceStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: WalletBalanceState) => void — invocado a cada transição de estado.",
+        returns:
+          "() => void: uma função para cancelar a inscrição. O walletBalance do hook do react é construído sobre isto.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openWalletBalanceModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: lê a carteira conectada e renderiza a tabela de saldos dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+      {
+        fn: "walletBalance",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo WalletBalanceState lido de usePollar().",
+        returns:
+          "Re-renderiza seu componente sempre que muda. Reflete getClient().getWalletBalanceState(): step e data quando carregado.",
+      },
+    ],
   },
 
   escrow: {
@@ -842,6 +1409,69 @@ export const pt: Dictionary = {
         "Seu aplicativo não tem uma carteira de financiamento configurada.",
       FUND_XLM_FAILED: "Falha ao enviar XLM para a carteira. Tente novamente.",
     },
+  },
+
+  lumenwipe: {
+    title: "LumenWipe",
+    intro:
+      "Planeje e construa as transações que encerram uma conta Stellar e transferem o XLM restante para um destino. A API retorna um plano ordenado e o XDR não assinado de cada passo — você assina localmente e envia.",
+    creditPre: "Esta aba é uma demo ao vivo da API pública do ",
+    creditApi: "LumenWipe",
+    creditMid: ". Todo o crédito à equipe do LumenWipe — veja ",
+    creditPost: " para o serviço original e a documentação.",
+
+    network: "Rede",
+    account: "Conta a encerrar",
+    accountNote: "Conta de origem (G…). Ela deve existir na rede selecionada.",
+    destination: "Destino",
+    destinationNote:
+      "Para onde vai o XLM — uma carteira ou endereço de exchange (G…).",
+    memo: "Memo",
+    memoNote: "Exigido por exchanges que requerem memo.",
+    memoType: "Tipo de memo",
+    getPlan: "Obter plano",
+    gettingPlan: "Obtendo plano…",
+
+    planTitle: "Plano",
+    executable: "Executável",
+    notExecutable: "Não executável",
+    mediatorRequired: "Requer mediador",
+    requiresMemo: "Requer memo",
+    blockers: "Bloqueios",
+    steps: "Passos",
+    noSteps: "Sem passos — a conta já está encerrada.",
+    buildXdr: "Construir XDR",
+    building: "Construindo…",
+    unsignedXdr: "XDR não assinado",
+    copy: "Copiar",
+    copied: "Copiado",
+    fee: "taxa",
+    ops: "ops",
+    cosignNote: "Requer a coassinatura do mediador (merge para exchange).",
+    useMyWallet: "Usar minha carteira",
+    myWallet: "Minha carteira",
+    signWithPollar: "Assinar e enviar com Pollar",
+    signing: "Assinando…",
+    submitted: "Enviado:",
+    ownAccountHint:
+      "Esta é a sua carteira conectada — assine cada passo com Pollar.",
+    networkMismatch:
+      "Sua carteira está em outra rede — ajuste o seletor para coincidir e poder assinar.",
+    cosignManual:
+      "Requer coassinatura do mediador — assine e envie este passo manualmente.",
+
+    safetyTitle: "Somente leitura e não custodial",
+    safety1:
+      "A API é somente leitura. Nunca envie uma chave secreta (S…) — apenas chaves públicas (G…).",
+    safety2:
+      "As respostas contêm envelopes de transação não assinados. Decodifique e verifique cada XDR antes de assiná-lo no seu próprio ambiente.",
+
+    loopTitle: "O ciclo de encerramento",
+    refTitle: "Tipos de passo",
+
+    requestFailed:
+      "A requisição falhou. Verifique a conta, o destino e a rede.",
+    emptyFields: "Informe uma conta e um destino.",
   },
 };
 
