@@ -15,6 +15,7 @@ const PAGES: { href: string; key: keyof Dictionary["nav"] }[] = [
   { href: "/escrow", key: "escrow" },
   { href: "/sessions", key: "sessions" },
   { href: "/distribution", key: "distribution" },
+  { href: "/lumenwipe", key: "lumenwipe" },
 ];
 
 export default function Home() {
