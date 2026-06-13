@@ -1,14 +1,9 @@
 "use client";
 
 import { usePollar } from "@pollar/react";
-import { DualCode } from "../_components/CodePanels";
 import { ComingSoon } from "../_components/ComingSoon";
+import { SdkModalTab } from "../_components/SdkDocs";
 import { useI18n } from "../_i18n/LanguageProvider";
-
-// ─── styles (shared with other demo pages) ────────────────────────────────────
-
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors";
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -66,28 +61,28 @@ export default function RampPage() {
       </div>
 
       <ComingSoon>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-          {/* ── left: action ─────────────────────────────────────────────── */}
-          <div className="space-y-4">
-            <button
-              onClick={openRampModal}
-              disabled={!isAuthenticated}
-              className={`${btn} w-full sm:w-auto`}
-            >
-              {isAuthenticated ? t.ramp.open : t.common.connectWalletFirst}
-            </button>
-
-            <p className="text-xs font-mono text-muted-light">
-              <code className="text-foreground">openRampModal()</code>{" "}
-              {t.ramp.note}
-            </p>
-          </div>
-
-          {/* ── right: code previews (core + react) ──────────────────────── */}
-          <div className="lg:sticky lg:top-6">
-            <DualCode core={CORE_CODE} react={REACT_CODE} />
-          </div>
-        </div>
+        <SdkModalTab
+          isAuthenticated={isAuthenticated}
+          onOpen={openRampModal}
+          openLabel={t.ramp.open}
+          connectLabel={t.common.connectWalletFirst}
+          modalCall="openRampModal()"
+          modalNote={t.ramp.note}
+          reactDesc={t.ramp.reactDesc}
+          coreDesc={t.ramp.coreDesc}
+          coreCode={CORE_CODE}
+          reactCode={REACT_CODE}
+          core={{
+            title: t.ramp.coreFnsTitle,
+            intro: t.ramp.coreFnsIntro,
+            fns: t.ramp.coreFns,
+          }}
+          react={{
+            title: t.ramp.reactFnsTitle,
+            intro: t.ramp.reactFnsIntro,
+            fns: t.ramp.reactFns,
+          }}
+        />
       </ComingSoon>
     </div>
   );

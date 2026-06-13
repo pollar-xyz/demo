@@ -5,6 +5,7 @@ import type { KycStatus as KycStatusValue, KycLevel } from "@pollar/core";
 import { useState } from "react";
 import { DualCode } from "../_components/CodePanels";
 import { ComingSoon } from "../_components/ComingSoon";
+import { FnReference } from "../_components/SdkDocs";
 import { useI18n } from "../_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
@@ -133,6 +134,17 @@ openKycModal({
             >
               {isAuthenticated ? t.kyc.start : t.common.connectWalletFirst}
             </button>
+
+            <FnReference
+              title={t.kyc.reactFnsTitle}
+              intro={t.kyc.reactFnsIntro}
+              fns={t.kyc.reactFns}
+            />
+            <FnReference
+              title={t.kyc.coreFnsTitle}
+              intro={t.kyc.coreFnsIntro}
+              fns={t.kyc.coreFns}
+            />
           </div>
 
           {/* ── right: live code previews (core + react) ──────────────────── */}

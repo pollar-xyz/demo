@@ -93,6 +93,66 @@ export const en = {
     desc: "Transfer assets to another Stellar address. Pollar renders the asset picker, amount input, review and signing flow inside a modal.",
     open: "Open Send modal",
     note: "takes no arguments — asset, amount and destination are picked inside the modal.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — asset picker, amount, review and the signing flow are all rendered for you.",
+    coreDesc:
+      "Build, sign and submit the payment yourself with a single runTx('payment', …) call, then read the transaction state.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "runTx(operation, params, options?)",
+        tag: "async",
+        params:
+          "operation: TxBuildBody['operation'] (e.g. 'payment'); params: the operation body — for a payment, { destination, asset, amount }; options?: optional build flags.",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending' | 'error', hash, … }. One-shot build → sign → submit.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "TransactionState — the current build/sign/submit progress; null before any tx runs.",
+      },
+      {
+        fn: "onTransactionStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: TransactionState) => void — invoked on every state transition.",
+        returns:
+          "() => void — an unsubscribe function. The react hook's tx value is built on top of this.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openSendModal()",
+        tag: "sync",
+        params:
+          "No arguments — asset, amount and destination are picked inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type TransactionState read from usePollar().",
+        returns:
+          "Re-renders your component as the payment builds, signs and submits. Mirrors getClient().getTransactionState().",
+      },
+    ],
   },
 
   receive: {
@@ -100,6 +160,51 @@ export const en = {
     desc: "Show the connected wallet's address and QR code so others can send funds to it. Pollar renders the whole view inside a modal.",
     open: "Open Receive modal",
     note: "takes no arguments — it reads the connected wallet address from context.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal showing the connected wallet's address and a QR code.",
+    coreDesc:
+      "Read the connected wallet's public key from the auth state and render the address + QR yourself.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "getAuthState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "AuthState — when step === 'authenticated', session.wallet?.publicKey is the receiving address (a G… string).",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openReceiveModal()",
+        tag: "sync",
+        params:
+          "No arguments — it reads the connected wallet address from context.",
+        returns:
+          "void — opens the prebuilt modal with the address and QR code.",
+      },
+      {
+        fn: "walletAddress",
+        tag: "reactive value",
+        params:
+          "Not a function — a string read from usePollar() (empty when not connected).",
+        returns:
+          "The connected wallet's public key; re-renders when the session changes.",
+      },
+    ],
   },
 
   history: {
@@ -180,6 +285,70 @@ export const en = {
     desc: "Review the active sessions for the signed-in user, revoke a single device, or sign out everywhere. Pollar renders the list and actions inside a modal.",
     open: "Open Sessions modal",
     note: "takes no arguments — it lists the current user's sessions and handles revocation.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — the device list, revoke and sign-out-everywhere actions are all rendered for you.",
+    coreDesc:
+      "Enumerate the user's sessions, revoke a single device or sign out everywhere — and render the list yourself.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "listSessions()",
+        tag: "async",
+        params: "No arguments.",
+        returns:
+          "Promise<SessionInfo[]> — one row per device / refresh-token family (familyId, deviceLabel, current, lastUsedAt, expiresAt, …).",
+      },
+      {
+        fn: "revokeSession(familyId)",
+        tag: "async",
+        params:
+          "familyId: string — from a SessionInfo row. Revoking the current session signs this device out.",
+        returns: "Promise<void>.",
+      },
+      {
+        fn: "logoutEverywhere()",
+        tag: "async",
+        params: "No arguments.",
+        returns: "Promise<void> — revokes every session for the user.",
+      },
+      {
+        fn: "getSessionsState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "SessionsState — a discriminated union on step; data holds the list when loaded. onSessionsStateChange(cb) subscribes to it.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openSessionsModal()",
+        tag: "sync",
+        params:
+          "No arguments — it lists the current user's sessions and handles revocation.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "sessions",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type SessionsState read from usePollar().",
+        returns:
+          "Re-renders as the list loads or a device is revoked. Mirrors getClient().getSessionsState().",
+      },
+    ],
   },
 
   distribution: {
@@ -187,6 +356,50 @@ export const en = {
     desc: "List the distribution rules the user is eligible for and claim their share. Pollar renders the rule list and claim actions inside a modal.",
     open: "Open Distribution modal",
     note: "takes no arguments — it loads the user's rules and handles claiming.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — the eligible-rule list and claim actions are all rendered for you.",
+    coreDesc:
+      "List the rules the user is eligible for and claim a share yourself.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "listDistributionRules()",
+        tag: "async",
+        params: "No arguments.",
+        returns:
+          "Promise<DistributionRule[]> — the rules the user is eligible for (id, period, amount, …).",
+      },
+      {
+        fn: "claimDistributionRule(body)",
+        tag: "async",
+        params:
+          "body: DistributionClaimBody — { ruleId: string } identifying the rule to claim.",
+        returns:
+          "Promise<DistributionClaimContent> — the claim result (amount, tx reference, …).",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openDistributionRulesModal()",
+        tag: "sync",
+        params:
+          "No arguments — it loads the user's rules and handles claiming.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+    ],
   },
 
   ramp: {
@@ -194,6 +407,64 @@ export const en = {
     desc: "Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH). Pollar renders the entire quote-and-payment flow inside a modal.",
     open: "Open Ramp modal",
     note: "takes no arguments — country, currency and direction are picked inside the modal.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — the whole quote → payment → settle flow is rendered for you.",
+    coreDesc:
+      "Drive the on/off-ramp yourself: quote, create the ramp, then poll until it settles.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "getRampsQuote(query)",
+        tag: "async",
+        params:
+          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+        returns:
+          "Promise<RampsQuoteResponse> — the available quotes for the request.",
+      },
+      {
+        fn: "createOnRamp(body)",
+        tag: "async",
+        params: "body: RampsOnrampBody — a chosen quote selection.",
+        returns:
+          "Promise<RampsOnrampResponse> — content.id and content.paymentInstructions.",
+      },
+      {
+        fn: "createOffRamp(body)",
+        tag: "async",
+        params: "body: RampsOfframpBody — a chosen quote selection.",
+        returns: "Promise<RampsOfframpResponse> — the off-ramp payout details.",
+      },
+      {
+        fn: "pollRampTransaction(txId, opts?)",
+        tag: "async",
+        params:
+          "txId: string (from the created ramp); opts?: polling options (interval, signal, …).",
+        returns:
+          "Promise<RampsTransactionResponse> — resolves once the ramp reaches a terminal status.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openRampModal()",
+        tag: "sync",
+        params:
+          "No arguments — country, currency and direction are picked inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+    ],
   },
 
   kyc: {
@@ -203,6 +474,68 @@ export const en = {
     levelLabel: "Level",
     currentStatus: "current status",
     start: "Start KYC",
+    coreFnsTitle: "@pollar/core — functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "getKycProviders(country)",
+        tag: "async",
+        params: "country: string — an ISO 3166-1 alpha-2 code (e.g. 'MX').",
+        returns:
+          "Promise<{ providers }> — the KYC providers available in that country.",
+      },
+      {
+        fn: "startKyc(body)",
+        tag: "async",
+        params:
+          "body: KycStartBody — { providerId: string; level: 'basic' | 'intermediate' | 'enhanced' }.",
+        returns:
+          "Promise<KycStartResponse> — the verification session to hand off to the provider.",
+      },
+      {
+        fn: "pollKycStatus(providerId, opts?)",
+        tag: "async",
+        params:
+          "providerId: string; opts?: { intervalMs?, timeoutMs? } polling controls.",
+        returns:
+          "Promise — resolves once the status settles to 'approved' | 'rejected' (from 'none' | 'pending').",
+      },
+      {
+        fn: "getKycStatus(providerId?)",
+        tag: "async",
+        params: "providerId?: string — omit to read the user's overall status.",
+        returns: "Promise<{ status, level?, providerId }> — a one-shot read.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openKycModal(options?)",
+        tag: "sync",
+        params:
+          "options?: { country?: string; level?: 'basic' | 'intermediate' | 'enhanced'; onApproved?: () => void } — wraps getKycProviders / startKyc / pollKycStatus.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "<KycStatus status={…} />",
+        tag: "component",
+        params:
+          "status: 'none' | 'pending' | 'approved' | 'rejected' — the badge to render.",
+        returns:
+          "A ready-made status badge component, exported from @pollar/react.",
+      },
+    ],
   },
 
   balance: {
@@ -324,6 +657,62 @@ export const en = {
     fundEscrow: "Fund escrow",
     setupSummary: "one-time adapter setup",
     txIdle: "Trigger an operation to see signing progress.",
+    coreFnsTitle: "@pollar/core — functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — the unsigned XDR the escrow adapter returns from Trustless Work. Omit it for custodial flows.",
+        returns:
+          "Promise<SubmitOutcome> — signs the XDR with the connected wallet and broadcasts it; { status, hash, … }.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "TransactionState — the auto-sign-and-submit progress; null before any tx runs.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook (plus the adapter factory) — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "createPollarAdapterHook(key)",
+        tag: "factory",
+        params:
+          "key: string — the adapter slot registered on the provider (e.g. 'escrow'). Call it once at module scope.",
+        returns:
+          "A typed hook (e.g. useEscrow) whose methods each return Promise<SubmitOutcome> — adapter → unsigned XDR → auto sign + submit.",
+      },
+      {
+        fn: "openTxModal()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "void — opens the prebuilt review/sign modal for the in-flight escrow tx.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type TransactionState read from usePollar().",
+        returns:
+          "Re-renders through the auto sign-and-submit flow (building → signing → submitting → success).",
+      },
+    ],
   },
 
   transactions: {
@@ -384,6 +773,84 @@ export const en = {
     submitStep: "submit signed transaction",
     stateLabel: "transaction state",
     stateIdle: "Submit a transaction to see its state here.",
+    coreFnsTitle: "@pollar/core — functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "buildTx(operation, params, options?)",
+        tag: "async",
+        params:
+          "operation: TxBuildBody['operation'] (e.g. 'payment'); params: the operation body; options?: optional build flags (timeout, maxFee, memo).",
+        returns:
+          "Promise<BuildOutcome> — builds the transaction and returns the unsigned XDR (or a custodial built tx) without submitting.",
+      },
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — the XDR from buildTx. Omit it for custodial flows, where the SDK submits the built tx for you.",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending' | 'error', hash, … }.",
+      },
+      {
+        fn: "runTx(operation, params, options?)",
+        tag: "async",
+        params: "Same arguments as buildTx.",
+        returns:
+          "Promise<SubmitOutcome> — one-shot build → sign → submit. Use it when you don't need the unsigned XDR in between.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "TransactionState — the current build/sign/submit progress; null before any tx runs.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "buildTx(operation, params, options?)",
+        tag: "async",
+        params: "Same as client.buildTx — operation, params, options?.",
+        returns:
+          "Promise<BuildOutcome> — builds the tx and drives the reactive tx state; the unsigned XDR lands in tx.buildData.",
+      },
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — from the previous buildTx; omit for custodial flows.",
+        returns:
+          "Promise<SubmitOutcome> — signs the built tx and broadcasts it.",
+      },
+      {
+        fn: "openTxModal()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "void — opens a built-in modal that handles signing + submitting the built tx for you.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type TransactionState read from usePollar().",
+        returns:
+          "Re-renders your component through building → signing → submitting → success. Mirrors getClient().getTransactionState().",
+      },
+    ],
   },
 
   activateWallet: {
@@ -461,6 +928,8 @@ export const en = {
     fee: "fee",
     ops: "ops",
     cosignNote: "Needs the mediator co-signature (exchange merge).",
+    fallbackNote:
+      "No DEX route — asset sent back to its issuer instead of swapped to XLM.",
     useMyWallet: "Use my wallet",
     myWallet: "My wallet",
     swap: "Swap account ↔ destination",
@@ -583,6 +1052,66 @@ export const es: Dictionary = {
     desc: "Transfiere activos a otra dirección de Stellar. Pollar renderiza el selector de activo, el campo de monto, la revisión y el flujo de firma dentro de un modal.",
     open: "Abrir modal de envío",
     note: "no recibe argumentos: el activo, el monto y el destino se eligen dentro del modal.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: el selector de activo, el monto, la revisión y el flujo de firma ya vienen renderizados.",
+    coreDesc:
+      "Construye, firma y envía el pago tú mismo con una sola llamada runTx('payment', …), y luego lee el estado de la transacción.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "runTx(operation, params, options?)",
+        tag: "async",
+        params:
+          "operation: TxBuildBody['operation'] (p. ej. 'payment'); params: el cuerpo de la operación — para un pago, { destination, asset, amount }; options?: flags de build opcionales.",
+        returns:
+          "Promise<SubmitOutcome>: { status: 'success' | 'pending' | 'error', hash, … }. En un solo paso build → sign → submit.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "TransactionState: el progreso actual de build/sign/submit; null antes de ejecutar cualquier tx.",
+      },
+      {
+        fn: "onTransactionStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: TransactionState) => void — se invoca en cada transición de estado.",
+        returns:
+          "() => void: una función para cancelar la suscripción. El valor tx del hook de react se construye sobre esto.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openSendModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: el activo, el monto y el destino se eligen dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo TransactionState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar tu componente mientras el pago se construye, firma y envía. Refleja getClient().getTransactionState().",
+      },
+    ],
   },
 
   receive: {
@@ -590,6 +1119,51 @@ export const es: Dictionary = {
     desc: "Muestra la dirección de la billetera conectada y su código QR para que otros puedan enviarle fondos. Pollar renderiza toda la vista dentro de un modal.",
     open: "Abrir modal de recepción",
     note: "no recibe argumentos: lee la dirección de la billetera conectada desde el contexto.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado con la dirección de la billetera conectada y un código QR.",
+    coreDesc:
+      "Lee la clave pública de la billetera conectada desde el estado de autenticación y renderiza la dirección + QR tú mismo.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getAuthState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "AuthState: cuando step === 'authenticated', session.wallet?.publicKey es la dirección de recepción (una cadena G…).",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openReceiveModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: lee la dirección de la billetera conectada desde el contexto.",
+        returns:
+          "void: abre el modal prearmado con la dirección y el código QR.",
+      },
+      {
+        fn: "walletAddress",
+        tag: "reactive value",
+        params:
+          "No es una función: es una cadena que se lee de usePollar() (vacía cuando no hay conexión).",
+        returns:
+          "La clave pública de la billetera conectada; vuelve a renderizar cuando cambia la sesión.",
+      },
+    ],
   },
 
   history: {
@@ -671,6 +1245,70 @@ export const es: Dictionary = {
     desc: "Revisa las sesiones activas del usuario que inició sesión, revoca un dispositivo individual o cierra sesión en todas partes. Pollar renderiza la lista y las acciones dentro de un modal.",
     open: "Abrir modal de sesiones",
     note: "no recibe argumentos: lista las sesiones del usuario actual y gestiona la revocación.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: la lista de dispositivos, las acciones de revocar y cerrar sesión en todas partes ya vienen renderizadas.",
+    coreDesc:
+      "Enumera las sesiones del usuario, revoca un dispositivo o cierra sesión en todas partes, y renderiza la lista tú mismo.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "listSessions()",
+        tag: "async",
+        params: "Sin argumentos.",
+        returns:
+          "Promise<SessionInfo[]>: una fila por dispositivo / familia de refresh-token (familyId, deviceLabel, current, lastUsedAt, expiresAt, …).",
+      },
+      {
+        fn: "revokeSession(familyId)",
+        tag: "async",
+        params:
+          "familyId: string — de una fila SessionInfo. Revocar la sesión actual cierra la sesión en este dispositivo.",
+        returns: "Promise<void>.",
+      },
+      {
+        fn: "logoutEverywhere()",
+        tag: "async",
+        params: "Sin argumentos.",
+        returns: "Promise<void>: revoca todas las sesiones del usuario.",
+      },
+      {
+        fn: "getSessionsState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "SessionsState: una unión discriminada por step; data tiene la lista cuando cargó. onSessionsStateChange(cb) se suscribe.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openSessionsModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: lista las sesiones del usuario actual y gestiona la revocación.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "sessions",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo SessionsState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar cuando la lista carga o se revoca un dispositivo. Refleja getClient().getSessionsState().",
+      },
+    ],
   },
 
   distribution: {
@@ -678,6 +1316,50 @@ export const es: Dictionary = {
     desc: "Lista las reglas de distribución para las que el usuario es elegible y reclama su parte. Pollar renderiza la lista de reglas y las acciones de reclamo dentro de un modal.",
     open: "Abrir modal de distribución",
     note: "no recibe argumentos: carga las reglas del usuario y gestiona el reclamo.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: la lista de reglas elegibles y las acciones de reclamo ya vienen renderizadas.",
+    coreDesc:
+      "Lista las reglas para las que el usuario es elegible y reclama una parte tú mismo.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "listDistributionRules()",
+        tag: "async",
+        params: "Sin argumentos.",
+        returns:
+          "Promise<DistributionRule[]>: las reglas para las que el usuario es elegible (id, period, amount, …).",
+      },
+      {
+        fn: "claimDistributionRule(body)",
+        tag: "async",
+        params:
+          "body: DistributionClaimBody — { ruleId: string } que identifica la regla a reclamar.",
+        returns:
+          "Promise<DistributionClaimContent>: el resultado del reclamo (monto, referencia de tx, …).",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openDistributionRulesModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: carga las reglas del usuario y gestiona el reclamo.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+    ],
   },
 
   ramp: {
@@ -685,6 +1367,65 @@ export const es: Dictionary = {
     desc: "Compra y vende cripto con métodos de pago locales (SPEI, PIX, PSE, ACH). Pollar renderiza todo el flujo de cotización y pago dentro de un modal.",
     open: "Abrir modal de ramp",
     note: "no recibe argumentos: el país, la moneda y el tipo de operación se eligen dentro del modal.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: todo el flujo cotización → pago → liquidación ya viene renderizado.",
+    coreDesc:
+      "Controla el on/off-ramp tú mismo: cotiza, crea el ramp y luego haz polling hasta que se liquide.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getRampsQuote(query)",
+        tag: "async",
+        params:
+          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+        returns:
+          "Promise<RampsQuoteResponse>: las cotizaciones disponibles para la solicitud.",
+      },
+      {
+        fn: "createOnRamp(body)",
+        tag: "async",
+        params: "body: RampsOnrampBody — una cotización elegida.",
+        returns:
+          "Promise<RampsOnrampResponse>: content.id y content.paymentInstructions.",
+      },
+      {
+        fn: "createOffRamp(body)",
+        tag: "async",
+        params: "body: RampsOfframpBody — una cotización elegida.",
+        returns:
+          "Promise<RampsOfframpResponse>: los detalles del pago del off-ramp.",
+      },
+      {
+        fn: "pollRampTransaction(txId, opts?)",
+        tag: "async",
+        params:
+          "txId: string (del ramp creado); opts?: opciones de polling (intervalo, signal, …).",
+        returns:
+          "Promise<RampsTransactionResponse>: se resuelve cuando el ramp llega a un estado terminal.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openRampModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: el país, la moneda y el tipo de operación se eligen dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+    ],
   },
 
   kyc: {
@@ -694,6 +1435,70 @@ export const es: Dictionary = {
     levelLabel: "Nivel",
     currentStatus: "estado actual",
     start: "Iniciar KYC",
+    coreFnsTitle: "@pollar/core — funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getKycProviders(country)",
+        tag: "async",
+        params: "country: string — un código ISO 3166-1 alfa-2 (p. ej. 'MX').",
+        returns:
+          "Promise<{ providers }>: los proveedores de KYC disponibles en ese país.",
+      },
+      {
+        fn: "startKyc(body)",
+        tag: "async",
+        params:
+          "body: KycStartBody — { providerId: string; level: 'basic' | 'intermediate' | 'enhanced' }.",
+        returns:
+          "Promise<KycStartResponse>: la sesión de verificación para entregar al proveedor.",
+      },
+      {
+        fn: "pollKycStatus(providerId, opts?)",
+        tag: "async",
+        params:
+          "providerId: string; opts?: { intervalMs?, timeoutMs? } controles de polling.",
+        returns:
+          "Promise: se resuelve cuando el estado llega a 'approved' | 'rejected' (desde 'none' | 'pending').",
+      },
+      {
+        fn: "getKycStatus(providerId?)",
+        tag: "async",
+        params:
+          "providerId?: string — omítelo para leer el estado general del usuario.",
+        returns:
+          "Promise<{ status, level?, providerId }>: una lectura puntual.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openKycModal(options?)",
+        tag: "sync",
+        params:
+          "options?: { country?: string; level?: 'basic' | 'intermediate' | 'enhanced'; onApproved?: () => void } — envuelve getKycProviders / startKyc / pollKycStatus.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "<KycStatus status={…} />",
+        tag: "component",
+        params:
+          "status: 'none' | 'pending' | 'approved' | 'rejected' — el badge a renderizar.",
+        returns:
+          "Un componente de badge de estado ya hecho, exportado desde @pollar/react.",
+      },
+    ],
   },
 
   balance: {
@@ -816,6 +1621,62 @@ export const es: Dictionary = {
     fundEscrow: "Fondear escrow",
     setupSummary: "configuración única del adaptador",
     txIdle: "Ejecuta una operación para ver el progreso de la firma.",
+    coreFnsTitle: "@pollar/core — funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — el XDR sin firmar que el adaptador de escrow devuelve de Trustless Work. Omítelo en flujos custodiales.",
+        returns:
+          "Promise<SubmitOutcome>: firma el XDR con la billetera conectada y lo transmite; { status, hash, … }.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "TransactionState: el progreso del auto-firmar-y-enviar; null antes de ejecutar cualquier tx.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar() (más la fábrica del adaptador): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "createPollarAdapterHook(key)",
+        tag: "factory",
+        params:
+          "key: string — el slot del adaptador registrado en el provider (p. ej. 'escrow'). Llámalo una vez a nivel de módulo.",
+        returns:
+          "Un hook tipado (p. ej. useEscrow) cuyos métodos devuelven cada uno Promise<SubmitOutcome>: adaptador → XDR sin firmar → auto firmar + enviar.",
+      },
+      {
+        fn: "openTxModal()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "void: abre el modal de revisión/firma para la tx de escrow en curso.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo TransactionState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar a lo largo del flujo auto firmar-y-enviar (building → signing → submitting → success).",
+      },
+    ],
   },
 
   transactions: {
@@ -878,6 +1739,83 @@ export const es: Dictionary = {
     submitStep: "enviar transacción firmada",
     stateLabel: "estado de la transacción",
     stateIdle: "Envía una transacción para ver su estado aquí.",
+    coreFnsTitle: "@pollar/core — funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "buildTx(operation, params, options?)",
+        tag: "async",
+        params:
+          "operation: TxBuildBody['operation'] (p. ej. 'payment'); params: el cuerpo de la operación; options?: flags de build opcionales (timeout, maxFee, memo).",
+        returns:
+          "Promise<BuildOutcome>: construye la transacción y devuelve el XDR sin firmar (o una tx custodial ya armada) sin enviarla.",
+      },
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — el XDR de buildTx. Omítelo en flujos custodiales, donde el SDK envía la tx ya armada por ti.",
+        returns:
+          "Promise<SubmitOutcome>: { status: 'success' | 'pending' | 'error', hash, … }.",
+      },
+      {
+        fn: "runTx(operation, params, options?)",
+        tag: "async",
+        params: "Mismos argumentos que buildTx.",
+        returns:
+          "Promise<SubmitOutcome>: en un solo paso build → sign → submit. Úsalo cuando no necesitas el XDR sin firmar en el medio.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "TransactionState: el progreso actual de build/sign/submit; null antes de ejecutar cualquier tx.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "buildTx(operation, params, options?)",
+        tag: "async",
+        params: "Igual que client.buildTx — operation, params, options?.",
+        returns:
+          "Promise<BuildOutcome>: construye la tx y alimenta el estado reactivo tx; el XDR sin firmar queda en tx.buildData.",
+      },
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — del buildTx anterior; omítelo en flujos custodiales.",
+        returns: "Promise<SubmitOutcome>: firma la tx armada y la transmite.",
+      },
+      {
+        fn: "openTxModal()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "void: abre un modal integrado que firma y envía la tx armada por ti.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo TransactionState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar tu componente a través de building → signing → submitting → success. Refleja getClient().getTransactionState().",
+      },
+    ],
   },
 
   activateWallet: {
@@ -957,6 +1895,8 @@ export const es: Dictionary = {
     fee: "comisión",
     ops: "ops",
     cosignNote: "Requiere la co-firma del mediador (merge a exchange).",
+    fallbackNote:
+      "Sin ruta en el DEX — el activo se devuelve a su emisor en lugar de cambiarse a XLM.",
     useMyWallet: "Usar mi billetera",
     myWallet: "Mi billetera",
     swap: "Intercambiar cuenta ↔ destino",
@@ -1076,6 +2016,66 @@ export const pt: Dictionary = {
     desc: "Transfira ativos para outro endereço Stellar. A Pollar renderiza o seletor de ativos, o campo de valor, a revisão e o fluxo de assinatura dentro de um modal.",
     open: "Abrir modal de envio",
     note: "não recebe argumentos — o ativo, o valor e o destino são escolhidos dentro do modal.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: o seletor de ativos, o valor, a revisão e o fluxo de assinatura já vêm renderizados.",
+    coreDesc:
+      "Construa, assine e envie o pagamento você mesmo com uma única chamada runTx('payment', …), e então leia o estado da transação.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "runTx(operation, params, options?)",
+        tag: "async",
+        params:
+          "operation: TxBuildBody['operation'] (ex. 'payment'); params: o corpo da operação — para um pagamento, { destination, asset, amount }; options?: flags de build opcionais.",
+        returns:
+          "Promise<SubmitOutcome>: { status: 'success' | 'pending' | 'error', hash, … }. Em um passo só build → sign → submit.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "TransactionState: o progresso atual de build/sign/submit; null antes de executar qualquer tx.",
+      },
+      {
+        fn: "onTransactionStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: TransactionState) => void — invocado a cada transição de estado.",
+        returns:
+          "() => void: uma função para cancelar a inscrição. O valor tx do hook do react é construído sobre isto.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openSendModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: o ativo, o valor e o destino são escolhidos dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo TransactionState lido de usePollar().",
+        returns:
+          "Re-renderiza seu componente enquanto o pagamento é construído, assinado e enviado. Reflete getClient().getTransactionState().",
+      },
+    ],
   },
 
   receive: {
@@ -1083,6 +2083,50 @@ export const pt: Dictionary = {
     desc: "Mostre o endereço da carteira conectada e o código QR para que outros possam enviar fundos para ela. A Pollar renderiza toda a visualização dentro de um modal.",
     open: "Abrir modal de recebimento",
     note: "não recebe argumentos — ele lê o endereço da carteira conectada do contexto.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado com o endereço da carteira conectada e um código QR.",
+    coreDesc:
+      "Leia a chave pública da carteira conectada a partir do estado de autenticação e renderize o endereço + QR você mesmo.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getAuthState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "AuthState: quando step === 'authenticated', session.wallet?.publicKey é o endereço de recebimento (uma string G…).",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openReceiveModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: ele lê o endereço da carteira conectada do contexto.",
+        returns: "void: abre o modal pré-montado com o endereço e o código QR.",
+      },
+      {
+        fn: "walletAddress",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é uma string lida de usePollar() (vazia quando não conectado).",
+        returns:
+          "A chave pública da carteira conectada; re-renderiza quando a sessão muda.",
+      },
+    ],
   },
 
   history: {
@@ -1164,6 +2208,70 @@ export const pt: Dictionary = {
     desc: "Revise as sessões ativas do usuário conectado, revogue um único dispositivo ou encerre a sessão em todos os lugares. A Pollar renderiza a lista e as ações dentro de um modal.",
     open: "Abrir modal de sessões",
     note: "não recebe argumentos — ele lista as sessões do usuário atual e cuida da revogação.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: a lista de dispositivos, as ações de revogar e encerrar a sessão em todos os lugares já vêm renderizadas.",
+    coreDesc:
+      "Enumere as sessões do usuário, revogue um dispositivo ou encerre a sessão em todos os lugares, e renderize a lista você mesmo.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "listSessions()",
+        tag: "async",
+        params: "Sem argumentos.",
+        returns:
+          "Promise<SessionInfo[]>: uma linha por dispositivo / família de refresh-token (familyId, deviceLabel, current, lastUsedAt, expiresAt, …).",
+      },
+      {
+        fn: "revokeSession(familyId)",
+        tag: "async",
+        params:
+          "familyId: string — de uma linha SessionInfo. Revogar a sessão atual encerra a sessão neste dispositivo.",
+        returns: "Promise<void>.",
+      },
+      {
+        fn: "logoutEverywhere()",
+        tag: "async",
+        params: "Sem argumentos.",
+        returns: "Promise<void>: revoga todas as sessões do usuário.",
+      },
+      {
+        fn: "getSessionsState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "SessionsState: uma união discriminada por step; data tem a lista quando carregada. onSessionsStateChange(cb) se inscreve.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openSessionsModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: ele lista as sessões do usuário atual e cuida da revogação.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+      {
+        fn: "sessions",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo SessionsState lido de usePollar().",
+        returns:
+          "Re-renderiza quando a lista carrega ou um dispositivo é revogado. Reflete getClient().getSessionsState().",
+      },
+    ],
   },
 
   distribution: {
@@ -1171,6 +2279,50 @@ export const pt: Dictionary = {
     desc: "Liste as regras de distribuição para as quais o usuário é elegível e resgate a parte dele. A Pollar renderiza a lista de regras e as ações de resgate dentro de um modal.",
     open: "Abrir modal de distribuição",
     note: "não recebe argumentos — ele carrega as regras do usuário e cuida do resgate.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: a lista de regras elegíveis e as ações de resgate já vêm renderizadas.",
+    coreDesc:
+      "Liste as regras para as quais o usuário é elegível e resgate uma parte você mesmo.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "listDistributionRules()",
+        tag: "async",
+        params: "Sem argumentos.",
+        returns:
+          "Promise<DistributionRule[]>: as regras para as quais o usuário é elegível (id, period, amount, …).",
+      },
+      {
+        fn: "claimDistributionRule(body)",
+        tag: "async",
+        params:
+          "body: DistributionClaimBody — { ruleId: string } que identifica a regra a resgatar.",
+        returns:
+          "Promise<DistributionClaimContent>: o resultado do resgate (valor, referência de tx, …).",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openDistributionRulesModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: ele carrega as regras do usuário e cuida do resgate.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+    ],
   },
 
   ramp: {
@@ -1178,6 +2330,65 @@ export const pt: Dictionary = {
     desc: "Compre e venda cripto com métodos de pagamento locais (SPEI, PIX, PSE, ACH). A Pollar renderiza todo o fluxo de cotação e pagamento dentro de um modal.",
     open: "Abrir modal de ramp",
     note: "não recebe argumentos — o país, a moeda e o tipo de operação são escolhidos dentro do modal.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: todo o fluxo cotação → pagamento → liquidação já vem renderizado.",
+    coreDesc:
+      "Controle o on/off-ramp você mesmo: cote, crie o ramp e então faça polling até liquidar.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getRampsQuote(query)",
+        tag: "async",
+        params:
+          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+        returns:
+          "Promise<RampsQuoteResponse>: as cotações disponíveis para a solicitação.",
+      },
+      {
+        fn: "createOnRamp(body)",
+        tag: "async",
+        params: "body: RampsOnrampBody — uma cotação escolhida.",
+        returns:
+          "Promise<RampsOnrampResponse>: content.id e content.paymentInstructions.",
+      },
+      {
+        fn: "createOffRamp(body)",
+        tag: "async",
+        params: "body: RampsOfframpBody — uma cotação escolhida.",
+        returns:
+          "Promise<RampsOfframpResponse>: os detalhes de pagamento do off-ramp.",
+      },
+      {
+        fn: "pollRampTransaction(txId, opts?)",
+        tag: "async",
+        params:
+          "txId: string (do ramp criado); opts?: opções de polling (intervalo, signal, …).",
+        returns:
+          "Promise<RampsTransactionResponse>: resolve quando o ramp atinge um estado terminal.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openRampModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: o país, a moeda e o tipo de operação são escolhidos dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+    ],
   },
 
   kyc: {
@@ -1187,6 +2398,69 @@ export const pt: Dictionary = {
     levelLabel: "Nível",
     currentStatus: "status atual",
     start: "Iniciar KYC",
+    coreFnsTitle: "@pollar/core — funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getKycProviders(country)",
+        tag: "async",
+        params: "country: string — um código ISO 3166-1 alfa-2 (ex. 'MX').",
+        returns:
+          "Promise<{ providers }>: os provedores de KYC disponíveis nesse país.",
+      },
+      {
+        fn: "startKyc(body)",
+        tag: "async",
+        params:
+          "body: KycStartBody — { providerId: string; level: 'basic' | 'intermediate' | 'enhanced' }.",
+        returns:
+          "Promise<KycStartResponse>: a sessão de verificação para entregar ao provedor.",
+      },
+      {
+        fn: "pollKycStatus(providerId, opts?)",
+        tag: "async",
+        params:
+          "providerId: string; opts?: { intervalMs?, timeoutMs? } controles de polling.",
+        returns:
+          "Promise: resolve quando o status chega a 'approved' | 'rejected' (a partir de 'none' | 'pending').",
+      },
+      {
+        fn: "getKycStatus(providerId?)",
+        tag: "async",
+        params:
+          "providerId?: string — omita para ler o status geral do usuário.",
+        returns: "Promise<{ status, level?, providerId }>: uma leitura única.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openKycModal(options?)",
+        tag: "sync",
+        params:
+          "options?: { country?: string; level?: 'basic' | 'intermediate' | 'enhanced'; onApproved?: () => void } — envolve getKycProviders / startKyc / pollKycStatus.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+      {
+        fn: "<KycStatus status={…} />",
+        tag: "component",
+        params:
+          "status: 'none' | 'pending' | 'approved' | 'rejected' — o badge a renderizar.",
+        returns:
+          "Um componente de badge de status pronto, exportado de @pollar/react.",
+      },
+    ],
   },
 
   balance: {
@@ -1309,6 +2583,62 @@ export const pt: Dictionary = {
     fundEscrow: "Financiar escrow",
     setupSummary: "configuração única do adaptador",
     txIdle: "Execute uma operação para ver o progresso da assinatura.",
+    coreFnsTitle: "@pollar/core — funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — o XDR não assinado que o adaptador de escrow retorna da Trustless Work. Omita em fluxos custodiais.",
+        returns:
+          "Promise<SubmitOutcome>: assina o XDR com a carteira conectada e o transmite; { status, hash, … }.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "TransactionState: o progresso do auto-assinar-e-enviar; null antes de executar qualquer tx.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() (mais a fábrica do adaptador) — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "createPollarAdapterHook(key)",
+        tag: "factory",
+        params:
+          "key: string — o slot do adaptador registrado no provider (ex. 'escrow'). Chame-o uma vez no nível de módulo.",
+        returns:
+          "Um hook tipado (ex. useEscrow) cujos métodos retornam cada um Promise<SubmitOutcome>: adaptador → XDR não assinado → auto assinar + enviar.",
+      },
+      {
+        fn: "openTxModal()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "void: abre o modal de revisão/assinatura para a tx de escrow em andamento.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo TransactionState lido de usePollar().",
+        returns:
+          "Re-renderiza ao longo do fluxo auto assinar-e-enviar (building → signing → submitting → success).",
+      },
+    ],
   },
 
   transactions: {
@@ -1370,6 +2700,83 @@ export const pt: Dictionary = {
     submitStep: "enviar transação assinada",
     stateLabel: "estado da transação",
     stateIdle: "Envie uma transação para ver o estado dela aqui.",
+    coreFnsTitle: "@pollar/core — funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "buildTx(operation, params, options?)",
+        tag: "async",
+        params:
+          "operation: TxBuildBody['operation'] (ex. 'payment'); params: o corpo da operação; options?: flags de build opcionais (timeout, maxFee, memo).",
+        returns:
+          "Promise<BuildOutcome>: constrói a transação e retorna o XDR não assinado (ou uma tx custodial já montada) sem enviá-la.",
+      },
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — o XDR de buildTx. Omita em fluxos custodiais, onde o SDK envia a tx montada por você.",
+        returns:
+          "Promise<SubmitOutcome>: { status: 'success' | 'pending' | 'error', hash, … }.",
+      },
+      {
+        fn: "runTx(operation, params, options?)",
+        tag: "async",
+        params: "Mesmos argumentos que buildTx.",
+        returns:
+          "Promise<SubmitOutcome>: em um passo só build → sign → submit. Use quando não precisa do XDR não assinado no meio.",
+      },
+      {
+        fn: "getTransactionState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "TransactionState: o progresso atual de build/sign/submit; null antes de executar qualquer tx.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "buildTx(operation, params, options?)",
+        tag: "async",
+        params: "Igual a client.buildTx — operation, params, options?.",
+        returns:
+          "Promise<BuildOutcome>: constrói a tx e alimenta o estado reativo tx; o XDR não assinado fica em tx.buildData.",
+      },
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr?: string — do buildTx anterior; omita em fluxos custodiais.",
+        returns: "Promise<SubmitOutcome>: assina a tx montada e a transmite.",
+      },
+      {
+        fn: "openTxModal()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "void: abre um modal integrado que assina e envia a tx montada por você.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo TransactionState lido de usePollar().",
+        returns:
+          "Re-renderiza seu componente através de building → signing → submitting → success. Reflete getClient().getTransactionState().",
+      },
+    ],
   },
 
   activateWallet: {
@@ -1448,8 +2855,11 @@ export const pt: Dictionary = {
     fee: "taxa",
     ops: "ops",
     cosignNote: "Requer a coassinatura do mediador (merge para exchange).",
+    fallbackNote:
+      "Sem rota na DEX — o ativo é enviado de volta ao emissor em vez de trocado por XLM.",
     useMyWallet: "Usar minha carteira",
     myWallet: "Minha carteira",
+    swap: "Trocar conta ↔ destino",
     signWithPollar: "Assinar e enviar com Pollar",
     signing: "Assinando…",
     submitted: "Enviado:",

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { usePollar } from "@pollar/react";
 import { useEscrow } from "./adapter";
 import { DualCode } from "../_components/CodePanels";
+import { FnReference } from "../_components/SdkDocs";
 import { useI18n } from "../_i18n/LanguageProvider";
 
 // ─── styles ───────────────────────────────────────────────────────────────────
@@ -596,6 +597,18 @@ await client.signAndSubmitTx(unsignedTransaction);`;
               )}
             </div>
           </div>
+
+          {/* SDK reference — the functions behind the adapter flow */}
+          <FnReference
+            title={t.escrow.reactFnsTitle}
+            intro={t.escrow.reactFnsIntro}
+            fns={t.escrow.reactFns}
+          />
+          <FnReference
+            title={t.escrow.coreFnsTitle}
+            intro={t.escrow.coreFnsIntro}
+            fns={t.escrow.coreFns}
+          />
         </div>
       </div>
     </div>

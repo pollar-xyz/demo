@@ -4,6 +4,7 @@ import { usePollar } from "@pollar/react";
 import { contract, rpc } from "@stellar/stellar-sdk";
 import { useState } from "react";
 import { CodePanel, highlight } from "../_components/CodePanels";
+import { FnReference } from "../_components/SdkDocs";
 import { Select } from "../_components/Select";
 import { useI18n } from "../_i18n/LanguageProvider";
 
@@ -1176,6 +1177,18 @@ export default function TransactionsPage() {
               )}
             </div>
           </div>
+
+          {/* SDK reference — the build / sign / submit functions */}
+          <FnReference
+            title={tr.transactions.reactFnsTitle}
+            intro={tr.transactions.reactFnsIntro}
+            fns={tr.transactions.reactFns}
+          />
+          <FnReference
+            title={tr.transactions.coreFnsTitle}
+            intro={tr.transactions.coreFnsIntro}
+            fns={tr.transactions.coreFns}
+          />
         </div>
       </div>
     </div>

@@ -1,13 +1,8 @@
 "use client";
 
 import { usePollar } from "@pollar/react";
-import { DualCode } from "../_components/CodePanels";
+import { SdkModalTab } from "../_components/SdkDocs";
 import { useI18n } from "../_i18n/LanguageProvider";
-
-// ─── styles (shared with other demo pages) ────────────────────────────────────
-
-const btn =
-  "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors";
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
@@ -50,39 +45,30 @@ export default function DistributionPage() {
 
   return (
     <div className="w-full max-w-5xl">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* ── left: action ───────────────────────────────────────────────── */}
-        <div className="space-y-4">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              {t.distribution.title}
-            </h1>
-            <p className="text-sm text-muted mt-1.5">{t.distribution.desc}</p>
-          </div>
-
-          <button
-            onClick={openDistributionRulesModal}
-            disabled={!isAuthenticated}
-            className={`${btn} w-full sm:w-auto`}
-          >
-            {isAuthenticated
-              ? t.distribution.open
-              : t.common.connectWalletFirst}
-          </button>
-
-          <p className="text-xs font-mono text-muted-light">
-            <code className="text-foreground">
-              openDistributionRulesModal()
-            </code>{" "}
-            {t.distribution.note}
-          </p>
-        </div>
-
-        {/* ── right: code previews (core + react) ──────────────────────── */}
-        <div className="lg:sticky lg:top-6">
-          <DualCode core={CORE_CODE} react={REACT_CODE} />
-        </div>
-      </div>
+      <SdkModalTab
+        title={t.distribution.title}
+        desc={t.distribution.desc}
+        isAuthenticated={isAuthenticated}
+        onOpen={openDistributionRulesModal}
+        openLabel={t.distribution.open}
+        connectLabel={t.common.connectWalletFirst}
+        modalCall="openDistributionRulesModal()"
+        modalNote={t.distribution.note}
+        reactDesc={t.distribution.reactDesc}
+        coreDesc={t.distribution.coreDesc}
+        coreCode={CORE_CODE}
+        reactCode={REACT_CODE}
+        core={{
+          title: t.distribution.coreFnsTitle,
+          intro: t.distribution.coreFnsIntro,
+          fns: t.distribution.coreFns,
+        }}
+        react={{
+          title: t.distribution.reactFnsTitle,
+          intro: t.distribution.reactFnsIntro,
+          fns: t.distribution.reactFns,
+        }}
+      />
     </div>
   );
 }

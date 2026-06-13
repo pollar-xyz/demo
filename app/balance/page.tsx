@@ -3,7 +3,8 @@
 import { usePollar } from "@pollar/react";
 import type { WalletBalanceContent } from "@pollar/core";
 import { useState } from "react";
-import { DualCode } from "../_components/CodePanels";
+import { CodePanel } from "../_components/CodePanels";
+import { FnReference, SdkToggle, type Sdk } from "../_components/SdkDocs";
 import { useI18n } from "../_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
@@ -15,93 +16,30 @@ const btn = (variant: "primary" | "secondary") =>
     ? "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
     : "rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors";
 
-// ─── page ─────────────────────────────────────────────────────────────────────
+// ─── code previews ────────────────────────────────────────────────────────────
+// @pollar/react is the prebuilt modal; @pollar/core is the manual fetch whose
+// raw response we render. The core snippet varies by whether a public key is
+// entered (arbitrary address → getWalletBalance; otherwise → refreshBalance).
 
-export default function BalancePage() {
-  const { t } = useI18n();
-  const {
-    walletBalance,
-    refreshWalletBalance,
-    getClient,
-    walletAddress,
-    isAuthenticated,
-  } = usePollar();
+const REACT_CODE = `import { usePollar } from '@pollar/react';
 
-  const [publicKey, setPublicKey] = useState("");
-  const [lastError, setLastError] = useState<string | null>(null);
-  const [inFlight, setInFlight] = useState(false);
-  // arbitrary-address lookups now return data directly (getWalletBalance),
-  // so — unlike the connected wallet — they don't drive reactive state.
-  const [customResult, setCustomResult] = useState<WalletBalanceContent | null>(
-    null,
+export function BalanceButton() {
+  const { openWalletBalanceModal, isAuthenticated } = usePollar();
+
+  // openWalletBalanceModal renders the connected wallet's
+  // balances inside a modal — built on top of client.refreshBalance().
+  return (
+    <button
+      onClick={openWalletBalanceModal}
+      disabled={!isAuthenticated}
+    >
+      Balance
+    </button>
   );
+}`;
 
-  // ── actions ─────────────────────────────────────────────────────────────────
-  async function fetchOwnWallet() {
-    setLastError(null);
-    setCustomResult(null);
-    setInFlight(true);
-    try {
-      await refreshWalletBalance();
-    } catch (e) {
-      setLastError(e instanceof Error ? e.message : t.common.unknownError);
-    } finally {
-      setInFlight(false);
-    }
-  }
-
-  async function fetchByPublicKey() {
-    setLastError(null);
-    setInFlight(true);
-    try {
-      // for an arbitrary address, drop down to the underlying client.
-      // getWalletBalance() returns the content directly (no reactive state),
-      // since refreshWalletBalance() only ever targets the connected wallet.
-      const content = await getClient().getWalletBalance(publicKey.trim());
-      setCustomResult(content);
-    } catch (e) {
-      setCustomResult(null);
-      setLastError(e instanceof Error ? e.message : t.common.unknownError);
-    } finally {
-      setInFlight(false);
-    }
-  }
-
-  // ── derived ─────────────────────────────────────────────────────────────────
-  const trimmedKey = publicKey.trim();
-  const usingCustomKey = trimmedKey.length > 0;
-
-  // own-wallet lookups read reactive `walletBalance`; custom-address lookups
-  // read the directly-returned `customResult`.
-  const step = usingCustomKey
-    ? inFlight
-      ? "loading"
-      : lastError
-        ? "error"
-        : customResult
-          ? "loaded"
-          : "idle"
-    : walletBalance.step;
-  const balances = usingCustomKey
-    ? (customResult?.balances ?? null)
-    : walletBalance.step === "loaded"
-      ? walletBalance.data.balances
-      : null;
-  const stateMessage =
-    step === "idle"
-      ? t.balance.idle
-      : step === "loading"
-        ? t.common.loading
-        : step === "error"
-          ? usingCustomKey
-            ? lastError
-            : walletBalance.step === "error"
-              ? walletBalance.message
-              : null
-          : null;
-
-  // ── live code previews ──────────────────────────────────────────────────────
-  const coreCode = usingCustomKey
+function coreSnippet(trimmedKey: string, usingCustomKey: boolean): string {
+  return usingCustomKey
     ? `import { PollarClient } from '@pollar/core';
 
 const client = new PollarClient({ apiKey, baseUrl });
@@ -128,107 +66,218 @@ if (state.step === 'loaded') {
     console.log(b.code, b.balance);
   });
 }`;
+}
 
-  const reactCode = usingCustomKey
-    ? `import { usePollar } from '@pollar/react';
+// ─── page ─────────────────────────────────────────────────────────────────────
 
-const { getClient } = usePollar();
+export default function BalancePage() {
+  const { t } = useI18n();
+  const {
+    walletBalance,
+    openWalletBalanceModal,
+    getClient,
+    walletAddress,
+    isAuthenticated,
+  } = usePollar();
 
-// for an arbitrary address, drop down to the underlying client.
-// getWalletBalance() returns the content directly (no reactive state).
-const { balances } = await getClient().getWalletBalance('${trimmedKey || "G..."}');
+  const [sdk, setSdk] = useState<Sdk>("react");
+  const [publicKey, setPublicKey] = useState("");
+  const [lastError, setLastError] = useState<string | null>(null);
+  const [inFlight, setInFlight] = useState(false);
+  // arbitrary-address lookups return data directly (getWalletBalance), so —
+  // unlike the connected wallet — they don't drive reactive state.
+  const [customResult, setCustomResult] = useState<WalletBalanceContent | null>(
+    null,
+  );
 
-balances.forEach(b => {
-  console.log(b.code, b.balance);
-});`
-    : `import { usePollar } from '@pollar/react';
+  // ── actions ─────────────────────────────────────────────────────────────────
+  async function fetchOwnWallet() {
+    setLastError(null);
+    setCustomResult(null);
+    setInFlight(true);
+    try {
+      // connected wallet → drives the reactive walletBalance state.
+      await getClient().refreshBalance();
+    } catch (e) {
+      setLastError(e instanceof Error ? e.message : t.common.unknownError);
+    } finally {
+      setInFlight(false);
+    }
+  }
 
-const { walletBalance, refreshWalletBalance } = usePollar();
+  async function fetchByPublicKey() {
+    setLastError(null);
+    setInFlight(true);
+    try {
+      // arbitrary address → getWalletBalance() returns the content directly
+      // (no reactive state), since refreshBalance() only targets the connected wallet.
+      const content = await getClient().getWalletBalance(publicKey.trim());
+      setCustomResult(content);
+    } catch (e) {
+      setCustomResult(null);
+      setLastError(e instanceof Error ? e.message : t.common.unknownError);
+    } finally {
+      setInFlight(false);
+    }
+  }
 
-// fetch the connected wallet's balances
-await refreshWalletBalance();
+  // ── derived ─────────────────────────────────────────────────────────────────
+  const trimmedKey = publicKey.trim();
+  // custom-key lookups only exist in core mode.
+  const usingCustomKey = sdk === "core" && trimmedKey.length > 0;
 
-// then read the reactive state
-if (walletBalance.step === 'loaded') {
-  walletBalance.data.balances.forEach(b => {
-    console.log(b.code, b.balance);
-  });
-}`;
+  // custom-address lookups read the directly-returned `customResult`; everything
+  // else reads the reactive `walletBalance` (driven by refreshBalance / the modal).
+  const step = usingCustomKey
+    ? inFlight
+      ? "loading"
+      : lastError
+        ? "error"
+        : customResult
+          ? "loaded"
+          : "idle"
+    : walletBalance.step;
+  const rawData = usingCustomKey
+    ? customResult
+    : walletBalance.step === "loaded"
+      ? walletBalance.data
+      : null;
+  const balances = rawData?.balances ?? null;
+  const stateMessage =
+    step === "idle"
+      ? t.balance.idle
+      : step === "loading"
+        ? t.common.loading
+        : step === "error"
+          ? usingCustomKey
+            ? lastError
+            : walletBalance.step === "error"
+              ? walletBalance.message
+              : null
+          : null;
+
+  const coreCode = coreSnippet(trimmedKey, usingCustomKey);
 
   // ── render ──────────────────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-5xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* ── left: form + result ───────────────────────────────────────── */}
-        <div className="space-y-5">
+        {/* ── left: toggle + matching action ─────────────────────────────── */}
+        <div className="space-y-4">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
               {t.balance.title}
             </h1>
-            <p className="text-sm text-muted mt-1.5">
-              {t.balance.desc1}
-              <code className="font-mono">walletBalance</code>
-              {t.balance.desc2}
-              <code className="font-mono">refreshWalletBalance()</code>
-              {t.balance.desc3}
-              <code className="font-mono">
-                getClient().getWalletBalance(pk)
-              </code>
-              {t.balance.desc4}
-            </p>
+            <p className="text-sm text-muted mt-1.5">{t.balance.desc}</p>
           </div>
 
-          {/* lookup any address */}
-          <div className="space-y-2">
-            <label className="block text-xs font-mono text-muted">
-              {t.balance.lookupLabel}
-            </label>
-            <div className="flex gap-2">
-              <input
-                className={inp}
-                value={publicKey}
-                onChange={(e) => setPublicKey(e.target.value)}
-                placeholder="G..."
-                spellCheck={false}
-              />
-              <button
-                onClick={fetchByPublicKey}
-                disabled={inFlight || !usingCustomKey}
-                className={`${btn("primary")} shrink-0`}
-              >
-                {inFlight && usingCustomKey
-                  ? t.common.loading
-                  : t.balance.fetch}
-              </button>
-            </div>
-          </div>
+          <SdkToggle value={sdk} onChange={setSdk} />
 
-          {/* own wallet shortcut */}
-          {isAuthenticated && (
+          {/* what the selected SDK does */}
+          <p className="text-sm text-muted">
+            {sdk === "react" ? t.balance.reactDesc : t.balance.coreDesc}
+          </p>
+
+          {sdk === "react" ? (
             <div className="space-y-1">
               <button
-                onClick={fetchOwnWallet}
-                disabled={inFlight}
-                className={btn("secondary")}
+                onClick={openWalletBalanceModal}
+                disabled={!isAuthenticated}
+                className={`${btn("primary")} w-full sm:w-auto`}
               >
-                {inFlight && !usingCustomKey
-                  ? t.common.loading
-                  : t.balance.useMyWallet}
+                {isAuthenticated ? t.balance.open : t.common.connectWalletFirst}
               </button>
-              {walletAddress && (
-                <p className="text-[10px] font-mono text-muted-light truncate">
-                  {walletAddress}
-                </p>
+              <p className="text-xs font-mono text-muted-light">
+                <code className="text-foreground">
+                  openWalletBalanceModal()
+                </code>{" "}
+                {t.balance.modalNote}
+              </p>
+
+              <FnReference
+                title={t.balance.reactFnsTitle}
+                intro={t.balance.reactFnsIntro}
+                fns={t.balance.reactFns}
+              />
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {/* lookup any address */}
+              <div className="space-y-2">
+                <label className="block text-xs font-mono text-muted">
+                  {t.balance.lookupLabel}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    className={inp}
+                    value={publicKey}
+                    onChange={(e) => setPublicKey(e.target.value)}
+                    placeholder="G..."
+                    spellCheck={false}
+                  />
+                  <button
+                    onClick={fetchByPublicKey}
+                    disabled={inFlight || !usingCustomKey}
+                    className={`${btn("primary")} shrink-0`}
+                  >
+                    {inFlight && usingCustomKey
+                      ? t.common.loading
+                      : t.balance.fetch}
+                  </button>
+                </div>
+              </div>
+
+              {/* own wallet shortcut */}
+              {isAuthenticated && (
+                <div className="space-y-1">
+                  <button
+                    onClick={fetchOwnWallet}
+                    disabled={inFlight}
+                    className={btn("secondary")}
+                  >
+                    {inFlight && !usingCustomKey
+                      ? t.common.loading
+                      : t.balance.useMyWallet}
+                  </button>
+                  {walletAddress && (
+                    <p className="text-[10px] font-mono text-muted-light truncate">
+                      {walletAddress}
+                    </p>
+                  )}
+                </div>
               )}
+
+              <p className="text-xs font-mono text-muted-light">
+                <code className="text-foreground">getWalletBalance()</code>{" "}
+                {t.balance.coreNote}
+              </p>
+
+              <FnReference
+                title={t.balance.coreFnsTitle}
+                intro={t.balance.coreFnsIntro}
+                fns={t.balance.coreFns}
+              />
             </div>
           )}
+        </div>
 
-          {/* error from our wrapper */}
-          {lastError && (
-            <p className="text-xs font-mono text-error">{lastError}</p>
+        {/* ── right: matching code panel + live state + raw response ───────── */}
+        <div className="lg:sticky lg:top-6 space-y-4">
+          {sdk === "core" ? (
+            <CodePanel
+              sdk="@pollar/core"
+              note="framework-agnostic"
+              code={coreCode}
+            />
+          ) : (
+            <CodePanel
+              sdk="@pollar/react"
+              note="hooks & components"
+              code={REACT_CODE}
+            />
           )}
 
-          {/* reactive state */}
+          {/* live state + rendered table */}
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
               <span className="text-xs font-mono text-muted-light">
@@ -248,6 +297,12 @@ if (walletBalance.step === 'loaded') {
                 {step}
               </span>
             </div>
+
+            {lastError && usingCustomKey && (
+              <p className="px-4 py-3 text-xs font-mono text-error">
+                {lastError}
+              </p>
+            )}
 
             {stateMessage && (
               <p className="px-4 py-3 text-xs font-mono text-muted-light">
@@ -302,11 +357,23 @@ if (walletBalance.step === 'loaded') {
               </table>
             )}
           </div>
-        </div>
 
-        {/* ── right: live code previews (core + react) ──────────────────── */}
-        <div className="lg:sticky lg:top-6">
-          <DualCode core={coreCode} react={reactCode} />
+          {/* raw response — how the data actually arrives from the API */}
+          {rawData && (
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border bg-surface">
+                <span className="text-xs font-mono text-muted-light">
+                  {t.balance.rawResponse}
+                </span>
+                <span className="text-xs font-mono text-muted-light">
+                  {usingCustomKey ? "getWalletBalance()" : "walletBalance.data"}
+                </span>
+              </div>
+              <pre className="p-4 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto whitespace-pre leading-relaxed max-h-80 overflow-y-auto">
+                {JSON.stringify(rawData, null, 2)}
+              </pre>
+            </div>
+          )}
         </div>
       </div>
     </div>
