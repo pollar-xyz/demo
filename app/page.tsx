@@ -1,23 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { GROUPS, type NavGroup, type TabLabel } from "./_nav";
 import { useI18n } from "./_i18n/LanguageProvider";
 import type { Dictionary } from "./_i18n/translations";
 
-const PAGES: { href: string; key: keyof Dictionary["nav"] }[] = [
-  { href: "/transactions", key: "transactions" },
-  { href: "/send", key: "send" },
-  { href: "/receive", key: "receive" },
-  { href: "/history", key: "history" },
-  { href: "/balance", key: "balance" },
-  { href: "/assets", key: "assets" },
-  { href: "/ramp", key: "ramp" },
-  { href: "/kyc", key: "kyc" },
-  { href: "/escrow", key: "escrow" },
-  { href: "/sessions", key: "sessions" },
-  { href: "/distribution", key: "distribution" },
-  { href: "/lumenwipe", key: "lumenwipe" },
-];
+// Short blurb for each landing card. Native tabs reuse the existing home
+// descriptions; the explainer "overview" tabs borrow their about-page tagline.
+function tabDesc(
+  t: Dictionary,
+  group: NavGroup,
+  label: TabLabel,
+): string {
+  if (label === "overview") {
+    if (group.key === "trustlessWork") return t.twAbout.tagline;
+    if (group.key === "lumenwipe") return t.lwAbout.tagline;
+    return t.nekoAbout.tagline;
+  }
+  if (label === "dashboard") return t.neko.cardDesc;
+  return t.home.descs[label as keyof Dictionary["home"]["descs"]];
+}
 
 export default function Home() {
   const { t } = useI18n();
@@ -44,20 +46,29 @@ export default function Home() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {PAGES.map(({ href, key }) => (
-          <Link
-            key={href}
-            href={href}
-            className="group block rounded-2xl border border-border bg-background p-5 sm:p-6 hover:border-primary transition-colors"
-          >
-            <p className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">
-              {t.nav[key]}
-            </p>
-            <p className="text-xs sm:text-sm text-muted mt-1.5">
-              {t.home.descs[key]}
-            </p>
-          </Link>
+      <div className="space-y-10">
+        {GROUPS.map((group) => (
+          <section key={group.key} className="space-y-4">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+              {t.nav.groups[group.key]}
+            </h2>
+            <div className="grid gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {group.tabs.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group block rounded-2xl border border-border bg-background p-5 sm:p-6 hover:border-primary transition-colors"
+                >
+                  <p className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">
+                    {t.nav[label]}
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted mt-1.5">
+                    {tabDesc(t, group, label)}
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
         ))}
       </div>
     </div>

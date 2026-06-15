@@ -31,6 +31,14 @@ export const en = {
     sessions: "Sessions",
     distribution: "Distribution",
     lumenwipe: "LumenWipe",
+    overview: "Overview",
+    dashboard: "Dashboard",
+    groups: {
+      pollarNative: "Pollar native",
+      trustlessWork: "Trustless Work",
+      lumenwipe: "LumenWipe",
+      nekoProtocol: "Neko Protocol",
+    },
   },
 
   shell: {
@@ -41,6 +49,7 @@ export const en = {
     changeLanguage: "Change language",
     openMenu: "Open menu",
     closeMenu: "Close menu",
+    products: "Products & partners",
   },
 
   home: {
@@ -1101,6 +1110,154 @@ export const en = {
       "Request failed. Check the account, destination and network.",
     emptyFields: "Enter both an account and a destination.",
   },
+
+  twAbout: {
+    eyebrow: "Trustless Work",
+    title: "Milestone-based escrows on Stellar",
+    tagline: "Escrows for stablecoins made easy.",
+    body: [
+      "Trustless Work provides non-custodial, milestone-based escrow infrastructure built on the Stellar blockchain. Funds are locked on-chain and released only when predefined conditions are met — taking counterparty risk out of stablecoin transactions.",
+      "Instead of writing smart contracts from scratch, builders integrate escrow through Trustless Work's APIs, SDKs and open-source templates — powering marketplaces, crowdfunding, freelancing and trade-finance flows without a custodial intermediary.",
+      "In this demo, the Escrow tab uses the Pollar SDK's Trustless Work adapter: you deploy, fund, approve milestones and resolve disputes, and the SDK signs and submits the unsigned XDR with your connected wallet automatically.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Non-custodial escrow",
+        desc: "Funds are locked on-chain and released by rules — never held by a third party.",
+      },
+      {
+        title: "Milestone-based releases",
+        desc: "Break a deal into milestones and release funds as each one is approved.",
+      },
+      {
+        title: "APIs, SDKs & templates",
+        desc: "Drop-in escrow without writing or auditing smart contracts yourself.",
+      },
+      {
+        title: "Built for stablecoins",
+        desc: "Designed around stablecoin payments on Stellar.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    dappLabel: "Open the dApp",
+    disclaimer:
+      "Summary based on the official Trustless Work pages. Pollar is not affiliated with Trustless Work — all credit to their team.",
+  },
+
+  lwAbout: {
+    eyebrow: "LumenWipe",
+    title: "Cleanly close a Stellar account",
+    tagline: "Recover the XLM locked in account reserves.",
+    body: [
+      "Every Stellar account locks a minimum reserve — 1 XLM plus 0.5 XLM per subentry (trustlines, offers, data entries, signers). LumenWipe recovers those reserves by guiding an account through a complete, auditable wind-down.",
+      "It systematically unwinds every encumbrance — cancelling offers, exiting Soroban DeFi positions, removing trustlines and data entries — converts the remaining balances to XLM, then merges the account into a destination wallet.",
+      "LumenWipe is non-custodial: every transaction is signed in your browser and keys never leave it. The API is read-only and returns unsigned XDRs, so you decode and verify each step before signing.",
+      "In this demo, the LumenWipe tab calls the public LumenWipe API to plan and build the wind-down, and lets you sign each step with your connected Pollar wallet.",
+    ],
+    featuresTitle: "What it does",
+    features: [
+      {
+        title: "Recovers locked reserves",
+        desc: "Frees the XLM held by an account's minimum reserve.",
+      },
+      {
+        title: "Full wind-down loop",
+        desc: "Offers, trustlines, data, signers and DeFi positions — handled in order.",
+      },
+      {
+        title: "Soroban & DeFi aware",
+        desc: "Exits supported Soroban DeFi positions before closing.",
+      },
+      {
+        title: "Non-custodial & resumable",
+        desc: "Signs in the browser; sessions can be paused and resumed.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    docsLabel: "Documentation",
+    disclaimer:
+      "Summary based on the official LumenWipe site and docs. All credit to the LumenWipe team.",
+  },
+
+  nekoAbout: {
+    eyebrow: "Neko Protocol",
+    title: "Discover and activate tokenized real-world assets",
+    tagline:
+      "Discover, access and activate tokenized real assets — all in one place.",
+    body: [
+      "Neko is a unified platform for discovering, trading and activating real-world assets (RWAs) on-chain. It aggregates multiple protocols and issuers behind a single interface, so users don't have to navigate a fragmented RWA ecosystem.",
+      "Beyond buying and selling tokenized assets, Neko lets users put RWAs to work — using them as collateral and earning yield through lending vaults — with a focus on accessibility for everyday users rather than crypto specialists.",
+      "This overview references Neko's official pages; the Neko section of this demo is informational for now.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Aggregated RWA access",
+        desc: "One interface across multiple protocols and issuers.",
+      },
+      {
+        title: "Trade tokenized assets",
+        desc: "Buy and sell real-world assets on-chain.",
+      },
+      {
+        title: "Collateral & yield",
+        desc: "Use RWAs as collateral and earn through lending vaults.",
+      },
+      {
+        title: "Built for everyone",
+        desc: "Designed for everyday users, not just crypto specialists.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    appLabel: "Open the app",
+    disclaimer:
+      "Summary based on the official Neko Protocol pages. Pollar is not affiliated with Neko.",
+  },
+
+  neko: {
+    title: "Neko dashboard",
+    desc: "Live Neko Protocol data for your connected Pollar wallet, plus the prepare → sign → submit transaction flow — signed locally with Pollar, submitted through Neko.",
+    cardDesc: "Live Neko data and transaction signing with your Pollar wallet.",
+    connect:
+      "Connect your Pollar wallet to load Neko data and sign transactions.",
+    notConfigured:
+      "The Neko proxy isn't configured. Add NEKO_PROXY_BASE_URL and NEKO_SERVER_CODE to your environment, then reload.",
+    refresh: "Refresh",
+    loading: "Loading…",
+    yieldsTitle: "Bond yields",
+    yieldsNote: "Etherfuse APYs (CETES, USTRY, TESOURO).",
+    apy: "APY",
+    noYields: "No yields available.",
+    pricesTitle: "Prices",
+    pricesNote: "USD prices for XLM and USDC.",
+    positionsTitle: "Your positions",
+    positionsNote: "Aggregated pool + vault positions for your wallet.",
+    catalogTitle: "Pool catalog",
+    catalogNote: "Blend / Aqua / Soroswap pools.",
+    rawResponse: "Raw response",
+    noData: "No data.",
+    signTitle: "Sign a Neko transaction with Pollar",
+    signDesc:
+      "Paste an unsigned Soroban XDR from Neko. The demo prepares it on the proxy, signs it locally with your Pollar wallet (sign only — no submit), then submits the signed XDR back through Neko and polls the status.",
+    xdrLabel: "Unsigned XDR",
+    xdrPh: "AAAA… (base64 Soroban envelope)",
+    run: "Prepare, sign & submit",
+    running: "Working…",
+    stepPrepare: "Prepare (proxy)",
+    stepSign: "Sign with Pollar",
+    stepSubmit: "Submit (proxy)",
+    stepPoll: "Poll status",
+    statusLabel: "Status",
+    hashLabel: "Hash",
+    resultIdle: "Paste an unsigned XDR and run the flow.",
+    emptyXdr: "Enter an unsigned XDR first.",
+    signFailed: "Signing was rejected or failed.",
+    flowTitle: "The prepare → sign → submit flow",
+  },
 };
 
 export type Dictionary = typeof en;
@@ -1134,6 +1291,14 @@ export const es: Dictionary = {
     sessions: "Sesiones",
     distribution: "Distribución",
     lumenwipe: "LumenWipe",
+    overview: "Resumen",
+    dashboard: "Panel",
+    groups: {
+      pollarNative: "Pollar nativo",
+      trustlessWork: "Trustless Work",
+      lumenwipe: "LumenWipe",
+      nekoProtocol: "Neko Protocol",
+    },
   },
 
   shell: {
@@ -1144,6 +1309,7 @@ export const es: Dictionary = {
     changeLanguage: "Cambiar idioma",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
+    products: "Productos y partners",
   },
 
   home: {
@@ -2213,6 +2379,155 @@ export const es: Dictionary = {
     requestFailed: "La solicitud falló. Revisa la cuenta, el destino y la red.",
     emptyFields: "Ingresa una cuenta y un destino.",
   },
+
+  twAbout: {
+    eyebrow: "Trustless Work",
+    title: "Escrows por hitos en Stellar",
+    tagline: "Escrows para stablecoins, fáciles.",
+    body: [
+      "Trustless Work ofrece infraestructura de escrow no custodial y basada en hitos, construida sobre la blockchain de Stellar. Los fondos se bloquean on-chain y se liberan solo cuando se cumplen condiciones predefinidas, eliminando el riesgo de contraparte en las transacciones con stablecoins.",
+      "En lugar de escribir contratos inteligentes desde cero, los desarrolladores integran escrow mediante las APIs, SDKs y plantillas open source de Trustless Work, habilitando marketplaces, crowdfunding, freelancing y financiamiento comercial sin un intermediario custodio.",
+      "En esta demo, la pestaña Escrow usa el adaptador de Trustless Work del SDK de Pollar: despliegas, financias, apruebas hitos y resuelves disputas, y el SDK firma y envía el XDR sin firmar con tu billetera conectada automáticamente.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Escrow no custodial",
+        desc: "Los fondos se bloquean on-chain y se liberan por reglas, nunca los retiene un tercero.",
+      },
+      {
+        title: "Liberación por hitos",
+        desc: "Divide un acuerdo en hitos y libera fondos a medida que se aprueba cada uno.",
+      },
+      {
+        title: "APIs, SDKs y plantillas",
+        desc: "Escrow listo para usar sin escribir ni auditar contratos inteligentes tú mismo.",
+      },
+      {
+        title: "Hecho para stablecoins",
+        desc: "Diseñado en torno a pagos con stablecoins en Stellar.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    dappLabel: "Abrir la dApp",
+    disclaimer:
+      "Resumen basado en las páginas oficiales de Trustless Work. Pollar no está afiliado a Trustless Work; todo el crédito es de su equipo.",
+  },
+
+  lwAbout: {
+    eyebrow: "LumenWipe",
+    title: "Cierra una cuenta Stellar de forma limpia",
+    tagline: "Recupera el XLM bloqueado en las reservas de la cuenta.",
+    body: [
+      "Cada cuenta de Stellar bloquea una reserva mínima: 1 XLM más 0,5 XLM por cada subentrada (trustlines, ofertas, entradas de datos, firmantes). LumenWipe recupera esas reservas guiando a la cuenta por un cierre completo y auditable.",
+      "Desarma sistemáticamente cada gravamen — cancelando ofertas, saliendo de posiciones DeFi en Soroban, eliminando trustlines y entradas de datos —, convierte los saldos restantes a XLM y luego fusiona la cuenta en una billetera de destino.",
+      "LumenWipe es no custodial: cada transacción se firma en tu navegador y las claves nunca salen de él. La API es de solo lectura y devuelve XDR sin firmar, así que decodificas y verificas cada paso antes de firmar.",
+      "En esta demo, la pestaña LumenWipe llama a la API pública de LumenWipe para planificar y construir el cierre, y te permite firmar cada paso con tu billetera de Pollar conectada.",
+    ],
+    featuresTitle: "Qué hace",
+    features: [
+      {
+        title: "Recupera reservas bloqueadas",
+        desc: "Libera el XLM retenido por la reserva mínima de una cuenta.",
+      },
+      {
+        title: "Bucle de cierre completo",
+        desc: "Ofertas, trustlines, datos, firmantes y posiciones DeFi, en orden.",
+      },
+      {
+        title: "Compatible con Soroban y DeFi",
+        desc: "Sale de las posiciones DeFi de Soroban compatibles antes de cerrar.",
+      },
+      {
+        title: "No custodial y reanudable",
+        desc: "Firma en el navegador; las sesiones se pueden pausar y reanudar.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    docsLabel: "Documentación",
+    disclaimer:
+      "Resumen basado en el sitio y la documentación oficiales de LumenWipe. Todo el crédito es del equipo de LumenWipe.",
+  },
+
+  nekoAbout: {
+    eyebrow: "Neko Protocol",
+    title: "Descubre y activa activos del mundo real tokenizados",
+    tagline:
+      "Descubre, accede y activa activos reales tokenizados, todo en un solo lugar.",
+    body: [
+      "Neko es una plataforma unificada para descubrir, intercambiar y activar activos del mundo real (RWA) on-chain. Agrega múltiples protocolos y emisores tras una sola interfaz, para que los usuarios no tengan que navegar un ecosistema RWA fragmentado.",
+      "Más allá de comprar y vender activos tokenizados, Neko permite poner los RWA a trabajar — usándolos como colateral y generando rendimiento a través de bóvedas de préstamo —, con foco en la accesibilidad para usuarios cotidianos y no solo para especialistas en cripto.",
+      "Este resumen hace referencia a las páginas oficiales de Neko; la sección de Neko en esta demo es informativa por ahora.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Acceso agregado a RWA",
+        desc: "Una sola interfaz para múltiples protocolos y emisores.",
+      },
+      {
+        title: "Intercambia activos tokenizados",
+        desc: "Compra y vende activos del mundo real on-chain.",
+      },
+      {
+        title: "Colateral y rendimiento",
+        desc: "Usa RWA como colateral y gana mediante bóvedas de préstamo.",
+      },
+      {
+        title: "Hecho para todos",
+        desc: "Diseñado para usuarios cotidianos, no solo para especialistas en cripto.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    appLabel: "Abrir la app",
+    disclaimer:
+      "Resumen basado en las páginas oficiales de Neko Protocol. Pollar no está afiliado a Neko.",
+  },
+
+  neko: {
+    title: "Panel de Neko",
+    desc: "Datos en vivo de Neko Protocol para tu billetera de Pollar conectada, más el flujo de transacción prepare → firmar → submit — firmado localmente con Pollar y enviado a través de Neko.",
+    cardDesc:
+      "Datos en vivo de Neko y firma de transacciones con tu billetera de Pollar.",
+    connect:
+      "Conecta tu billetera de Pollar para cargar los datos de Neko y firmar transacciones.",
+    notConfigured:
+      "El proxy de Neko no está configurado. Agrega NEKO_PROXY_BASE_URL y NEKO_SERVER_CODE a tu entorno y recarga.",
+    refresh: "Actualizar",
+    loading: "Cargando…",
+    yieldsTitle: "Rendimientos de bonos",
+    yieldsNote: "APYs de Etherfuse (CETES, USTRY, TESOURO).",
+    apy: "APY",
+    noYields: "No hay rendimientos disponibles.",
+    pricesTitle: "Precios",
+    pricesNote: "Precios en USD de XLM y USDC.",
+    positionsTitle: "Tus posiciones",
+    positionsNote: "Posiciones agregadas de pools + vaults de tu billetera.",
+    catalogTitle: "Catálogo de pools",
+    catalogNote: "Pools de Blend / Aqua / Soroswap.",
+    rawResponse: "Respuesta cruda",
+    noData: "Sin datos.",
+    signTitle: "Firma una transacción de Neko con Pollar",
+    signDesc:
+      "Pega un XDR de Soroban sin firmar de Neko. La demo lo prepara en el proxy, lo firma localmente con tu billetera de Pollar (solo firma — sin enviar), luego envía el XDR firmado de vuelta a través de Neko y consulta el estado.",
+    xdrLabel: "XDR sin firmar",
+    xdrPh: "AAAA… (sobre Soroban en base64)",
+    run: "Preparar, firmar y enviar",
+    running: "Procesando…",
+    stepPrepare: "Preparar (proxy)",
+    stepSign: "Firmar con Pollar",
+    stepSubmit: "Enviar (proxy)",
+    stepPoll: "Consultar estado",
+    statusLabel: "Estado",
+    hashLabel: "Hash",
+    resultIdle: "Pega un XDR sin firmar y ejecuta el flujo.",
+    emptyXdr: "Ingresa primero un XDR sin firmar.",
+    signFailed: "La firma fue rechazada o falló.",
+    flowTitle: "El flujo prepare → firmar → submit",
+  },
 };
 
 export const pt: Dictionary = {
@@ -2244,6 +2559,14 @@ export const pt: Dictionary = {
     sessions: "Sessões",
     distribution: "Distribuição",
     lumenwipe: "LumenWipe",
+    overview: "Visão geral",
+    dashboard: "Painel",
+    groups: {
+      pollarNative: "Pollar nativo",
+      trustlessWork: "Trustless Work",
+      lumenwipe: "LumenWipe",
+      nekoProtocol: "Neko Protocol",
+    },
   },
 
   shell: {
@@ -2254,6 +2577,7 @@ export const pt: Dictionary = {
     changeLanguage: "Alterar idioma",
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
+    products: "Produtos e parceiros",
   },
 
   home: {
@@ -3318,6 +3642,155 @@ export const pt: Dictionary = {
     requestFailed:
       "A requisição falhou. Verifique a conta, o destino e a rede.",
     emptyFields: "Informe uma conta e um destino.",
+  },
+
+  twAbout: {
+    eyebrow: "Trustless Work",
+    title: "Escrows por marcos na Stellar",
+    tagline: "Escrows para stablecoins, sem complicação.",
+    body: [
+      "A Trustless Work oferece infraestrutura de escrow não custodial e baseada em marcos, construída sobre a blockchain Stellar. Os fundos são bloqueados on-chain e liberados apenas quando condições predefinidas são cumpridas, eliminando o risco de contraparte nas transações com stablecoins.",
+      "Em vez de escrever contratos inteligentes do zero, os desenvolvedores integram escrow por meio das APIs, SDKs e modelos open source da Trustless Work, viabilizando marketplaces, crowdfunding, freelancing e financiamento comercial sem um intermediário custodiante.",
+      "Nesta demo, a aba Escrow usa o adaptador da Trustless Work do SDK da Pollar: você implanta, financia, aprova marcos e resolve disputas, e o SDK assina e envia o XDR não assinado com a sua carteira conectada automaticamente.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Escrow não custodial",
+        desc: "Os fundos são bloqueados on-chain e liberados por regras, nunca retidos por terceiros.",
+      },
+      {
+        title: "Liberação por marcos",
+        desc: "Divida um acordo em marcos e libere os fundos conforme cada um é aprovado.",
+      },
+      {
+        title: "APIs, SDKs e modelos",
+        desc: "Escrow pronto para uso sem escrever ou auditar contratos inteligentes.",
+      },
+      {
+        title: "Feito para stablecoins",
+        desc: "Projetado em torno de pagamentos com stablecoins na Stellar.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    dappLabel: "Abrir o dApp",
+    disclaimer:
+      "Resumo baseado nas páginas oficiais da Trustless Work. A Pollar não é afiliada à Trustless Work; todo o crédito é da equipe deles.",
+  },
+
+  lwAbout: {
+    eyebrow: "LumenWipe",
+    title: "Encerre uma conta Stellar de forma limpa",
+    tagline: "Recupere o XLM bloqueado nas reservas da conta.",
+    body: [
+      "Toda conta Stellar bloqueia uma reserva mínima — 1 XLM mais 0,5 XLM por subentrada (trustlines, ofertas, entradas de dados, signatários). O LumenWipe recupera essas reservas conduzindo a conta por um encerramento completo e auditável.",
+      "Ele desfaz sistematicamente cada ônus — cancelando ofertas, saindo de posições DeFi na Soroban, removendo trustlines e entradas de dados —, converte os saldos restantes em XLM e então funde a conta em uma carteira de destino.",
+      "O LumenWipe é não custodial: cada transação é assinada no seu navegador e as chaves nunca saem dele. A API é somente leitura e retorna XDRs não assinados, então você decodifica e verifica cada passo antes de assinar.",
+      "Nesta demo, a aba LumenWipe chama a API pública do LumenWipe para planejar e construir o encerramento, e permite assinar cada passo com a sua carteira Pollar conectada.",
+    ],
+    featuresTitle: "O que faz",
+    features: [
+      {
+        title: "Recupera reservas bloqueadas",
+        desc: "Libera o XLM retido pela reserva mínima de uma conta.",
+      },
+      {
+        title: "Ciclo de encerramento completo",
+        desc: "Ofertas, trustlines, dados, signatários e posições DeFi, em ordem.",
+      },
+      {
+        title: "Compatível com Soroban e DeFi",
+        desc: "Sai das posições DeFi da Soroban compatíveis antes de encerrar.",
+      },
+      {
+        title: "Não custodial e retomável",
+        desc: "Assina no navegador; as sessões podem ser pausadas e retomadas.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    docsLabel: "Documentação",
+    disclaimer:
+      "Resumo baseado no site e na documentação oficiais do LumenWipe. Todo o crédito é da equipe do LumenWipe.",
+  },
+
+  nekoAbout: {
+    eyebrow: "Neko Protocol",
+    title: "Descubra e ative ativos do mundo real tokenizados",
+    tagline:
+      "Descubra, acesse e ative ativos reais tokenizados, tudo em um só lugar.",
+    body: [
+      "A Neko é uma plataforma unificada para descobrir, negociar e ativar ativos do mundo real (RWAs) on-chain. Ela agrega vários protocolos e emissores em uma única interface, para que os usuários não precisem navegar por um ecossistema RWA fragmentado.",
+      "Além de comprar e vender ativos tokenizados, a Neko permite colocar os RWAs para trabalhar — usando-os como garantia e gerando rendimento por meio de cofres de empréstimo —, com foco na acessibilidade para usuários comuns e não apenas para especialistas em cripto.",
+      "Este resumo faz referência às páginas oficiais da Neko; a seção da Neko nesta demo é informativa por enquanto.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Acesso agregado a RWA",
+        desc: "Uma única interface para vários protocolos e emissores.",
+      },
+      {
+        title: "Negocie ativos tokenizados",
+        desc: "Compre e venda ativos do mundo real on-chain.",
+      },
+      {
+        title: "Garantia e rendimento",
+        desc: "Use RWAs como garantia e ganhe por meio de cofres de empréstimo.",
+      },
+      {
+        title: "Feito para todos",
+        desc: "Projetado para usuários comuns, não apenas para especialistas em cripto.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    appLabel: "Abrir o app",
+    disclaimer:
+      "Resumo baseado nas páginas oficiais da Neko Protocol. A Pollar não é afiliada à Neko.",
+  },
+
+  neko: {
+    title: "Painel da Neko",
+    desc: "Dados ao vivo da Neko Protocol para a sua carteira Pollar conectada, além do fluxo de transação prepare → assinar → submit — assinado localmente com a Pollar e enviado pela Neko.",
+    cardDesc:
+      "Dados ao vivo da Neko e assinatura de transações com a sua carteira Pollar.",
+    connect:
+      "Conecte a sua carteira Pollar para carregar os dados da Neko e assinar transações.",
+    notConfigured:
+      "O proxy da Neko não está configurado. Adicione NEKO_PROXY_BASE_URL e NEKO_SERVER_CODE ao seu ambiente e recarregue.",
+    refresh: "Atualizar",
+    loading: "Carregando…",
+    yieldsTitle: "Rendimentos de títulos",
+    yieldsNote: "APYs da Etherfuse (CETES, USTRY, TESOURO).",
+    apy: "APY",
+    noYields: "Nenhum rendimento disponível.",
+    pricesTitle: "Preços",
+    pricesNote: "Preços em USD de XLM e USDC.",
+    positionsTitle: "Suas posições",
+    positionsNote: "Posições agregadas de pools + vaults da sua carteira.",
+    catalogTitle: "Catálogo de pools",
+    catalogNote: "Pools de Blend / Aqua / Soroswap.",
+    rawResponse: "Resposta crua",
+    noData: "Sem dados.",
+    signTitle: "Assine uma transação da Neko com a Pollar",
+    signDesc:
+      "Cole um XDR Soroban não assinado da Neko. A demo o prepara no proxy, assina localmente com a sua carteira Pollar (apenas assinar — sem enviar), depois envia o XDR assinado de volta pela Neko e consulta o status.",
+    xdrLabel: "XDR não assinado",
+    xdrPh: "AAAA… (envelope Soroban em base64)",
+    run: "Preparar, assinar e enviar",
+    running: "Processando…",
+    stepPrepare: "Preparar (proxy)",
+    stepSign: "Assinar com a Pollar",
+    stepSubmit: "Enviar (proxy)",
+    stepPoll: "Consultar status",
+    statusLabel: "Status",
+    hashLabel: "Hash",
+    resultIdle: "Cole um XDR não assinado e execute o fluxo.",
+    emptyXdr: "Informe primeiro um XDR não assinado.",
+    signFailed: "A assinatura foi rejeitada ou falhou.",
+    flowTitle: "O fluxo prepare → assinar → submit",
   },
 };
 

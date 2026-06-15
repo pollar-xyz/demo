@@ -10,26 +10,11 @@ import { ApiKeyModal } from './_components/ApiKeyModal';
 import { LanguageSwitcher } from './_components/LanguageSwitcher';
 import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
-import type { Dictionary } from './_i18n/translations';
-import { trustlessWorkAdapter } from './escrow/adapter';
+import { GROUPS } from './_nav';
+import { trustlessWorkAdapter } from './trustless-work/escrow/adapter';
 
 const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
-
-const NAV_LINKS: { href: string; key: keyof Dictionary['nav'] }[] = [
-  { href: '/transactions', key: 'transactions' },
-  { href: '/send', key: 'send' },
-  { href: '/receive', key: 'receive' },
-  { href: '/history', key: 'history' },
-  { href: '/balance', key: 'balance' },
-  { href: '/assets', key: 'assets' },
-  { href: '/ramp', key: 'ramp' },
-  { href: '/kyc', key: 'kyc' },
-  { href: '/escrow', key: 'escrow' },
-  { href: '/sessions', key: 'sessions' },
-  { href: '/distribution', key: 'distribution' },
-  { href: '/lumenwipe', key: 'lumenwipe' },
-];
 
 function ThemeToggle() {
   const { t } = useI18n();
@@ -100,6 +85,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const customKey = searchParams.get('apiKey');
   const apiKey = customKey ?? DEFAULT_API_KEY;
   const isCustomKey = customKey !== null;
+
+  // The group whose route prefix matches the current path (null on `/`).
+  const activeGroup =
+    GROUPS.find((g) => pathname.startsWith(g.basePath)) ?? null;
 
   const [ keyModalOpen, setKeyModalOpen ] = useState(false);
   const [ menuOpen, setMenuOpen ] = useState(false);
@@ -261,27 +250,78 @@ export function Shell({ children }: { children: React.ReactNode }) {
               </div>
             </div>
           )}
-          {/* row 2: feature tabs (scrollable on mobile) */}
-          <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden">
-            {NAV_LINKS.map(({ href, key }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
-                  pathname === href
-                    ? 'border-primary text-primary font-semibold'
-                    : 'border-transparent text-muted hover:text-foreground'
-                }`}
-              >
-                {t.nav[key]}
-              </Link>
-            ))}
-          </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-10 lg:px-8">
-        {children}
-      </main>
+
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 lg:flex lg:gap-8">
+        {/* sidebar: one entry per product group (desktop) */}
+        <aside className="hidden lg:block w-56 shrink-0 self-start lg:sticky lg:top-20 py-8">
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-light">
+            {t.shell.products}
+          </p>
+          <nav className="space-y-1">
+            {GROUPS.map((g) => {
+              const active = activeGroup?.key === g.key;
+              return (
+                <Link
+                  key={g.key}
+                  href={g.tabs[0].href}
+                  className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-primary-light text-primary'
+                      : 'text-muted hover:text-foreground hover:bg-surface'
+                  }`}
+                >
+                  {t.nav.groups[g.key]}
+                </Link>
+              );
+            })}
+          </nav>
+        </aside>
+
+        <div className="min-w-0 flex-1">
+          {/* group selector (mobile): the sidebar collapses to a pill row */}
+          <div className="lg:hidden flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden pt-4">
+            {GROUPS.map((g) => {
+              const active = activeGroup?.key === g.key;
+              return (
+                <Link
+                  key={g.key}
+                  href={g.tabs[0].href}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                    active
+                      ? 'bg-primary text-white'
+                      : 'border border-border text-muted hover:text-foreground'
+                  }`}
+                >
+                  {t.nav.groups[g.key]}
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* tabs for the active group (scrollable on mobile) */}
+          {activeGroup && (
+            <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden border-b border-border mt-4 lg:mt-8">
+              {activeGroup.tabs.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
+                    pathname === href
+                      ? 'border-primary text-primary font-semibold'
+                      : 'border-transparent text-muted hover:text-foreground'
+                  }`}
+                >
+                  {t.nav[label]}
+                </Link>
+              ))}
+            </nav>
+          )}
+
+          <main className="py-6 sm:py-10">{children}</main>
+        </div>
+      </div>
 
       {keyModalOpen && (
         <ApiKeyModal

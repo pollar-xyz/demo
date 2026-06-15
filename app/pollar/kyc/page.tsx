@@ -3,10 +3,10 @@
 import { usePollar, KycStatus } from "@pollar/react";
 import type { KycStatus as KycStatusValue, KycLevel } from "@pollar/core";
 import { useState } from "react";
-import { DualCode } from "../_components/CodePanels";
-import { ComingSoon } from "../_components/ComingSoon";
-import { FnReference } from "../_components/SdkDocs";
-import { useI18n } from "../_i18n/LanguageProvider";
+import { DualCode } from "@/app/_components/CodePanels";
+import { ComingSoon } from "@/app/_components/ComingSoon";
+import { FnReference } from "@/app/_components/SdkDocs";
+import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
 

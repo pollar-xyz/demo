@@ -1,9 +1,9 @@
 "use client";
 
 import { usePollar } from "@pollar/react";
-import { ComingSoon } from "../_components/ComingSoon";
-import { SdkModalTab } from "../_components/SdkDocs";
-import { useI18n } from "../_i18n/LanguageProvider";
+import { ComingSoon } from "@/app/_components/ComingSoon";
+import { SdkModalTab } from "@/app/_components/SdkDocs";
+import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── code previews ────────────────────────────────────────────────────────────
 

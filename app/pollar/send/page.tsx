@@ -2,10 +2,10 @@
 
 import { usePollar } from "@pollar/react";
 import { useEffect, useState } from "react";
-import { CodePanel } from "../_components/CodePanels";
-import { Select } from "../_components/Select";
-import { FnReference, SdkToggle, type Sdk } from "../_components/SdkDocs";
-import { useI18n } from "../_i18n/LanguageProvider";
+import { CodePanel } from "@/app/_components/CodePanels";
+import { Select } from "@/app/_components/Select";
+import { FnReference, SdkToggle, type Sdk } from "@/app/_components/SdkDocs";
+import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
 

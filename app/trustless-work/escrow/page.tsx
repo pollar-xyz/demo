@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { usePollar } from "@pollar/react";
 import { useEscrow } from "./adapter";
-import { DualCode } from "../_components/CodePanels";
-import { FnReference } from "../_components/SdkDocs";
-import { useI18n } from "../_i18n/LanguageProvider";
+import { DualCode } from "@/app/_components/CodePanels";
+import { FnReference } from "@/app/_components/SdkDocs";
+import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── styles ───────────────────────────────────────────────────────────────────
 

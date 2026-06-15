@@ -3,10 +3,10 @@
 import { usePollar } from "@pollar/react";
 import { contract, rpc } from "@stellar/stellar-sdk";
 import { useState } from "react";
-import { CodePanel, highlight } from "../_components/CodePanels";
-import { FnReference } from "../_components/SdkDocs";
-import { Select } from "../_components/Select";
-import { useI18n } from "../_i18n/LanguageProvider";
+import { CodePanel, highlight } from "@/app/_components/CodePanels";
+import { FnReference } from "@/app/_components/SdkDocs";
+import { Select } from "@/app/_components/Select";
+import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
