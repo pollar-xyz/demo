@@ -1,52 +1,54 @@
-"use client";
+'use client';
 
-import { PollarProvider, WalletButton } from "@pollar/react";
-import Image from "next/image";
-import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import "@pollar/react/styles.css";
-import { useEffect, useState } from "react";
-import { ApiKeyModal } from "./_components/ApiKeyModal";
-import { OriginNotAllowedModal } from "./_components/OriginNotAllowedModal";
-import { LanguageSwitcher } from "./_components/LanguageSwitcher";
-import { useI18n } from "./_i18n/LanguageProvider";
-import type { Dictionary } from "./_i18n/translations";
-import { trustlessWorkAdapter } from "./escrow/adapter";
+import { PollarProvider, WalletButton } from '@pollar/react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import '@pollar/react/styles.css';
+import { useEffect, useState } from 'react';
+import { ApiKeyModal } from './_components/ApiKeyModal';
+import { LanguageSwitcher } from './_components/LanguageSwitcher';
+import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
+import { useI18n } from './_i18n/LanguageProvider';
+import type { Dictionary } from './_i18n/translations';
+import { trustlessWorkAdapter } from './escrow/adapter';
 
-const DEFAULT_API_KEY = "pub_testnet_703470595eb6cb72c18651b1455fdc34";
-const BASE_URL = "https://sdk.api.pollar.xyz";
+const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
+const BASE_URL = 'https://sdk.api.pollar.xyz';
 
-const NAV_LINKS: { href: string; key: keyof Dictionary["nav"] }[] = [
-  { href: "/transactions", key: "transactions" },
-  { href: "/send", key: "send" },
-  { href: "/receive", key: "receive" },
-  { href: "/history", key: "history" },
-  { href: "/balance", key: "balance" },
-  { href: "/ramp", key: "ramp" },
-  { href: "/kyc", key: "kyc" },
-  { href: "/escrow", key: "escrow" },
-  { href: "/sessions", key: "sessions" },
-  { href: "/distribution", key: "distribution" },
-  { href: "/lumenwipe", key: "lumenwipe" },
+const NAV_LINKS: { href: string; key: keyof Dictionary['nav'] }[] = [
+  { href: '/transactions', key: 'transactions' },
+  { href: '/send', key: 'send' },
+  { href: '/receive', key: 'receive' },
+  { href: '/history', key: 'history' },
+  { href: '/balance', key: 'balance' },
+  { href: '/assets', key: 'assets' },
+  { href: '/ramp', key: 'ramp' },
+  { href: '/kyc', key: 'kyc' },
+  { href: '/escrow', key: 'escrow' },
+  { href: '/sessions', key: 'sessions' },
+  { href: '/distribution', key: 'distribution' },
+  { href: '/lumenwipe', key: 'lumenwipe' },
 ];
 
 function ThemeToggle() {
   const { t } = useI18n();
-  const [dark, setDark] = useState(false);
+  const [ dark, setDark ] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
+    setDark(document.documentElement.classList.contains('dark'));
   }, []);
 
   function toggle() {
     // Read from the DOM, not state — two instances render (mobile + desktop)
     // and only the DOM class is shared between them.
-    const next = !document.documentElement.classList.contains("dark");
+    const next = !document.documentElement.classList.contains('dark');
     setDark(next);
-    document.documentElement.classList.toggle("dark", next);
+    document.documentElement.classList.toggle('dark', next);
     try {
-      localStorage.setItem("pollar-demo-theme", next ? "dark" : "light");
-    } catch {}
+      localStorage.setItem('pollar-demo-theme', next ? 'dark' : 'light');
+    } catch {
+    }
   }
 
   return (
@@ -95,18 +97,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
 
-  const customKey = searchParams.get("apiKey");
+  const customKey = searchParams.get('apiKey');
   const apiKey = customKey ?? DEFAULT_API_KEY;
   const isCustomKey = customKey !== null;
 
-  const [keyModalOpen, setKeyModalOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [originBlocked, setOriginBlocked] = useState(false);
+  const [ keyModalOpen, setKeyModalOpen ] = useState(false);
+  const [ menuOpen, setMenuOpen ] = useState(false);
+  const [ originBlocked, setOriginBlocked ] = useState(false);
 
   // Close the mobile menu when navigating to another tab.
   useEffect(() => {
     setMenuOpen(false);
-  }, [pathname]);
+  }, [ pathname ]);
 
   // The SDK fetches `/applications/config` internally and doesn't surface its
   // error, so when a custom key is in use we probe the same endpoint with the
@@ -117,7 +119,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     if (!isCustomKey) return;
     const controller = new AbortController();
     fetch(`${BASE_URL}/v1/applications/config`, {
-      headers: { "x-pollar-api-key": apiKey },
+      headers: { 'x-pollar-api-key': apiKey },
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -126,20 +128,20 @@ export function Shell({ children }: { children: React.ReactNode }) {
           return;
         }
         const body = await res.json().catch(() => null);
-        setOriginBlocked(body?.code === "ORIGIN_NOT_ALLOWED");
+        setOriginBlocked(body?.code === 'ORIGIN_NOT_ALLOWED');
       })
       .catch(() => {
         // network/abort errors are unrelated to the origin check — ignore.
       });
     return () => controller.abort();
-  }, [apiKey, isCustomKey]);
+  }, [ apiKey, isCustomKey ]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     const trimmed = next.trim();
-    if (trimmed) params.set("apiKey", trimmed);
-    else params.delete("apiKey");
+    if (trimmed) params.set('apiKey', trimmed);
+    else params.delete('apiKey');
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
     setKeyModalOpen(false);
@@ -150,7 +152,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
     // API key changes — the client is otherwise locked at first render.
     <PollarProvider
       key={apiKey}
-      client={{ apiKey, baseUrl: BASE_URL }}
+      // `logLevel` gates the SDK's own logging: 'silent' | 'error' | 'warn' |
+      // 'info' | 'debug' (each level emits itself + everything more important;
+      // state-transition chatter is at 'debug'). Pass a `logger` here to route
+      // those logs to your own sink (pino, Sentry, a test spy) instead of the
+      // console — or build one with createLogger(level, sink) from @pollar/core.
+      client={{ apiKey, baseUrl: BASE_URL, logLevel: 'debug' }}
       adapters={{ escrow: trustlessWorkAdapter }}
     >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
@@ -181,7 +188,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               >
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    isCustomKey ? "bg-success" : "bg-muted-light"
+                    isCustomKey ? 'bg-success' : 'bg-muted-light'
                   }`}
                 />
                 {t.shell.apiKey}
@@ -244,7 +251,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 >
                   <span
                     className={`inline-block h-1.5 w-1.5 rounded-full ${
-                      isCustomKey ? "bg-success" : "bg-muted-light"
+                      isCustomKey ? 'bg-success' : 'bg-muted-light'
                     }`}
                   />
                   {t.shell.apiKey}
@@ -262,8 +269,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 href={href}
                 className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
                   pathname === href
-                    ? "border-primary text-primary font-semibold"
-                    : "border-transparent text-muted hover:text-foreground"
+                    ? 'border-primary text-primary font-semibold'
+                    : 'border-transparent text-muted hover:text-foreground'
                 }`}
               >
                 {t.nav[key]}
@@ -287,7 +294,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {originBlocked && isCustomKey && (
         <OriginNotAllowedModal
-          origin={typeof window !== "undefined" ? window.location.origin : ""}
+          origin={typeof window !== 'undefined' ? window.location.origin : ''}
           onClose={() => setOriginBlocked(false)}
         />
       )}

@@ -10,6 +10,7 @@ const PAGES: { href: string; key: keyof Dictionary["nav"] }[] = [
   { href: "/receive", key: "receive" },
   { href: "/history", key: "history" },
   { href: "/balance", key: "balance" },
+  { href: "/assets", key: "assets" },
   { href: "/ramp", key: "ramp" },
   { href: "/kyc", key: "kyc" },
   { href: "/escrow", key: "escrow" },

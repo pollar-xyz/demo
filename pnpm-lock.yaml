@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@pollar/core':
-        specifier: 0.9.0-rc.0
-        version: 0.9.0-rc.0
+        specifier: 0.9.0-rc.4
+        version: 0.9.0-rc.4
       '@pollar/react':
-        specifier: 0.9.0-rc.0
-        version: 0.9.0-rc.0(@pollar/core@0.9.0-rc.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 0.9.0-rc.4
+        version: 0.9.0-rc.4(@pollar/core@0.9.0-rc.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@stellar/stellar-sdk':
         specifier: ^15.0.0
         version: 15.1.0
@@ -461,8 +461,8 @@ packages:
     resolution: {integrity: sha512-nn5ozdjYQpUCZlWGuxcJY/KpxkWQs4DcbMCmKojjyrYDEAGy4Ce19NN4v5MduafTwJlbKc99UA8YhSVqq9yPZA==}
     engines: {node: '>=12.4.0'}
 
-  '@pollar/core@0.9.0-rc.0':
-    resolution: {integrity: sha512-ID5UzlgfHgt+5Mq7pIAA9kZjRA8RhNd34WG1S91KKQAZgD1fQ1T/vH3FpKyulfMIozNrU52Krw87jFrn2nNl7g==}
+  '@pollar/core@0.9.0-rc.4':
+    resolution: {integrity: sha512-M3M3Z1dLLDs/uTdfBlAVnEGoGcBdKTDsQfgH1nOxrV3f6fNERaIhRwdm7ee243XkoSbTltBIzv1T8u4ecGeVDg==}
     engines: {node: '>=20'}
     peerDependencies:
       expo-secure-store: '>=12'
@@ -473,11 +473,11 @@ packages:
       react-native-keychain:
         optional: true
 
-  '@pollar/react@0.9.0-rc.0':
-    resolution: {integrity: sha512-E31po70oE4mp72EVW5IzqDrF1pi5M6FwKxw6Y5kHfRyCaoPLoF/S2Rh0Ym4Jtwop1eyhw93lb6P8NXWibbdkiw==}
+  '@pollar/react@0.9.0-rc.4':
+    resolution: {integrity: sha512-Fj/bGfZm2amr0Mcb1EhLnuWRdrywxYq6L/bE8Napcs3Kvr2JiP8QyCmLWFv6SVUTvHftGYTSnSvFg6hq+htNDQ==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@pollar/core': 0.9.0-rc.0
+      '@pollar/core': 0.9.0-rc.4
       react: '>=18'
       react-dom: '>=18'
 
@@ -2521,16 +2521,16 @@ snapshots:
 
   '@nolyfill/is-core-module@1.0.39': {}
 
-  '@pollar/core@0.9.0-rc.0':
+  '@pollar/core@0.9.0-rc.4':
     dependencies:
       '@noble/curves': 1.9.7
       '@noble/hashes': 1.8.0
       '@stellar/freighter-api': 2.0.0
       openapi-fetch: 0.17.0
 
-  '@pollar/react@0.9.0-rc.0(@pollar/core@0.9.0-rc.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@pollar/react@0.9.0-rc.4(@pollar/core@0.9.0-rc.4)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@pollar/core': 0.9.0-rc.0
+      '@pollar/core': 0.9.0-rc.4
       '@simplewebauthn/browser': 13.3.0
       qr.js: 0.0.0
       react: 19.2.3
