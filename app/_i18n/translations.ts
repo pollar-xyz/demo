@@ -24,6 +24,7 @@ export const en = {
     receive: "Receive",
     history: "History",
     balance: "Balance",
+    assets: "Assets",
     ramp: "Ramp",
     kyc: "KYC",
     escrow: "Escrow",
@@ -54,6 +55,8 @@ export const en = {
       receive: "Show your address and QR code to receive funds.",
       history: "List the wallet's past transactions.",
       balance: "Fetch Stellar account balances by public key.",
+      assets:
+        "See the app's enabled assets and which trustlines you're missing.",
       ramp: "Buy and sell crypto with local payment methods.",
       kyc: "Verify your identity to unlock higher limits.",
       escrow: "Trustless Work escrows with automatic XDR signing.",
@@ -97,6 +100,20 @@ export const en = {
       "Drop-in button that opens a prebuilt modal — asset picker, amount, review and the signing flow are all rendered for you.",
     coreDesc:
       "Build, sign and submit the payment yourself with a single runTx('payment', …) call, then read the transaction state.",
+    form: {
+      destinationLabel: "Destination",
+      destinationPh: "G… (recipient address)",
+      assetLabel: "Asset",
+      assetHint:
+        "assets the connected wallet holds — loaded via refreshWalletBalance().",
+      amountLabel: "Amount",
+      amountPh: "10",
+      run: "Run payment",
+      running: "Submitting…",
+      stateIdle: "Fill in destination, asset and amount, then run the payment.",
+      nativeOnly:
+        "Connect a wallet to load its held assets — native XLM is shown by default.",
+    },
     coreFnsTitle: "Functions used",
     coreFnsIntro:
       "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
@@ -625,6 +642,132 @@ export const en = {
     ],
   },
 
+  assets: {
+    title: "Enabled assets",
+    desc: "The app's dashboard-enabled assets paired with the connected wallet's on-chain trustline state — so you know which trustlines the wallet still needs to add. Native XLM is always present.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal listing every enabled asset and whether the connected wallet has a trustline for it.",
+    coreDesc:
+      "Fetch the enabled assets yourself with refreshAssets() and render the reactive enabledAssets state — no balances, just trustline status.",
+    open: "Open Assets modal",
+    modalNote:
+      "takes no arguments — it reads the connected wallet's session and renders the trustline table for you.",
+    refresh: "Refresh assets",
+    coreNote:
+      "the wallet and network are resolved server-side from the session; the result drives the reactive enabledAssets state.",
+    idle: "Refresh to load the app's enabled assets.",
+    noAssets: "No enabled assets found.",
+    assetCol: "Asset",
+    typeCol: "Type",
+    trustlineCol: "Trustline",
+    established: "Established",
+    missing: "Missing",
+    rawResponse: "Raw response",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "refreshAssets()",
+        tag: "async",
+        params:
+          "No arguments — the wallet and network are resolved server-side from the session.",
+        returns:
+          "Promise<void> — writes the enabled assets + trustline state into the reactive state; read it with getEnabledAssetsState().",
+      },
+      {
+        fn: "getEnabledAssetsState()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "EnabledAssetsState — a discriminated union on step: 'idle' | 'loading' | 'loaded' | 'error'. data.assets exists only when step === 'loaded'.",
+      },
+      {
+        fn: "onEnabledAssetsStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: EnabledAssetsState) => void — invoked on every state transition.",
+        returns:
+          "() => void — an unsubscribe function. The react hook's enabledAssets is built on top of this.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "openEnabledAssetsModal()",
+        tag: "sync",
+        params:
+          "No arguments — it reads the connected wallet and renders the enabled-assets / trustline table inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "refreshAssets()",
+        tag: "async",
+        params:
+          "No arguments — same call as the core method, re-exported on the hook for convenience.",
+        returns:
+          "Promise<void> — refreshes the enabledAssets reactive value below.",
+      },
+      {
+        fn: "enabledAssets",
+        tag: "reactive value",
+        params:
+          "Not a function — a value of type EnabledAssetsState read from usePollar().",
+        returns:
+          "Re-renders your component whenever it changes. Mirrors getClient().getEnabledAssetsState(): step plus data when loaded.",
+      },
+    ],
+    trust: {
+      title: "Enable / disable a trustline",
+      desc: 'A trustline is a change_trust operation. Enabling adds the asset (optionally capped by a limit); disabling sends limit "0", which removes it — and only succeeds when the asset balance is already zero. Native XLM never needs a trustline.',
+      typeLabel: "Asset type",
+      codeLabel: "Asset code",
+      codePh: "USDC",
+      issuerLabel: "Issuer",
+      issuerPh: "G… (issuing account)",
+      limitLabel: "Limit",
+      limitNote:
+        'Maximum amount you\'ll trust. Leave empty for the maximum; Disable forces "0".',
+      limitPh: "1000000",
+      enable: "Enable trustline",
+      disable: "Disable trustline",
+      running: "Submitting…",
+      stateIdle: "Set the asset, then enable or disable its trustline.",
+      removedNote:
+        "On a successful disable, the balance response reports trustlineRemoved: true.",
+      fnsTitle: "change_trust functions",
+      fnsIntro:
+        "runTx is the one-shot path; the demo then re-renders the table via refreshAssets(). Both come from usePollar() (or the underlying PollarClient via getClient()).",
+      fns: [
+        {
+          fn: "runTx(operation, params, options?)",
+          tag: "async",
+          params:
+            "operation: 'change_trust'; params.asset: { type, code, issuer }; params.limit?: string ('0' removes the trustline, omitted = max).",
+          returns:
+            "Promise<SubmitOutcome> — build → sign → submit in one call; status: 'success' | 'pending' | 'error'. Drives the reactive tx state.",
+        },
+        {
+          fn: "buildTx(operation, params, options?)",
+          tag: "async",
+          params:
+            "Same arguments as runTx — use it when you want to inspect the unsigned XDR before signing.",
+          returns:
+            "Promise<BuildOutcome> — returns the built tx without submitting; pair it with signAndSubmitTx().",
+        },
+        {
+          fn: "refreshAssets()",
+          tag: "async",
+          params: "No arguments.",
+          returns:
+            "Promise<void> — re-fetches the enabled-assets table so trustlineEstablished reflects the change_trust you just submitted.",
+        },
+      ],
+    },
+  },
+
   escrow: {
     title: "Escrow",
     desc: "Trustless Work adapter — the SDK signs and submits the unsigned XDR with the connected wallet, so your code only deals with business params.",
@@ -942,6 +1085,8 @@ export const en = {
       "Your wallet is on a different network — switch the selector to match it to sign.",
     cosignManual:
       "Mediator co-sign required — sign and submit this step manually.",
+    signNeedsPollarWallet:
+      "This action isn't allowed — to sign, the account being closed must be the wallet you're logged in with on Pollar.",
 
     safetyTitle: "Read-only & non-custodial",
     safety1:
@@ -982,6 +1127,7 @@ export const es: Dictionary = {
     receive: "Recibir",
     history: "Historial",
     balance: "Saldo",
+    assets: "Activos",
     ramp: "Ramp",
     kyc: "KYC",
     escrow: "Escrow",
@@ -1013,6 +1159,8 @@ export const es: Dictionary = {
       receive: "Muestra tu dirección y código QR para recibir fondos.",
       history: "Lista las transacciones pasadas de la billetera.",
       balance: "Consulta los saldos de cuentas de Stellar por clave pública.",
+      assets:
+        "Mira los activos habilitados de la app y qué trustlines te faltan.",
       ramp: "Compra y vende cripto con métodos de pago locales.",
       kyc: "Verifica tu identidad para desbloquear límites más altos.",
       escrow: "Escrows de Trustless Work con firma automática de XDR.",
@@ -1056,6 +1204,20 @@ export const es: Dictionary = {
       "Botón listo que abre un modal prearmado: el selector de activo, el monto, la revisión y el flujo de firma ya vienen renderizados.",
     coreDesc:
       "Construye, firma y envía el pago tú mismo con una sola llamada runTx('payment', …), y luego lee el estado de la transacción.",
+    form: {
+      destinationLabel: "Destino",
+      destinationPh: "G… (dirección del destinatario)",
+      assetLabel: "Activo",
+      assetHint:
+        "los activos que tiene la billetera conectada: se cargan con refreshWalletBalance().",
+      amountLabel: "Monto",
+      amountPh: "10",
+      run: "Ejecutar pago",
+      running: "Enviando…",
+      stateIdle: "Completa destino, activo y monto, y luego ejecuta el pago.",
+      nativeOnly:
+        "Conecta una billetera para cargar sus activos; XLM nativo se muestra por defecto.",
+    },
     coreFnsTitle: "Funciones utilizadas",
     coreFnsIntro:
       "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
@@ -1588,6 +1750,133 @@ export const es: Dictionary = {
     ],
   },
 
+  assets: {
+    title: "Activos habilitados",
+    desc: "Los activos habilitados en el panel de la app junto con el estado de trustline en cadena de la billetera conectada, para saber qué trustlines le faltan por agregar. XLM nativo siempre está presente.",
+    reactDesc:
+      "Botón listo para usar que abre un modal prearmado con cada activo habilitado y si la billetera conectada tiene trustline para él.",
+    coreDesc:
+      "Obtén los activos habilitados con refreshAssets() y renderiza el estado reactivo enabledAssets: sin saldos, solo el estado de trustline.",
+    open: "Abrir modal de Activos",
+    modalNote:
+      "no toma argumentos: lee la sesión de la billetera conectada y renderiza la tabla de trustlines por ti.",
+    refresh: "Actualizar activos",
+    coreNote:
+      "la billetera y la red se resuelven en el servidor a partir de la sesión; el resultado alimenta el estado reactivo enabledAssets.",
+    idle: "Actualiza para cargar los activos habilitados de la app.",
+    noAssets: "No se encontraron activos habilitados.",
+    assetCol: "Activo",
+    typeCol: "Tipo",
+    trustlineCol: "Trustline",
+    established: "Establecida",
+    missing: "Falta",
+    rawResponse: "Respuesta cruda",
+    coreFnsTitle: "Funciones usadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "refreshAssets()",
+        tag: "async",
+        params:
+          "Sin argumentos: la billetera y la red se resuelven en el servidor a partir de la sesión.",
+        returns:
+          "Promise<void>: escribe los activos habilitados y el estado de trustline en el estado reactivo; léelo con getEnabledAssetsState().",
+      },
+      {
+        fn: "getEnabledAssetsState()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "EnabledAssetsState: una unión discriminada por step: 'idle' | 'loading' | 'loaded' | 'error'. data.assets existe solo cuando step === 'loaded'.",
+      },
+      {
+        fn: "onEnabledAssetsStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: EnabledAssetsState) => void: se invoca en cada cambio de estado.",
+        returns:
+          "() => void: una función para cancelar la suscripción. El enabledAssets del hook de react se construye sobre esto.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores usados",
+    reactFnsIntro:
+      "Todo esto viene del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "openEnabledAssetsModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: lee la billetera conectada y renderiza la tabla de activos habilitados / trustlines dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "refreshAssets()",
+        tag: "async",
+        params:
+          "Sin argumentos: la misma llamada que el método de core, reexportada en el hook por comodidad.",
+        returns:
+          "Promise<void>: actualiza el valor reactivo enabledAssets de abajo.",
+      },
+      {
+        fn: "enabledAssets",
+        tag: "reactive value",
+        params:
+          "No es una función: es un valor de tipo EnabledAssetsState que se lee de usePollar().",
+        returns:
+          "Vuelve a renderizar tu componente cada vez que cambia. Refleja getClient().getEnabledAssetsState(): step y data cuando ya cargó.",
+      },
+    ],
+    trust: {
+      title: "Habilitar / deshabilitar un trustline",
+      desc: 'Un trustline es una operación change_trust. Habilitarlo agrega el activo (con un límite opcional); deshabilitarlo envía limit "0", que lo elimina, y solo funciona si el saldo del activo ya es cero. El XLM nativo nunca necesita trustline.',
+      typeLabel: "Tipo de activo",
+      codeLabel: "Código del activo",
+      codePh: "USDC",
+      issuerLabel: "Emisor",
+      issuerPh: "G… (cuenta emisora)",
+      limitLabel: "Límite",
+      limitNote:
+        'Monto máximo que confiarás. Déjalo vacío para el máximo; Deshabilitar fuerza "0".',
+      limitPh: "1000000",
+      enable: "Habilitar trustline",
+      disable: "Deshabilitar trustline",
+      running: "Enviando…",
+      stateIdle:
+        "Define el activo y luego habilita o deshabilita su trustline.",
+      removedNote:
+        "Tras una deshabilitación exitosa, la respuesta de balance reporta trustlineRemoved: true.",
+      fnsTitle: "Funciones de change_trust",
+      fnsIntro:
+        "runTx es el camino de una sola llamada; el demo luego vuelve a renderizar la tabla con refreshAssets(). Ambas vienen de usePollar() (o del PollarClient subyacente vía getClient()).",
+      fns: [
+        {
+          fn: "runTx(operation, params, options?)",
+          tag: "async",
+          params:
+            "operation: 'change_trust'; params.asset: { type, code, issuer }; params.limit?: string ('0' elimina el trustline, omitido = máximo).",
+          returns:
+            "Promise<SubmitOutcome>: construye → firma → envía en una sola llamada; status: 'success' | 'pending' | 'error'. Alimenta el estado reactivo tx.",
+        },
+        {
+          fn: "buildTx(operation, params, options?)",
+          tag: "async",
+          params:
+            "Los mismos argumentos que runTx: úsalo cuando quieras inspeccionar el XDR sin firmar antes de firmar.",
+          returns:
+            "Promise<BuildOutcome>: devuelve la tx construida sin enviarla; combínala con signAndSubmitTx().",
+        },
+        {
+          fn: "refreshAssets()",
+          tag: "async",
+          params: "Sin argumentos.",
+          returns:
+            "Promise<void>: vuelve a obtener la tabla de activos habilitados para que trustlineEstablished refleje el change_trust que acabas de enviar.",
+        },
+      ],
+    },
+  },
+
   escrow: {
     title: "Escrow",
     desc: "Adaptador de Trustless Work: el SDK firma y envía el XDR sin firmar con la billetera conectada, así tu código solo se ocupa de los parámetros de negocio.",
@@ -1909,6 +2198,8 @@ export const es: Dictionary = {
       "Tu billetera está en otra red — cambia el selector para que coincida y poder firmar.",
     cosignManual:
       "Requiere co-firma del mediador — firma y envía este paso manualmente.",
+    signNeedsPollarWallet:
+      "Esta acción no está permitida — para firmar, la cuenta a cerrar debe ser la billetera con la que iniciaste sesión en Pollar.",
 
     safetyTitle: "Solo lectura y no custodial",
     safety1:
@@ -1946,6 +2237,7 @@ export const pt: Dictionary = {
     receive: "Receber",
     history: "Histórico",
     balance: "Saldo",
+    assets: "Ativos",
     ramp: "Ramp",
     kyc: "KYC",
     escrow: "Escrow",
@@ -1977,6 +2269,8 @@ export const pt: Dictionary = {
       receive: "Mostre seu endereço e código QR para receber fundos.",
       history: "Liste as transações anteriores da carteira.",
       balance: "Consulte os saldos de contas Stellar pela chave pública.",
+      assets:
+        "Veja os ativos habilitados do app e quais trustlines estão faltando.",
       ramp: "Compre e venda cripto com métodos de pagamento locais.",
       kyc: "Verifique sua identidade para desbloquear limites maiores.",
       escrow: "Escrows da Trustless Work com assinatura automática de XDR.",
@@ -2020,6 +2314,20 @@ export const pt: Dictionary = {
       "Botão pronto que abre um modal pré-montado: o seletor de ativos, o valor, a revisão e o fluxo de assinatura já vêm renderizados.",
     coreDesc:
       "Construa, assine e envie o pagamento você mesmo com uma única chamada runTx('payment', …), e então leia o estado da transação.",
+    form: {
+      destinationLabel: "Destino",
+      destinationPh: "G… (endereço do destinatário)",
+      assetLabel: "Ativo",
+      assetHint:
+        "os ativos que a carteira conectada possui — carregados via refreshWalletBalance().",
+      amountLabel: "Valor",
+      amountPh: "10",
+      run: "Executar pagamento",
+      running: "Enviando…",
+      stateIdle: "Preencha destino, ativo e valor e então execute o pagamento.",
+      nativeOnly:
+        "Conecte uma carteira para carregar seus ativos; o XLM nativo é exibido por padrão.",
+    },
     coreFnsTitle: "Funções utilizadas",
     coreFnsIntro:
       "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
@@ -2550,6 +2858,132 @@ export const pt: Dictionary = {
     ],
   },
 
+  assets: {
+    title: "Ativos habilitados",
+    desc: "Os ativos habilitados no painel do app junto com o estado on-chain de trustline da carteira conectada — para saber quais trustlines a carteira ainda precisa adicionar. O XLM nativo está sempre presente.",
+    reactDesc:
+      "Botão pronto para usar que abre um modal pré-montado listando cada ativo habilitado e se a carteira conectada tem trustline para ele.",
+    coreDesc:
+      "Busque os ativos habilitados com refreshAssets() e renderize o estado reativo enabledAssets — sem saldos, apenas o estado de trustline.",
+    open: "Abrir modal de Ativos",
+    modalNote:
+      "não recebe argumentos: lê a sessão da carteira conectada e renderiza a tabela de trustlines para você.",
+    refresh: "Atualizar ativos",
+    coreNote:
+      "a carteira e a rede são resolvidas no servidor a partir da sessão; o resultado alimenta o estado reativo enabledAssets.",
+    idle: "Atualize para carregar os ativos habilitados do app.",
+    noAssets: "Nenhum ativo habilitado encontrado.",
+    assetCol: "Ativo",
+    typeCol: "Tipo",
+    trustlineCol: "Trustline",
+    established: "Estabelecida",
+    missing: "Faltando",
+    rawResponse: "Resposta crua",
+    coreFnsTitle: "Funções usadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente retornado por getClient() — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "refreshAssets()",
+        tag: "async",
+        params:
+          "Sem argumentos: a carteira e a rede são resolvidas no servidor a partir da sessão.",
+        returns:
+          "Promise<void>: grava os ativos habilitados e o estado de trustline no estado reativo; leia com getEnabledAssetsState().",
+      },
+      {
+        fn: "getEnabledAssetsState()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "EnabledAssetsState: uma união discriminada por step: 'idle' | 'loading' | 'loaded' | 'error'. data.assets existe apenas quando step === 'loaded'.",
+      },
+      {
+        fn: "onEnabledAssetsStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: EnabledAssetsState) => void: invocado a cada transição de estado.",
+        returns:
+          "() => void: uma função para cancelar a inscrição. O enabledAssets do hook do react é construído sobre isso.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores usados",
+    reactFnsIntro:
+      "Tudo isso vem do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "openEnabledAssetsModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: lê a carteira conectada e renderiza a tabela de ativos habilitados / trustlines dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+      {
+        fn: "refreshAssets()",
+        tag: "async",
+        params:
+          "Sem argumentos: a mesma chamada do método do core, reexportada no hook por conveniência.",
+        returns:
+          "Promise<void>: atualiza o valor reativo enabledAssets abaixo.",
+      },
+      {
+        fn: "enabledAssets",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um valor do tipo EnabledAssetsState lido de usePollar().",
+        returns:
+          "Re-renderiza seu componente sempre que muda. Reflete getClient().getEnabledAssetsState(): step e data quando carregado.",
+      },
+    ],
+    trust: {
+      title: "Habilitar / desabilitar uma trustline",
+      desc: 'Uma trustline é uma operação change_trust. Habilitar adiciona o ativo (com um limite opcional); desabilitar envia limit "0", que a remove — e só funciona quando o saldo do ativo já é zero. O XLM nativo nunca precisa de trustline.',
+      typeLabel: "Tipo de ativo",
+      codeLabel: "Código do ativo",
+      codePh: "USDC",
+      issuerLabel: "Emissor",
+      issuerPh: "G… (conta emissora)",
+      limitLabel: "Limite",
+      limitNote:
+        'Valor máximo que você confiará. Deixe vazio para o máximo; Desabilitar força "0".',
+      limitPh: "1000000",
+      enable: "Habilitar trustline",
+      disable: "Desabilitar trustline",
+      running: "Enviando…",
+      stateIdle: "Defina o ativo e então habilite ou desabilite sua trustline.",
+      removedNote:
+        "Após uma desabilitação bem-sucedida, a resposta de saldo reporta trustlineRemoved: true.",
+      fnsTitle: "Funções de change_trust",
+      fnsIntro:
+        "runTx é o caminho de uma única chamada; o demo então re-renderiza a tabela com refreshAssets(). Ambas vêm de usePollar() (ou do PollarClient subjacente via getClient()).",
+      fns: [
+        {
+          fn: "runTx(operation, params, options?)",
+          tag: "async",
+          params:
+            "operation: 'change_trust'; params.asset: { type, code, issuer }; params.limit?: string ('0' remove a trustline, omitido = máximo).",
+          returns:
+            "Promise<SubmitOutcome>: build → assina → envia em uma única chamada; status: 'success' | 'pending' | 'error'. Alimenta o estado reativo tx.",
+        },
+        {
+          fn: "buildTx(operation, params, options?)",
+          tag: "async",
+          params:
+            "Os mesmos argumentos do runTx: use-o quando quiser inspecionar o XDR não assinado antes de assinar.",
+          returns:
+            "Promise<BuildOutcome>: retorna a tx construída sem enviá-la; combine com signAndSubmitTx().",
+        },
+        {
+          fn: "refreshAssets()",
+          tag: "async",
+          params: "Sem argumentos.",
+          returns:
+            "Promise<void>: busca novamente a tabela de ativos habilitados para que trustlineEstablished reflita o change_trust que você acabou de enviar.",
+        },
+      ],
+    },
+  },
+
   escrow: {
     title: "Escrow",
     desc: "Adaptador da Trustless Work — o SDK assina e envia o XDR não assinado com a carteira conectada, então seu código só lida com os parâmetros de negócio.",
@@ -2869,6 +3303,8 @@ export const pt: Dictionary = {
       "Sua carteira está em outra rede — ajuste o seletor para coincidir e poder assinar.",
     cosignManual:
       "Requer coassinatura do mediador — assine e envie este passo manualmente.",
+    signNeedsPollarWallet:
+      "Esta ação não é permitida — para assinar, a conta a fechar deve ser a carteira com a qual você entrou na Pollar.",
 
     safetyTitle: "Somente leitura e não custodial",
     safety1:

@@ -682,7 +682,13 @@ export default function LumenWipePage() {
                                 ? lw.signing
                                 : lw.signWithPollar}
                             </button>
-                          ) : null}
+                          ) : (
+                            // The account being closed isn't the wallet you're
+                            // logged in with — you can't sign for it here.
+                            <p className="text-[10px] font-mono text-warning">
+                              {lw.signNeedsPollarWallet}
+                            </p>
+                          )}
 
                           {signResult[step.index] && (
                             <p
