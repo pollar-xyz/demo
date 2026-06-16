@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { GROUPS, type NavGroup, type TabLabel } from "./_nav";
+import { useApiKeyHref } from "./_useApiKeyHref";
 import { useI18n } from "./_i18n/LanguageProvider";
 import type { Dictionary } from "./_i18n/translations";
 
@@ -23,6 +24,7 @@ function tabDesc(
 
 export default function Home() {
   const { t } = useI18n();
+  const withApiKey = useApiKeyHref();
 
   return (
     <div className="w-full">
@@ -56,7 +58,7 @@ export default function Home() {
               {group.tabs.map(({ href, label }) => (
                 <Link
                   key={href}
-                  href={href}
+                  href={withApiKey(href)}
                   className="group block rounded-2xl border border-border bg-background p-5 sm:p-6 hover:border-primary transition-colors"
                 >
                   <p className="text-sm sm:text-base font-bold text-foreground group-hover:text-primary transition-colors">

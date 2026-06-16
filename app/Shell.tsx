@@ -11,10 +11,36 @@ import { LanguageSwitcher } from './_components/LanguageSwitcher';
 import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
 import { GROUPS } from './_nav';
+import { useApiKeyHref } from './_useApiKeyHref';
 import { trustlessWorkAdapter } from './trustless-work/escrow/adapter';
 
 const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
+
+type StellarNetwork = 'mainnet' | 'testnet';
+
+// Read-only badge showing which Stellar network the active API key targets.
+// The network is derived from the key prefix, so there's nothing to toggle.
+function NetworkBadge({ network }: { network: StellarNetwork }) {
+  const isMainnet = network === 'mainnet';
+  return (
+    <span
+      title={`Stellar ${network}`}
+      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium capitalize ${
+        isMainnet
+          ? 'border-success-border bg-success-light text-success'
+          : 'border-warning-border bg-warning-light text-warning'
+      }`}
+    >
+      <span
+        className={`inline-block h-1.5 w-1.5 rounded-full ${
+          isMainnet ? 'bg-success' : 'bg-warning'
+        }`}
+      />
+      {network}
+    </span>
+  );
+}
 
 function ThemeToggle() {
   const { t } = useI18n();
@@ -81,10 +107,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
+  const withApiKey = useApiKeyHref();
 
   const customKey = searchParams.get('apiKey');
   const apiKey = customKey ?? DEFAULT_API_KEY;
   const isCustomKey = customKey !== null;
+
+  // Stellar network is derived from the API key prefix (e.g. `pub_testnet_…`,
+  // `pub_mainnet_…`); fall back to mainnet for any unrecognized prefix.
+  const stellarNetwork: StellarNetwork =
+    apiKey.split('_')[1] === 'testnet' ? 'testnet' : 'mainnet';
 
   // The group whose route prefix matches the current path (null on `/`).
   const activeGroup =
@@ -146,14 +178,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
       // state-transition chatter is at 'debug'). Pass a `logger` here to route
       // those logs to your own sink (pino, Sentry, a test spy) instead of the
       // console — or build one with createLogger(level, sink) from @pollar/core.
-      client={{ apiKey, baseUrl: BASE_URL, logLevel: 'debug' }}
+      client={{ apiKey, baseUrl: BASE_URL, logLevel: 'debug', stellarNetwork }}
       adapters={{ escrow: trustlessWorkAdapter }}
     >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           {/* row 1: logo + api key + theme + wallet button */}
           <div className="flex items-center justify-between py-3">
-            <Link href="/" className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href={withApiKey('/')}
+              className="flex items-center gap-2 sm:gap-3"
+            >
               <Image
                 src="/logo.png"
                 alt="Pollar"
@@ -182,6 +217,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 />
                 {t.shell.apiKey}
               </button>
+              <NetworkBadge network={stellarNetwork} />
               <LanguageSwitcher />
               <ThemeToggle />
               <WalletButton />
@@ -229,6 +265,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {menuOpen && (
             <div className="sm:hidden flex flex-col gap-3 border-t border-border py-3">
               <WalletButton />
+              <NetworkBadge network={stellarNetwork} />
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -265,7 +302,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={g.key}
-                  href={g.tabs[0].href}
+                  href={withApiKey(g.tabs[0].href)}
                   className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     active
                       ? 'bg-primary-light text-primary'
@@ -287,7 +324,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               return (
                 <Link
                   key={g.key}
-                  href={g.tabs[0].href}
+                  href={withApiKey(g.tabs[0].href)}
                   className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     active
                       ? 'bg-primary text-white'
@@ -306,7 +343,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {activeGroup.tabs.map(({ href, label }) => (
                 <Link
                   key={href}
-                  href={href}
+                  href={withApiKey(href)}
                   className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
                     pathname === href
                       ? 'border-primary text-primary font-semibold'

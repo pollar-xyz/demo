@@ -2,6 +2,7 @@
 
 import { clientEnv } from "@/lib/env";
 import { useState } from "react";
+import { useApiKeyHref } from "../_useApiKeyHref";
 import { useI18n } from "../_i18n/LanguageProvider";
 
 type ActivateResult =
@@ -13,6 +14,7 @@ const input =
 
 export default function ActivateWalletPage() {
   const { t } = useI18n();
+  const withApiKey = useApiKeyHref();
   const [secretKey, setSecretKey] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [publicKey, setPublicKey] = useState("");
@@ -250,7 +252,7 @@ export default function ActivateWalletPage() {
 
         <div className="mt-8 text-xs text-muted-light">
           <a
-            href="/"
+            href={withApiKey("/")}
             className="underline underline-offset-2 hover:text-foreground"
           >
             {t.activateWallet.back}
