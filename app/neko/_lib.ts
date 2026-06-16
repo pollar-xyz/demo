@@ -8,7 +8,8 @@ async function unwrap<T>(res: Response): Promise<T> {
   const data = await res.json().catch(() => null);
   if (!res.ok) {
     const msg =
-      (data && (data.message || data.error)) || `Request failed (${res.status})`;
+      (data && (data.message || data.error)) ||
+      `Request failed (${res.status})`;
     throw new Error(msg);
   }
   return data as T;
@@ -44,3 +45,34 @@ export type TxStatus = {
 };
 
 export type PrepareResult = { ok: boolean; hash: string };
+
+// One row from GET /api/audit?wallet=… — an action Neko recorded for a wallet.
+export type AuditRecord = {
+  id: string;
+  created_at: string;
+  wallet_address: string;
+  action_type: string;
+  asset_in: string;
+  asset_out: string;
+  amount_in: number;
+  amount_out: number;
+  pool_id: string;
+  network: string;
+  tx_hash: string;
+  token_amount_in: number;
+};
+
+// Body for POST /api/audit — what your signed tx actually did. Neko derives
+// `amount_in`/`network` server-side, so they aren't sent here.
+export type AuditInput = {
+  wallet_address: string;
+  action_type: string;
+  asset_in: string;
+  token_amount_in: number;
+  asset_out: string;
+  amount_out: number;
+  pool_id: string;
+  tx_hash: string;
+};
+
+export type AuditResult = { ok: boolean; isFirstVaultDeposit?: boolean };

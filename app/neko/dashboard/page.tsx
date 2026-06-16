@@ -7,6 +7,8 @@ import { useI18n } from "@/app/_i18n/LanguageProvider";
 import {
   nekoGet,
   nekoPost,
+  type AuditRecord,
+  type AuditResult,
   type BondYield,
   type PrepareResult,
   type TxStatus,
@@ -75,7 +77,9 @@ function Step({ label, state }: { label: string; state: StepState }) {
   return (
     <div className="flex items-center gap-2 text-xs font-mono">
       <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
-      <span className={state === "idle" ? "text-muted-light" : "text-foreground"}>
+      <span
+        className={state === "idle" ? "text-muted-light" : "text-foreground"}
+      >
         {label}
       </span>
     </div>
@@ -102,6 +106,48 @@ function Section({
   );
 }
 
+function AuditTable({ rows }: { rows: AuditRecord[] }) {
+  const { t } = useI18n();
+  return (
+    <div className="overflow-x-auto rounded-xl border border-border">
+      <table className="w-full text-left text-xs">
+        <thead>
+          <tr className="border-b border-border text-[10px] font-mono uppercase tracking-wider text-muted-light">
+            <th className="px-3 py-2 font-medium">{t.neko.auditAction}</th>
+            <th className="px-3 py-2 font-medium">{t.neko.auditFlow}</th>
+            <th className="px-3 py-2 font-medium">{t.neko.auditDate}</th>
+            <th className="px-3 py-2 font-medium">{t.neko.auditTx}</th>
+          </tr>
+        </thead>
+        <tbody className="font-mono">
+          {rows.map((r) => (
+            <tr key={r.id} className="border-b border-border/50 last:border-0">
+              <td className="px-3 py-2 text-foreground">{r.action_type}</td>
+              <td className="px-3 py-2 text-muted">
+                <span className="text-foreground">
+                  {r.token_amount_in} {r.asset_in}
+                </span>
+                {" → "}
+                <span className="text-success">
+                  {r.amount_out} {r.asset_out}
+                </span>
+              </td>
+              <td className="px-3 py-2 text-muted-light whitespace-nowrap">
+                {new Date(r.created_at).toLocaleString()}
+              </td>
+              <td className="px-3 py-2">
+                <span className="text-muted-light" title={r.tx_hash}>
+                  {r.tx_hash.slice(0, 6)}…{r.tx_hash.slice(-6)}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export default function NekoDashboardPage() {
   const { t } = useI18n();
   const { isAuthenticated, walletAddress, getClient } = usePollar();
@@ -110,8 +156,17 @@ export default function NekoDashboardPage() {
   const [prices, setPrices] = useState<unknown>(null);
   const [positions, setPositions] = useState<unknown>(null);
   const [catalog, setCatalog] = useState<unknown>(null);
+  const [audit, setAudit] = useState<AuditRecord[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+
+  const loadAudit = useCallback(async () => {
+    if (!walletAddress) return;
+    const rows = await nekoGet<AuditRecord[]>(
+      `/audit?limit=50&wallet=${walletAddress}`,
+    );
+    setAudit(rows);
+  }, [walletAddress]);
 
   const loadAll = useCallback(async () => {
     if (!walletAddress) return;
@@ -122,17 +177,19 @@ export default function NekoDashboardPage() {
       wallet_address: walletAddress,
       wallet_provider: null,
     }).catch(() => {});
-    const [y, p, pos, cat] = await Promise.allSettled([
+    const [y, p, pos, cat, aud] = await Promise.allSettled([
       nekoGet<BondYield[]>("/v1/etherfuse/bond-yields"),
       nekoGet("/dashboard/prices?symbols=XLM,USDC"),
       nekoGet(`/dashboard/positions/${walletAddress}`),
       nekoGet("/dashboard/pool-catalog"),
+      nekoGet<AuditRecord[]>(`/audit?limit=50&wallet=${walletAddress}`),
     ]);
     setYields(y.status === "fulfilled" ? y.value : null);
     setPrices(p.status === "fulfilled" ? p.value : null);
     setPositions(pos.status === "fulfilled" ? pos.value : null);
     setCatalog(cat.status === "fulfilled" ? cat.value : null);
-    if ([y, p, pos, cat].every((r) => r.status === "rejected")) {
+    setAudit(aud.status === "fulfilled" ? aud.value : null);
+    if ([y, p, pos, cat, aud].every((r) => r.status === "rejected")) {
       const reason = (y as PromiseRejectedResult).reason;
       setLoadError(reason instanceof Error ? reason.message : String(reason));
     }
@@ -152,6 +209,51 @@ export default function NekoDashboardPage() {
   const [steps, setSteps] = useState<Steps>(IDLE_STEPS);
   const [result, setResult] = useState<TxStatus | null>(null);
   const [txError, setTxError] = useState<string | null>(null);
+
+  // ─── audit (POST /api/audit) ────────────────────────────────────────────────
+  const [auditForm, setAuditForm] = useState({
+    action_type: "vaults_deposit",
+    asset_in: "USDC",
+    token_amount_in: "1",
+    asset_out: "DeFindex-Vault-Neko USDC",
+    amount_out: "0.9939207",
+    pool_id: "CCUZC3HC5TH2VCYZFUG57E6IGKPL45YUN2SI3UEYQUBA7RCYHUIZBSFV",
+    tx_hash: "",
+  });
+  const [auditBusy, setAuditBusy] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
+  const setAuditField = (k: keyof typeof auditForm, v: string) =>
+    setAuditForm((f) => ({ ...f, [k]: v }));
+
+  async function recordAudit() {
+    if (!walletAddress) return;
+    if (!auditForm.tx_hash.trim()) {
+      setAuditError(t.neko.auditTxRequired);
+      return;
+    }
+    setAuditBusy(true);
+    setAuditError(null);
+    setAuditResult(null);
+    try {
+      const res = await nekoPost<AuditResult>("/audit", {
+        wallet_address: walletAddress,
+        action_type: auditForm.action_type,
+        asset_in: auditForm.asset_in,
+        token_amount_in: Number(auditForm.token_amount_in),
+        asset_out: auditForm.asset_out,
+        amount_out: Number(auditForm.amount_out),
+        pool_id: auditForm.pool_id,
+        tx_hash: auditForm.tx_hash.trim(),
+      });
+      setAuditResult(res);
+      await loadAudit().catch(() => {});
+    } catch (e) {
+      setAuditError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setAuditBusy(false);
+    }
+  }
 
   async function runFlow() {
     const unsigned = xdr.trim();
@@ -188,6 +290,8 @@ export default function NekoDashboardPage() {
         setSteps((s) => ({ ...s, poll: "done" }));
       }
       setResult(status);
+      // Carry the hash into the audit form so you can record what it did.
+      if (status.hash) setAuditField("tx_hash", status.hash);
     } catch (e) {
       setTxError(e instanceof Error ? e.message : String(e));
       setSteps((s) => {
@@ -341,8 +445,118 @@ export default function NekoDashboardPage() {
             </div>
           </Section>
 
+          <Section title={t.neko.recordTitle} note={t.neko.recordNote}>
+            <div className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className={lbl}>{t.neko.fActionType}</label>
+                  <input
+                    value={auditForm.action_type}
+                    onChange={(e) =>
+                      setAuditField("action_type", e.target.value)
+                    }
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>{t.neko.fPoolId}</label>
+                  <input
+                    value={auditForm.pool_id}
+                    onChange={(e) => setAuditField("pool_id", e.target.value)}
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>{t.neko.fAssetIn}</label>
+                  <input
+                    value={auditForm.asset_in}
+                    onChange={(e) => setAuditField("asset_in", e.target.value)}
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>{t.neko.fAmountIn}</label>
+                  <input
+                    value={auditForm.token_amount_in}
+                    onChange={(e) =>
+                      setAuditField("token_amount_in", e.target.value)
+                    }
+                    inputMode="decimal"
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>{t.neko.fAssetOut}</label>
+                  <input
+                    value={auditForm.asset_out}
+                    onChange={(e) => setAuditField("asset_out", e.target.value)}
+                    className={inp}
+                  />
+                </div>
+                <div>
+                  <label className={lbl}>{t.neko.fAmountOut}</label>
+                  <input
+                    value={auditForm.amount_out}
+                    onChange={(e) =>
+                      setAuditField("amount_out", e.target.value)
+                    }
+                    inputMode="decimal"
+                    className={inp}
+                  />
+                </div>
+              </div>
+              <div>
+                <label className={lbl}>{t.neko.fTxHash}</label>
+                <input
+                  value={auditForm.tx_hash}
+                  onChange={(e) => setAuditField("tx_hash", e.target.value)}
+                  placeholder="ea5e82…"
+                  className={inp}
+                />
+                {result?.hash && result.hash === auditForm.tx_hash && (
+                  <p className="text-[10px] font-mono text-muted-light mt-1">
+                    {t.neko.txHashFromFlow}
+                  </p>
+                )}
+              </div>
+              <button
+                onClick={recordAudit}
+                disabled={auditBusy}
+                className={btn("primary")}
+              >
+                {auditBusy ? t.neko.recording : t.neko.record}
+              </button>
+
+              {auditError && (
+                <p className="text-xs font-mono text-error">{auditError}</p>
+              )}
+              {auditResult?.ok && (
+                <p className="text-xs font-mono text-success">
+                  {t.neko.recordOk}
+                  {auditResult.isFirstVaultDeposit
+                    ? ` ${t.neko.firstDeposit}`
+                    : ""}
+                </p>
+              )}
+            </div>
+          </Section>
+
+          <Section title={t.neko.auditTitle} note={t.neko.auditNote}>
+            {audit && audit.length > 0 ? (
+              <AuditTable rows={audit} />
+            ) : (
+              <p className="text-xs font-mono text-muted-light">
+                {t.neko.auditEmpty}
+              </p>
+            )}
+          </Section>
+
           <Section title={t.neko.flowTitle}>
-            <CodePanel sdk="@pollar/react" note="signTx + Neko proxy" code={FLOW_CODE} />
+            <CodePanel
+              sdk="@pollar/react"
+              note="signTx + Neko proxy"
+              code={FLOW_CODE}
+            />
           </Section>
         </>
       )}
