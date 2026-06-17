@@ -10,7 +10,8 @@ import { ApiKeyModal } from './_components/ApiKeyModal';
 import { LanguageSwitcher } from './_components/LanguageSwitcher';
 import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
-import { GROUPS } from './_nav';
+import { useNekoUnlocked } from './_neko/NekoGateProvider';
+import { visibleGroups } from './_nav';
 import { useApiKeyHref } from './_useApiKeyHref';
 import { trustlessWorkAdapter } from './trustless-work/escrow/adapter';
 
@@ -117,6 +118,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // `pub_mainnet_…`); fall back to mainnet for any unrecognized prefix.
   const stellarNetwork: StellarNetwork =
     apiKey.split('_')[1] === 'testnet' ? 'testnet' : 'mainnet';
+
+  const GROUPS = visibleGroups(useNekoUnlocked());
 
   // The group whose route prefix matches the current path (null on `/`).
   const activeGroup =

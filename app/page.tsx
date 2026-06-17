@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { GROUPS, type NavGroup, type TabLabel } from "./_nav";
+import { visibleGroups, type NavGroup, type TabLabel } from "./_nav";
+import { useNekoUnlocked } from "./_neko/NekoGateProvider";
 import { useApiKeyHref } from "./_useApiKeyHref";
 import { useI18n } from "./_i18n/LanguageProvider";
 import type { Dictionary } from "./_i18n/translations";
@@ -27,6 +28,7 @@ function tabDesc(
 export default function Home() {
   const { t } = useI18n();
   const withApiKey = useApiKeyHref();
+  const GROUPS = visibleGroups(useNekoUnlocked());
 
   return (
     <div className="w-full">

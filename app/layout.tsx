@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { Shell } from "@/app/Shell";
+import { NekoGateProvider } from "@/app/_neko/NekoGateProvider";
 import { LanguageProvider } from "@/app/_i18n/LanguageProvider";
 import { resolveLocale } from "@/app/_i18n/locale";
+import { NEKO_COOKIE, NEKO_COOKIE_VALUE } from "@/lib/neko-gate";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -28,6 +31,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const locale = await resolveLocale();
+  const nekoUnlocked =
+    (await cookies()).get(NEKO_COOKIE)?.value === NEKO_COOKIE_VALUE;
   return (
     <html lang={locale} suppressHydrationWarning>
       <head>
@@ -41,9 +46,11 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider initialLocale={locale}>
-          <Suspense>
-            <Shell>{children}</Shell>
-          </Suspense>
+          <NekoGateProvider unlocked={nekoUnlocked}>
+            <Suspense>
+              <Shell>{children}</Shell>
+            </Suspense>
+          </NekoGateProvider>
         </LanguageProvider>
       </body>
     </html>

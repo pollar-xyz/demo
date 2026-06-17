@@ -1,14 +1,19 @@
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { clientEnv } from "@/lib/env";
+import { NEKO_COOKIE, NEKO_COOKIE_VALUE } from "@/lib/neko-gate";
 
-// The whole Neko Protocol section is feature-flagged. When NEXT_PUBLIC_NEKO_ENABLED
-// is not "true", every /neko route 404s — this blocks direct URL access even
-// though the nav group and landing cards are already hidden in `app/_nav.ts`.
-export default function NekoLayout({
+// The whole Neko Protocol section is gated. It unlocks when a request arrives
+// with `?neko=<passcode>` — middleware.ts validates the passcode server-side
+// and sets the unlock cookie. Without the cookie every /neko route 404s, which
+// blocks direct URL access even though the nav group and landing cards are
+// already hidden in `app/_nav.ts`.
+export default async function NekoLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  if (!clientEnv.NEXT_PUBLIC_NEKO_ENABLED) notFound();
+  const unlocked =
+    (await cookies()).get(NEKO_COOKIE)?.value === NEKO_COOKIE_VALUE;
+  if (!unlocked) notFound();
   return children;
 }
