@@ -1040,6 +1040,8 @@ export const en = {
       WALLET_NOT_FOUND: "Wallet not found in the database.",
       FORBIDDEN: "This wallet does not belong to your application.",
       WALLET_ALREADY_FUNDED: "This wallet is already active on Stellar.",
+      ACTIVATION_DISABLED:
+        "Wallet activation is disabled in this demo — it moves to the Pollar SDK once KYC is ready.",
       APP_WALLET_NOT_FOUND:
         "Your application does not have a funding wallet configured.",
       FUND_XLM_FAILED: "Failed to send XLM to the wallet. Please try again.",
@@ -2401,6 +2403,8 @@ export const es: Dictionary = {
       WALLET_NOT_FOUND: "Billetera no encontrada en la base de datos.",
       FORBIDDEN: "Esta billetera no pertenece a tu aplicación.",
       WALLET_ALREADY_FUNDED: "Esta billetera ya está activa en Stellar.",
+      ACTIVATION_DISABLED:
+        "La activación de billeteras está deshabilitada en este demo; se moverá al SDK de Pollar cuando el KYC esté listo.",
       APP_WALLET_NOT_FOUND:
         "Tu aplicación no tiene una billetera de fondeo configurada.",
       FUND_XLM_FAILED:
@@ -3758,6 +3762,8 @@ export const pt: Dictionary = {
       WALLET_NOT_FOUND: "Carteira não encontrada no banco de dados.",
       FORBIDDEN: "Esta carteira não pertence ao seu aplicativo.",
       WALLET_ALREADY_FUNDED: "Esta carteira já está ativa na Stellar.",
+      ACTIVATION_DISABLED:
+        "A ativação de carteiras está desativada nesta demo; será movida para o SDK da Pollar quando o KYC estiver pronto.",
       APP_WALLET_NOT_FOUND:
         "Seu aplicativo não tem uma carteira de financiamento configurada.",
       FUND_XLM_FAILED: "Falha ao enviar XLM para a carteira. Tente novamente.",

@@ -1,6 +1,5 @@
 "use client";
 
-import { clientEnv } from "@/lib/env";
 import { useState } from "react";
 import { useApiKeyHref } from "../_useApiKeyHref";
 import { useI18n } from "../_i18n/LanguageProvider";
@@ -31,35 +30,34 @@ export default function ActivateWalletPage() {
   async function handleActivate() {
     setLoading(true);
     setResult(null);
-    try {
-      const res = await fetch(
-        `${clientEnv.NEXT_PUBLIC_SERVER_API_URL}/v1/wallets/activate`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "x-pollar-api-key": secretKey.trim(),
-          },
-          body: JSON.stringify({ publicKey: publicKey.trim() }),
-        },
-      );
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setResult({ ok: true, publicKey: data.publicKey, amount: data.amount });
-      } else {
-        setResult({
-          ok: false,
-          code: data.error ?? data.code ?? "UNKNOWN_ERROR",
-          status: res.status,
-        });
-      }
-    } catch {
-      setResult({ ok: false, code: "NETWORK_ERROR", status: 0 });
-    } finally {
-      setLoading(false);
-    }
+    // Activation is disabled in the demo. The frontend must NOT call the backend
+    // directly via NEXT_PUBLIC_SERVER_API_URL — wallet activation belongs in the
+    // Pollar SDK, and KYC isn't fully wired up yet. Original call kept for
+    // reference:
+    //
+    // const res = await fetch(
+    //   `${clientEnv.NEXT_PUBLIC_SERVER_API_URL}/v1/wallets/activate`,
+    //   {
+    //     method: "POST",
+    //     headers: {
+    //       "Content-Type": "application/json",
+    //       "x-pollar-api-key": secretKey.trim(),
+    //     },
+    //     body: JSON.stringify({ publicKey: publicKey.trim() }),
+    //   },
+    // );
+    // const data = await res.json();
+    // if (res.ok) {
+    //   setResult({ ok: true, publicKey: data.publicKey, amount: data.amount });
+    // } else {
+    //   setResult({
+    //     ok: false,
+    //     code: data.error ?? data.code ?? "UNKNOWN_ERROR",
+    //     status: res.status,
+    //   });
+    // }
+    setResult({ ok: false, code: "ACTIVATION_DISABLED", status: 0 });
+    setLoading(false);
   }
 
   return (
@@ -233,7 +231,7 @@ export default function ActivateWalletPage() {
           <div className="mt-3 rounded border border-border bg-surface p-3 space-y-1 leading-relaxed">
             <p>
               <span className="text-muted">POST</span>
-              {clientEnv.NEXT_PUBLIC_SERVER_API_URL}/v1/wallets/activate
+              {"<server-api>"}/v1/wallets/activate
             </p>
             <p>
               <span className="text-muted">header:</span>
