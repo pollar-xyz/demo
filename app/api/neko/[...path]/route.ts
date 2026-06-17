@@ -27,6 +27,9 @@ const ALLOW: { method: Method; re: RegExp }[] = [
   { method: "POST", re: /^\/v1\/tx\/prepare$/ },
   { method: "POST", re: /^\/v1\/tx\/submit$/ },
   { method: "GET", re: /^\/v1\/tx\/[a-f0-9]{64}$/ },
+  { method: "GET", re: /^\/v1\/audit$/ },
+  { method: "POST", re: /^\/v1\/audit$/ },
+  { method: "GET", re: /^\/v1\/defindex\/vaults$/ },
 ];
 
 async function forward(

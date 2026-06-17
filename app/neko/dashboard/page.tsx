@@ -163,7 +163,7 @@ export default function NekoDashboardPage() {
   const loadAudit = useCallback(async () => {
     if (!walletAddress) return;
     const rows = await nekoGet<AuditRecord[]>(
-      `/audit?limit=50&wallet=${walletAddress}`,
+      `/v1/audit?limit=50&wallet=${walletAddress}`,
     );
     setAudit(rows);
   }, [walletAddress]);
@@ -182,7 +182,7 @@ export default function NekoDashboardPage() {
       nekoGet("/dashboard/prices?symbols=XLM,USDC"),
       nekoGet(`/dashboard/positions/${walletAddress}`),
       nekoGet("/dashboard/pool-catalog"),
-      nekoGet<AuditRecord[]>(`/audit?limit=50&wallet=${walletAddress}`),
+      nekoGet<AuditRecord[]>(`/v1/audit?limit=50&wallet=${walletAddress}`),
     ]);
     setYields(y.status === "fulfilled" ? y.value : null);
     setPrices(p.status === "fulfilled" ? p.value : null);
@@ -236,7 +236,7 @@ export default function NekoDashboardPage() {
     setAuditError(null);
     setAuditResult(null);
     try {
-      const res = await nekoPost<AuditResult>("/audit", {
+      const res = await nekoPost<AuditResult>("/v1/audit", {
         wallet_address: walletAddress,
         action_type: auditForm.action_type,
         asset_in: auditForm.asset_in,
