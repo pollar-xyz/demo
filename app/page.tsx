@@ -19,6 +19,8 @@ function tabDesc(
     return t.nekoAbout.tagline;
   }
   if (label === "dashboard") return t.neko.cardDesc;
+  if (label === "pools") return t.nekoPools.cardDesc;
+  if (label === "vaults") return t.nekoVaults.cardDesc;
   return t.home.descs[label as keyof Dictionary["home"]["descs"]];
 }
 

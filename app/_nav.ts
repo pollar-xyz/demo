@@ -1,3 +1,4 @@
+import { clientEnv } from "@/lib/env";
 import type { Dictionary } from "./_i18n/translations";
 
 // Tab labels resolve against t.nav[...]; exclude the nested `groups` object.
@@ -11,7 +12,7 @@ export type NavGroup = {
 
 // The sidebar groups. Each group is its own route prefix; its tabs are the
 // subroutes under it. Selecting a group lands on its first tab.
-export const GROUPS: NavGroup[] = [
+const ALL_GROUPS: NavGroup[] = [
   {
     key: "pollarNative",
     basePath: "/pollar",
@@ -50,6 +51,13 @@ export const GROUPS: NavGroup[] = [
     tabs: [
       { href: "/neko/overview", label: "overview" },
       { href: "/neko/dashboard", label: "dashboard" },
+      { href: "/neko/pools", label: "pools" },
+      { href: "/neko/vaults", label: "vaults" },
     ],
   },
 ];
+
+// The Neko Protocol group is feature-flagged off unless NEXT_PUBLIC_NEKO_ENABLED=true.
+export const GROUPS: NavGroup[] = ALL_GROUPS.filter(
+  (g) => g.key !== "nekoProtocol" || clientEnv.NEXT_PUBLIC_NEKO_ENABLED,
+);
