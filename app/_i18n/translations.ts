@@ -48,7 +48,7 @@ export const en = {
   },
 
   shell: {
-    apiKey: "API key",
+    apiKey: "Custom API key",
     apiKeyTitle: "Use your own publishable API key",
     switchToLight: "Switch to light mode",
     switchToDark: "Switch to dark mode",
@@ -115,6 +115,15 @@ export const en = {
     instructions2:
       " → Build → API keys, then update it here or remove it to fall back to the demo key.",
     openDashboard: "Open dashboard",
+    dismiss: "Dismiss",
+  },
+
+  networkModal: {
+    title: "Network is tied to your API key",
+    subtitle:
+      "Your custom API key only works on one network, fixed by its prefix (pub_testnet_… or pub_mainnet_…).",
+    body: "To switch networks, change the API key to one issued for the network you want.",
+    changeKey: "Change API key",
     dismiss: "Dismiss",
   },
 
@@ -1366,7 +1375,7 @@ export const es: Dictionary = {
   },
 
   shell: {
-    apiKey: "Clave API",
+    apiKey: "Clave API personalizada",
     apiKeyTitle: "Usa tu propia clave API publicable",
     switchToLight: "Cambiar a modo claro",
     switchToDark: "Cambiar a modo oscuro",
@@ -1434,6 +1443,15 @@ export const es: Dictionary = {
     instructions2:
       " → Build → API keys, luego actualízala aquí o elimínala para volver a la clave de demostración.",
     openDashboard: "Abrir dashboard",
+    dismiss: "Cerrar",
+  },
+
+  networkModal: {
+    title: "La red está ligada a tu clave API",
+    subtitle:
+      "Tu clave API personalizada solo funciona en una red, fijada por su prefijo (pub_testnet_… o pub_mainnet_…).",
+    body: "Para cambiar de red, cambia la clave API por una emitida para la red que quieras.",
+    changeKey: "Cambiar clave API",
     dismiss: "Cerrar",
   },
 
@@ -2691,7 +2709,7 @@ export const pt: Dictionary = {
   },
 
   shell: {
-    apiKey: "Chave de API",
+    apiKey: "Chave de API personalizada",
     apiKeyTitle: "Use sua própria chave de API publicável",
     switchToLight: "Mudar para o modo claro",
     switchToDark: "Mudar para o modo escuro",
@@ -2759,6 +2777,15 @@ export const pt: Dictionary = {
     instructions2:
       " → Build → API keys, depois atualize-a aqui ou remova-a para voltar à chave de demonstração.",
     openDashboard: "Abrir dashboard",
+    dismiss: "Fechar",
+  },
+
+  networkModal: {
+    title: "A rede está vinculada à sua chave de API",
+    subtitle:
+      "Sua chave de API personalizada só funciona em uma rede, definida pelo seu prefixo (pub_testnet_… ou pub_mainnet_…).",
+    body: "Para trocar de rede, altere a chave de API por uma emitida para a rede desejada.",
+    changeKey: "Alterar chave de API",
     dismiss: "Fechar",
   },
 

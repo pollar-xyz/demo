@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import { ApiKeyModal } from './_components/ApiKeyModal';
 import { LanguageSwitcher } from './_components/LanguageSwitcher';
 import { InvalidApiKeyModal } from './_components/InvalidApiKeyModal';
+import { NetworkLockedModal } from './_components/NetworkLockedModal';
 import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
 import { visibleGroups } from './_nav';
@@ -143,8 +144,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const withApiKey = useApiKeyHref();
 
   const customKey = searchParams.get('apiKey');
-  const apiKey = customKey ?? DEFAULT_API_KEY_TESTNET;
-  const isCustomKey = customKey !== null;
+
+  // Network for the built-in demo keys when no custom key is set. Toggling the
+  // network in this mode is purely local state — it never touches the URL.
+  const [ demoNetwork, setDemoNetwork ] = useState<StellarNetwork>('testnet');
+  const demoKey =
+    demoNetwork === 'mainnet'
+      ? DEFAULT_API_KEY_MAINNET
+      : DEFAULT_API_KEY_TESTNET;
+
+  const apiKey = customKey ?? demoKey;
+
+  // "Custom" means a user-supplied key that isn't one of the demo defaults
+  // (the green dot lights up only for these).
+  const isCustomKey =
+    apiKey !== DEFAULT_API_KEY_TESTNET && apiKey !== DEFAULT_API_KEY_MAINNET;
 
   // Stellar network is derived from the API key prefix (e.g. `pub_testnet_…`,
   // `pub_mainnet_…`); fall back to mainnet for any unrecognized prefix.
@@ -161,6 +175,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [ menuOpen, setMenuOpen ] = useState(false);
   const [ originBlocked, setOriginBlocked ] = useState(false);
   const [ keyInvalid, setKeyInvalid ] = useState(false);
+  const [ networkLocked, setNetworkLocked ] = useState(false);
 
   // Close the mobile menu when navigating to another tab.
   useEffect(() => {
@@ -168,13 +183,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
   }, [ pathname ]);
 
   // The SDK fetches `/applications/config` internally and doesn't surface its
-  // error, so when a custom key is in use we probe the same endpoint with the
-  // same auth header (`x-pollar-api-key`). A 403 ORIGIN_NOT_ALLOWED means this
-  // page's origin isn't registered in the app's allowed domains; a 401
-  // API_KEY_NOT_FOUND means the key itself isn't recognized — prompt the user
-  // to fix whichever applies in the dashboard.
+  // error, so we probe the same endpoint with the same auth header
+  // (`x-pollar-api-key`). A 403 ORIGIN_NOT_ALLOWED means this page's origin
+  // isn't registered in the app's allowed domains; a 401 API_KEY_NOT_FOUND
+  // means the key itself isn't recognized — prompt the user to fix whichever
+  // applies in the dashboard.
   useEffect(() => {
-    if (!isCustomKey) return;
     const controller = new AbortController();
     fetch(`${BASE_URL}/v1/applications/config`, {
       headers: { 'x-pollar-api-key': apiKey },
@@ -196,7 +210,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         // network/abort errors are unrelated to the config check — ignore.
       });
     return () => controller.abort();
-  }, [ apiKey, isCustomKey ]);
+  }, [ apiKey ]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
@@ -209,12 +223,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
     setKeyModalOpen(false);
   }
 
-  // Switch the active network by swapping in the matching default key.
+  // Switch networks. With a demo key, just flip local state (no URL change).
+  // A custom key is bound to one network by its prefix, so it can't be
+  // toggled — point the user at the key dialog instead.
   function selectNetwork(next: StellarNetwork) {
     if (next === stellarNetwork) return;
-    applyApiKey(
-      next === 'mainnet' ? DEFAULT_API_KEY_MAINNET : DEFAULT_API_KEY_TESTNET,
-    );
+    if (isCustomKey) {
+      setNetworkLocked(true);
+      return;
+    }
+    setDemoNetwork(next);
   }
 
   return (
@@ -418,17 +436,27 @@ export function Shell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      {originBlocked && isCustomKey && (
+      {originBlocked && (
         <OriginNotAllowedModal
           origin={typeof window !== 'undefined' ? window.location.origin : ''}
           onClose={() => setOriginBlocked(false)}
         />
       )}
 
-      {keyInvalid && isCustomKey && (
+      {keyInvalid && (
         <InvalidApiKeyModal
           apiKey={apiKey}
           onClose={() => setKeyInvalid(false)}
+        />
+      )}
+
+      {networkLocked && (
+        <NetworkLockedModal
+          onClose={() => setNetworkLocked(false)}
+          onChangeKey={() => {
+            setNetworkLocked(false);
+            setKeyModalOpen(true);
+          }}
         />
       )}
     </PollarProvider>
