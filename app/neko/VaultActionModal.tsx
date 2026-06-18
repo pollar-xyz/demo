@@ -1,7 +1,7 @@
 "use client";
 
 import { usePollar } from "@pollar/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 import { nekoPost, type VaultCatalogEntry } from "./_lib";
 import {
@@ -43,14 +43,56 @@ export function VaultActionModal({
   onDone: () => void;
 }) {
   const { t } = useI18n();
-  const { walletAddress, getClient } = usePollar();
+  const { walletAddress, getClient, enabledAssets, refreshAssets, setTrustline } =
+    usePollar();
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Steps>(IDLE);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [tlBusy, setTlBusy] = useState(false);
+  const [tlError, setTlError] = useState<string | null>(null);
 
   const asset = vault.supplyAsset.symbol;
+
+  // The vault's underlying asset, paired with this wallet's trustline state. We
+  // match the app's enabled assets by code (the vault only exposes a symbol +
+  // SAC address, not the classic issuer). If it's missing a trustline, the
+  // deposit's `transfer` would fail on-chain — so we surface a one-click fix.
+  const assetRecord =
+    enabledAssets.step === "loaded"
+      ? enabledAssets.data.assets.find(
+          (a) => a.type !== "native" && a.code === asset,
+        )
+      : undefined;
+  const needsTrustline = !!assetRecord && !assetRecord.trustlineEstablished;
+
+  // Load the enabled-asset / trustline state once when the modal opens.
+  useEffect(() => {
+    if (enabledAssets.step === "idle") refreshAssets().catch(() => {});
+  }, [enabledAssets.step, refreshAssets]);
+
+  async function activateTrustline() {
+    if (!assetRecord?.issuer) return;
+    setTlBusy(true);
+    setTlError(null);
+    try {
+      const outcome = await setTrustline(
+        { code: assetRecord.code, issuer: assetRecord.issuer },
+        { sponsored: assetRecord.sponsored },
+      );
+      if (outcome.status === "error") {
+        setTlError(outcome.details ?? t.nekoVaults.signFailed);
+      } else {
+        await refreshAssets();
+      }
+    } catch (e) {
+      setTlError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setTlBusy(false);
+    }
+  }
+
   const stepList: { key: StepKey; label: string }[] = [
     { key: "submit", label: t.nekoVaults.run },
     { key: "audit", label: t.nekoVaults.sAudit },
@@ -180,13 +222,31 @@ export function VaultActionModal({
           />
         </div>
 
-        <button
-          onClick={run}
-          disabled={busy}
-          className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
-        >
-          {busy ? t.nekoVaults.working : t.nekoVaults.run}
-        </button>
+        {needsTrustline ? (
+          <div className="space-y-2">
+            <p className="text-xs text-muted">{t.nekoVaults.needTrustline}</p>
+            <button
+              onClick={activateTrustline}
+              disabled={tlBusy || !assetRecord?.issuer}
+              className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
+            >
+              {tlBusy
+                ? t.nekoVaults.activatingTrustline
+                : `${t.nekoVaults.activateTrustline} (${asset})`}
+            </button>
+            {tlError && (
+              <p className="text-xs font-mono text-error break-all">{tlError}</p>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={run}
+            disabled={busy}
+            className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
+          >
+            {busy ? t.nekoVaults.working : t.nekoVaults.run}
+          </button>
+        )}
 
         <div className="flex flex-wrap gap-x-4 gap-y-1.5">
           {stepList.map(({ key, label }) => {

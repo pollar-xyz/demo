@@ -33,6 +33,11 @@ const nextConfig: NextConfig = {
         permanent: false,
       },
       { source: "/neko", destination: "/neko/overview", permanent: false },
+      {
+        source: "/accesly",
+        destination: "/accesly/overview",
+        permanent: false,
+      },
     ];
   },
 };

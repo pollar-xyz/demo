@@ -8,38 +8,70 @@ import '@pollar/react/styles.css';
 import { useEffect, useState } from 'react';
 import { ApiKeyModal } from './_components/ApiKeyModal';
 import { LanguageSwitcher } from './_components/LanguageSwitcher';
+import { InvalidApiKeyModal } from './_components/InvalidApiKeyModal';
 import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
-import { useNekoUnlocked } from './_neko/NekoGateProvider';
 import { visibleGroups } from './_nav';
 import { useApiKeyHref } from './_useApiKeyHref';
+import { useNekoUnlocked } from './neko/_GateProvider';
+import { useAcceslyUnlocked } from './accesly/_GateProvider';
 import { trustlessWorkAdapter } from './trustless-work/escrow/adapter';
 
-const DEFAULT_API_KEY = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
+const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
+const DEFAULT_API_KEY_MAINNET = 'pub_mainnet_921399523168e5775276241dc1c786b2';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
 
 type StellarNetwork = 'mainnet' | 'testnet';
 
-// Read-only badge showing which Stellar network the active API key targets.
-// The network is derived from the key prefix, so there's nothing to toggle.
-function NetworkBadge({ network }: { network: StellarNetwork }) {
-  const isMainnet = network === 'mainnet';
+// Toggle that switches the active Stellar network. Selecting a network swaps
+// in the matching hardcoded default API key (which carries the network prefix),
+// so the SDK client and the derived `stellarNetwork` follow along.
+function NetworkToggle({
+  network,
+  onSelect,
+}: {
+  network: StellarNetwork;
+  onSelect: (network: StellarNetwork) => void;
+}) {
+  const options: StellarNetwork[] = [ 'testnet', 'mainnet' ];
   return (
-    <span
-      title={`Stellar ${network}`}
-      className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium capitalize ${
-        isMainnet
-          ? 'border-success-border bg-success-light text-success'
-          : 'border-warning-border bg-warning-light text-warning'
-      }`}
+    <div
+      role="group"
+      aria-label="Stellar network"
+      className="inline-flex items-center rounded-lg border border-border p-0.5"
     >
-      <span
-        className={`inline-block h-1.5 w-1.5 rounded-full ${
-          isMainnet ? 'bg-success' : 'bg-warning'
-        }`}
-      />
-      {network}
-    </span>
+      {options.map((opt) => {
+        const active = network === opt;
+        const isMainnet = opt === 'mainnet';
+        return (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onSelect(opt)}
+            aria-pressed={active}
+            title={`Stellar ${opt}`}
+            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
+              active
+                ? isMainnet
+                  ? 'bg-success-light text-success'
+                  : 'bg-warning-light text-warning'
+                : 'text-muted hover:text-foreground'
+            }`}
+          >
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${
+                active
+                  ? isMainnet
+                    ? 'bg-success'
+                    : 'bg-warning'
+                  : 'bg-muted-light'
+              }`}
+            />
+            {opt}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
@@ -111,7 +143,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const withApiKey = useApiKeyHref();
 
   const customKey = searchParams.get('apiKey');
-  const apiKey = customKey ?? DEFAULT_API_KEY;
+  const apiKey = customKey ?? DEFAULT_API_KEY_TESTNET;
   const isCustomKey = customKey !== null;
 
   // Stellar network is derived from the API key prefix (e.g. `pub_testnet_…`,
@@ -119,7 +151,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const stellarNetwork: StellarNetwork =
     apiKey.split('_')[1] === 'testnet' ? 'testnet' : 'mainnet';
 
-  const GROUPS = visibleGroups(useNekoUnlocked());
+  const GROUPS = visibleGroups(useNekoUnlocked(), useAcceslyUnlocked());
 
   // The group whose route prefix matches the current path (null on `/`).
   const activeGroup =
@@ -128,6 +160,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const [ keyModalOpen, setKeyModalOpen ] = useState(false);
   const [ menuOpen, setMenuOpen ] = useState(false);
   const [ originBlocked, setOriginBlocked ] = useState(false);
+  const [ keyInvalid, setKeyInvalid ] = useState(false);
 
   // Close the mobile menu when navigating to another tab.
   useEffect(() => {
@@ -137,8 +170,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // The SDK fetches `/applications/config` internally and doesn't surface its
   // error, so when a custom key is in use we probe the same endpoint with the
   // same auth header (`x-pollar-api-key`). A 403 ORIGIN_NOT_ALLOWED means this
-  // page's origin isn't registered in the app's allowed domains — prompt the
-  // user to add it in the dashboard.
+  // page's origin isn't registered in the app's allowed domains; a 401
+  // API_KEY_NOT_FOUND means the key itself isn't recognized — prompt the user
+  // to fix whichever applies in the dashboard.
   useEffect(() => {
     if (!isCustomKey) return;
     const controller = new AbortController();
@@ -147,15 +181,19 @@ export function Shell({ children }: { children: React.ReactNode }) {
       signal: controller.signal,
     })
       .then(async (res) => {
-        if (res.status !== 403) {
+        if (res.ok) {
           setOriginBlocked(false);
+          setKeyInvalid(false);
           return;
         }
         const body = await res.json().catch(() => null);
-        setOriginBlocked(body?.code === 'ORIGIN_NOT_ALLOWED');
+        setOriginBlocked(
+          res.status === 403 && body?.code === 'ORIGIN_NOT_ALLOWED',
+        );
+        setKeyInvalid(res.status === 401 && body?.code === 'API_KEY_NOT_FOUND');
       })
       .catch(() => {
-        // network/abort errors are unrelated to the origin check — ignore.
+        // network/abort errors are unrelated to the config check — ignore.
       });
     return () => controller.abort();
   }, [ apiKey, isCustomKey ]);
@@ -169,6 +207,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
     setKeyModalOpen(false);
+  }
+
+  // Switch the active network by swapping in the matching default key.
+  function selectNetwork(next: StellarNetwork) {
+    if (next === stellarNetwork) return;
+    applyApiKey(
+      next === 'mainnet' ? DEFAULT_API_KEY_MAINNET : DEFAULT_API_KEY_TESTNET,
+    );
   }
 
   return (
@@ -220,7 +266,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 />
                 {t.shell.apiKey}
               </button>
-              <NetworkBadge network={stellarNetwork} />
+              <NetworkToggle network={stellarNetwork} onSelect={selectNetwork} />
               <LanguageSwitcher />
               <ThemeToggle />
               <WalletButton />
@@ -268,7 +314,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {menuOpen && (
             <div className="sm:hidden flex flex-col gap-3 border-t border-border py-3">
               <WalletButton />
-              <NetworkBadge network={stellarNetwork} />
+              <NetworkToggle network={stellarNetwork} onSelect={selectNetwork} />
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => {
@@ -376,6 +422,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
         <OriginNotAllowedModal
           origin={typeof window !== 'undefined' ? window.location.origin : ''}
           onClose={() => setOriginBlocked(false)}
+        />
+      )}
+
+      {keyInvalid && isCustomKey && (
+        <InvalidApiKeyModal
+          apiKey={apiKey}
+          onClose={() => setKeyInvalid(false)}
         />
       )}
     </PollarProvider>

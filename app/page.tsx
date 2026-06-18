@@ -2,33 +2,31 @@
 
 import Link from "next/link";
 import { visibleGroups, type NavGroup, type TabLabel } from "./_nav";
-import { useNekoUnlocked } from "./_neko/NekoGateProvider";
+import { useNekoUnlocked } from "./neko/_GateProvider";
+import { useAcceslyUnlocked } from "./accesly/_GateProvider";
+import { nekoTabDesc } from "./neko/_cards";
 import { useApiKeyHref } from "./_useApiKeyHref";
 import { useI18n } from "./_i18n/LanguageProvider";
 import type { Dictionary } from "./_i18n/translations";
 
 // Short blurb for each landing card. Native tabs reuse the existing home
 // descriptions; the explainer "overview" tabs borrow their about-page tagline.
-function tabDesc(
-  t: Dictionary,
-  group: NavGroup,
-  label: TabLabel,
-): string {
+function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
+  // Neko owns its card copy (app/neko/_cards.ts) so its strings stay with it.
+  if (group.key === "nekoProtocol") return nekoTabDesc(t, label);
   if (label === "overview") {
     if (group.key === "trustlessWork") return t.twAbout.tagline;
     if (group.key === "lumenwipe") return t.lwAbout.tagline;
-    return t.nekoAbout.tagline;
+    if (group.key === "accesly") return ""; // TODO: add description if needed
+    return "";
   }
-  if (label === "dashboard") return t.neko.cardDesc;
-  if (label === "pools") return t.nekoPools.cardDesc;
-  if (label === "vaults") return t.nekoVaults.cardDesc;
   return t.home.descs[label as keyof Dictionary["home"]["descs"]];
 }
 
 export default function Home() {
   const { t } = useI18n();
   const withApiKey = useApiKeyHref();
-  const GROUPS = visibleGroups(useNekoUnlocked());
+  const GROUPS = visibleGroups(useNekoUnlocked(), useAcceslyUnlocked());
 
   return (
     <div className="w-full">

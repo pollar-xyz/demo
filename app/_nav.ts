@@ -54,10 +54,26 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/neko/vaults", label: "vaults" },
     ],
   },
+  {
+    key: "accesly",
+    basePath: "/accesly",
+    tabs: [
+      { href: "/accesly/overview", label: "overview" },
+      { href: "/accesly/wallet", label: "wallet" },
+    ],
+  },
 ];
 
-// The Neko Protocol group is hidden until the section is unlocked at runtime
-// (see lib/neko-gate.ts + middleware.ts); `nekoUnlocked` comes from the cookie.
-export function visibleGroups(nekoUnlocked: boolean): NavGroup[] {
-  return ALL_GROUPS.filter((g) => g.key !== "nekoProtocol" || nekoUnlocked);
+// The Neko Protocol and Accesly groups are hidden until the section is
+// unlocked at runtime (see app/neko/_gate.ts, app/accesly/_gate.ts +
+// middleware.ts); the unlocked states come from cookies.
+export function visibleGroups(
+  nekoUnlocked: boolean,
+  acceslyUnlocked: boolean
+): NavGroup[] {
+  return ALL_GROUPS.filter((g) => {
+    if (g.key === "nekoProtocol") return nekoUnlocked;
+    if (g.key === "accesly") return acceslyUnlocked;
+    return true;
+  });
 }

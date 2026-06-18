@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import { NEKO_COOKIE, NEKO_COOKIE_VALUE } from "@/lib/neko-gate";
+import { NEKO_COOKIE, NEKO_COOKIE_VALUE } from "./_gate";
 
 // The whole Neko Protocol section is gated. It unlocks when a request arrives
 // with `?neko=<passcode>` — middleware.ts validates the passcode server-side
