@@ -9,6 +9,13 @@ type AboutSection = {
   title: string;
   tagline: string;
   body: string[];
+  // Optional "why pick Pollar on top of this tech" sales callout.
+  whyPollar?: {
+    title: string;
+    tagline: string;
+    points: { title: string; desc: string }[];
+    punch: string;
+  };
   featuresTitle: string;
   features: { title: string; desc: string }[];
   resourcesTitle: string;
@@ -48,6 +55,43 @@ export function AboutPage({
           </p>
         ))}
       </div>
+
+      {section.whyPollar && (
+        <section className="rounded-2xl border border-primary/30 bg-primary-light p-5 sm:p-6 space-y-4">
+          <div className="space-y-1.5">
+            <h2 className="text-base sm:text-lg font-bold text-foreground">
+              {section.whyPollar.title}
+            </h2>
+            <p className="text-sm text-muted">{section.whyPollar.tagline}</p>
+          </div>
+          <ul className="space-y-3">
+            {section.whyPollar.points.map((point) => (
+              <li key={point.title} className="flex gap-3">
+                <svg
+                  className="mt-0.5 h-4 w-4 shrink-0 text-primary"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M16.704 5.29a1 1 0 010 1.42l-7.5 7.5a1 1 0 01-1.42 0l-3.5-3.5a1 1 0 011.42-1.42l2.79 2.79 6.79-6.79a1 1 0 011.42 0z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div>
+                  <p className="text-sm font-semibold text-foreground">
+                    {point.title}
+                  </p>
+                  <p className="text-xs sm:text-sm text-muted">{point.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="text-sm font-semibold text-primary">
+            {section.whyPollar.punch}
+          </p>
+        </section>
+      )}
 
       <section className="space-y-4">
         <h2 className="text-sm font-semibold text-foreground">

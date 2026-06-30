@@ -7,6 +7,12 @@ type AboutSection = {
   title: string;
   tagline: string;
   body: string[];
+  whyPollar: {
+    title: string;
+    tagline: string;
+    points: { title: string; desc: string }[];
+    punch: string;
+  };
   featuresTitle: string;
   features: { title: string; desc: string }[];
   resourcesTitle: string;
@@ -25,6 +31,30 @@ const en: AboutSection = {
     "Pollar's adapter wraps each kit wallet as a WalletAdapter, so the SDK runs the SEP-10 login and signs transactions through any of them. Register them once and the login modal renders a button per wallet.",
     "It's framework-agnostic: use it with @pollar/core on a plain PollarClient, or with @pollar/react on the provider. See the Setup tab for both.",
   ],
+  whyPollar: {
+    title: "Why Pollar, not just Stellar Wallets Kit?",
+    tagline:
+      "SWK connects the wallet. That's step zero. Pollar turns that connection into a finished product.",
+    points: [
+      {
+        title: "A connection isn't an app",
+        desc: "SWK gets you a signature. Pollar gives you SEP-10 auth sessions, balances, transfers, history, on/off-ramp and KYC — the whole backend, already built.",
+      },
+      {
+        title: "Every wallet AND every login, one modal",
+        desc: "Keep all the SWK wallets and add Privy email login, smart accounts and more behind the same login flow. Add an auth method without rewriting your UI.",
+      },
+      {
+        title: "Production UI out of the box",
+        desc: "Login modal, wallet button and status components ship with the SDK — instead of hand-building modals around raw kit calls.",
+      },
+      {
+        title: "Backend you never maintain",
+        desc: "Indexing, transaction submission and ramp/KYC providers run on Pollar's API. Ship in days, not months — with no infra to babysit.",
+      },
+    ],
+    punch: "Stellar Wallets Kit connects the wallet. Pollar ships the app.",
+  },
   featuresTitle: "What you get",
   features: [
     {
@@ -61,6 +91,30 @@ const es: AboutSection = {
     "El adaptador de Pollar envuelve cada wallet del kit como un WalletAdapter, así el SDK corre el login SEP-10 y firma transacciones con cualquiera de ellas. Registralas una vez y el modal de login renderiza un botón por wallet.",
     "Es agnóstico al framework: usalo con @pollar/core en un PollarClient plano, o con @pollar/react en el provider. Mirá la pestaña Setup para ambos.",
   ],
+  whyPollar: {
+    title: "¿Por qué Pollar y no solo Stellar Wallets Kit?",
+    tagline:
+      "SWK conecta la wallet. Eso es el paso cero. Pollar convierte esa conexión en un producto terminado.",
+    points: [
+      {
+        title: "Una conexión no es una app",
+        desc: "SWK te consigue una firma. Pollar te da sesiones de auth SEP-10, balances, transferencias, historial, on/off-ramp y KYC — todo el backend, ya construido.",
+      },
+      {
+        title: "Todas las wallets Y todos los logins, un solo modal",
+        desc: "Mantené todas las wallets de SWK y sumá login con email de Privy, smart accounts y más detrás del mismo flujo. Agregá un método de auth sin reescribir tu UI.",
+      },
+      {
+        title: "UI de producción lista",
+        desc: "Modal de login, botón de wallet y componentes de estado vienen con el SDK — en vez de armar modales a mano sobre llamadas crudas del kit.",
+      },
+      {
+        title: "Backend que nunca mantenés",
+        desc: "Indexación, envío de transacciones y proveedores de ramp/KYC corren en la API de Pollar. Lanzá en días, no meses — sin infra que cuidar.",
+      },
+    ],
+    punch: "Stellar Wallets Kit conecta la wallet. Pollar lanza la app.",
+  },
   featuresTitle: "Qué obtenés",
   features: [
     {
@@ -97,6 +151,30 @@ const pt: AboutSection = {
     "O adaptador da Pollar envolve cada carteira do kit como um WalletAdapter, então o SDK roda o login SEP-10 e assina transações por qualquer uma delas. Registre-as uma vez e o modal de login renderiza um botão por carteira.",
     "É agnóstico de framework: use com @pollar/core em um PollarClient puro, ou com @pollar/react no provider. Veja a aba Setup para ambos.",
   ],
+  whyPollar: {
+    title: "Por que Pollar, e não só o Stellar Wallets Kit?",
+    tagline:
+      "O SWK conecta a carteira. Isso é o passo zero. A Pollar transforma essa conexão em um produto pronto.",
+    points: [
+      {
+        title: "Uma conexão não é um app",
+        desc: "O SWK te dá uma assinatura. A Pollar te dá sessões de auth SEP-10, saldos, transferências, histórico, on/off-ramp e KYC — todo o backend, já construído.",
+      },
+      {
+        title: "Todas as carteiras E todos os logins, um só modal",
+        desc: "Mantenha todas as carteiras do SWK e adicione login por e-mail da Privy, smart accounts e mais atrás do mesmo fluxo. Acrescente um método de auth sem reescrever sua UI.",
+      },
+      {
+        title: "UI de produção pronta",
+        desc: "Modal de login, botão de carteira e componentes de status vêm com o SDK — em vez de montar modais na mão sobre chamadas cruas do kit.",
+      },
+      {
+        title: "Backend que você nunca mantém",
+        desc: "Indexação, envio de transações e provedores de ramp/KYC rodam na API da Pollar. Lance em dias, não meses — sem infra para cuidar.",
+      },
+    ],
+    punch: "O Stellar Wallets Kit conecta a carteira. A Pollar lança o app.",
+  },
   featuresTitle: "O que você ganha",
   features: [
     {
