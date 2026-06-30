@@ -13,26 +13,58 @@ const nextConfig: NextConfig = {
         destination: "/pollar/:tab",
         permanent: false,
       },
-      // Old flat escrow route -> Trustless Work group.
+      // Old "Built with Pollar" routes -> the standardized /built-with-pollar
+      // group (overview now lives at each group root, mirroring wallet-adapters).
+      // More specific sources must come before their group root.
       {
         source: "/escrow",
-        destination: "/trustless-work/escrow",
+        destination: "/built-with-pollar/trustless-work/escrow",
+        permanent: false,
+      },
+      {
+        source: "/trustless-work/escrow",
+        destination: "/built-with-pollar/trustless-work/escrow",
+        permanent: false,
+      },
+      {
+        source: "/trustless-work/about",
+        destination: "/built-with-pollar/trustless-work",
+        permanent: false,
+      },
+      {
+        source: "/trustless-work",
+        destination: "/built-with-pollar/trustless-work",
+        permanent: false,
+      },
+      {
+        source: "/lumenwipe/wipe",
+        destination: "/built-with-pollar/lumenwipe/wipe",
+        permanent: false,
+      },
+      {
+        source: "/lumenwipe/about",
+        destination: "/built-with-pollar/lumenwipe",
+        permanent: false,
+      },
+      {
+        source: "/lumenwipe",
+        destination: "/built-with-pollar/lumenwipe",
+        permanent: false,
+      },
+      {
+        source: "/nirium/about",
+        destination: "/built-with-pollar/nirium",
+        permanent: false,
+      },
+      {
+        source: "/nirium",
+        destination: "/built-with-pollar/nirium",
         permanent: false,
       },
       // Group bases -> their first tab.
       {
         source: "/pollar",
         destination: "/pollar/transactions",
-        permanent: false,
-      },
-      {
-        source: "/trustless-work",
-        destination: "/trustless-work/about",
-        permanent: false,
-      },
-      {
-        source: "/lumenwipe",
-        destination: "/lumenwipe/about",
         permanent: false,
       },
       { source: "/neko", destination: "/neko/overview", permanent: false },
