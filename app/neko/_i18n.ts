@@ -47,6 +47,8 @@ export const nekoEn = {
     cardDesc: "Live Neko data and transaction signing with your Pollar wallet.",
     connect:
       "Connect your Pollar wallet to load Neko data and sign transactions.",
+    mainnetOnly:
+      "The Neko section runs on Stellar mainnet only. Switch your Pollar API key to a mainnet key (pub_mainnet_…) to load data and use the wallet actions.",
     notConfigured:
       "The Neko proxy isn't configured. Add NEKO_PROXY_BASE_URL and NEKO_SERVER_CODE to your environment, then reload.",
     refresh: "Refresh",
@@ -223,6 +225,8 @@ export const nekoEs = {
       "Datos en vivo de Neko y firma de transacciones con tu billetera de Pollar.",
     connect:
       "Conecta tu billetera de Pollar para cargar los datos de Neko y firmar transacciones.",
+    mainnetOnly:
+      "La sección de Neko solo funciona en Stellar mainnet. Cambia tu API key de Pollar a una de mainnet (pub_mainnet_…) para cargar datos y usar las acciones de wallet.",
     notConfigured:
       "El proxy de Neko no está configurado. Agrega NEKO_PROXY_BASE_URL y NEKO_SERVER_CODE a tu entorno y recarga.",
     refresh: "Actualizar",
@@ -400,6 +404,8 @@ export const nekoPt = {
       "Dados ao vivo da Neko e assinatura de transações com a sua carteira Pollar.",
     connect:
       "Conecte a sua carteira Pollar para carregar os dados da Neko e assinar transações.",
+    mainnetOnly:
+      "A seção da Neko só funciona na mainnet da Stellar. Troque a sua API key da Pollar por uma de mainnet (pub_mainnet_…) para carregar dados e usar as ações de carteira.",
     notConfigured:
       "O proxy da Neko não está configurado. Adicione NEKO_PROXY_BASE_URL e NEKO_SERVER_CODE ao seu ambiente e recarregue.",
     refresh: "Atualizar",

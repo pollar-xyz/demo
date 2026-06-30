@@ -1,0 +1,4 @@
+demo.local.pollar.xyz:443 {
+    tls internal
+    reverse_proxy localhost:3060
+}

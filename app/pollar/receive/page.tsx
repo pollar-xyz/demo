@@ -25,7 +25,7 @@ const REACT_CODE = `import { usePollar } from '@pollar/react';
 export function ReceiveButton() {
   const { openReceiveModal, isAuthenticated } = usePollar();
 
-  // openReceiveModal reads walletAddress from context and
+  // openReceiveModal reads the wallet address from context and
   // renders the address + QR for you.
   return (
     <button

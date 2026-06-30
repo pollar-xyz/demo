@@ -1,0 +1,18 @@
+allowBuilds:
+  '@reown/appkit': true
+  '@stellar/stellar-sdk': true
+  blake-hash: true
+  bufferutil: true
+  keccak: true
+  protobufjs: true
+  secp256k1: true
+  sharp: true
+  tiny-secp256k1: true
+  unrs-resolver: true
+  usb: true
+  utf-8-validate: true
+minimumReleaseAgeExclude:
+  - '@pollar/core@0.10.0-rc.8'
+  - '@pollar/react@0.10.0-rc.8'
+  - '@pollar/privy-adapter@0.10.0-rc.8'
+  - '@pollar/stellar-wallets-kit-adapter@0.10.0-rc.8'
