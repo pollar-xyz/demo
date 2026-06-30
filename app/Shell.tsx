@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import "@pollar/react/styles.css";
 import { useEffect, useState } from "react";
 import { ApiKeyModal } from "./_components/ApiKeyModal";
+import { ComingSoon } from "./_components/ComingSoon";
 import { LanguageSwitcher } from "./_components/LanguageSwitcher";
 import { InvalidApiKeyModal } from "./_components/InvalidApiKeyModal";
 import { NetworkLockedModal } from "./_components/NetworkLockedModal";
@@ -15,7 +16,8 @@ import { useI18n } from "./_i18n/LanguageProvider";
 import { SIDEBAR_SECTIONS, visibleGroups } from "./_nav";
 import { useApiKeyHref } from "./_useApiKeyHref";
 import { useNekoUnlocked } from "./neko/_GateProvider";
-import { trustlessWorkAdapter } from "./trustless-work/escrow/adapter";
+import { trustlessWorkAdapter } from "./built-with-pollar/trustless-work/escrow/adapter";
+import { niriumAdapter } from "./built-with-pollar/nirium/x402/adapter";
 import { AppWalletProvider } from "./_AppWalletProvider";
 
 const DEFAULT_API_KEY_TESTNET = "pub_testnet_703470595eb6cb72c18651b1455fdc34";
@@ -145,7 +147,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const customKey = searchParams.get("apiKey");
 
   // Network for the built-in demo keys when no custom key is set. Toggling the
-  // network in this mode is purely local state — it never touches the URL.
+  // network in this mode never touches the URL; we persist the choice in
+  // localStorage so it survives a refresh (the custom-key network already does,
+  // since it's derived from the key carried in the URL).
   const [demoNetwork, setDemoNetwork] = useState<StellarNetwork>("testnet");
   const demoKey =
     demoNetwork === "mainnet"
@@ -186,6 +190,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  // Restore the demo-key network saved on a previous toggle. Read after mount
+  // (not in the initializer) to keep the server-rendered markup deterministic.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pollar-demo-network");
+      if (saved === "mainnet" || saved === "testnet") setDemoNetwork(saved);
+    } catch {}
+  }, []);
 
   // The SDK fetches `/applications/config` internally and doesn't surface its
   // error, so we probe the same endpoint with the same auth header
@@ -238,7 +251,37 @@ export function Shell({ children }: { children: React.ReactNode }) {
       return;
     }
     setDemoNetwork(next);
+    try {
+      localStorage.setItem("pollar-demo-network", next);
+    } catch {}
   }
+
+  // The active group's body: its tab bar (hidden for single-tab groups, where
+  // the sidebar entry already names it) plus the routed page. Extracted so a
+  // "soon" group can wrap the whole thing — tabs included — in ComingSoon.
+  const groupBody = (
+    <>
+      {activeGroup && activeGroup.tabs.length > 1 && (
+        <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden border-b border-border mt-4 lg:mt-8">
+          {activeGroup.tabs.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={withApiKey(href)}
+              className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
+                pathname === href
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              {t.nav[label]}
+            </Link>
+          ))}
+        </nav>
+      )}
+
+      <main className="py-6 sm:py-10">{children}</main>
+    </>
+  );
 
   return (
     // Mounts the global PrivyProvider + the Pollar client, wired with a combined
@@ -248,7 +291,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       apiKey={apiKey}
       baseUrl={BASE_URL}
       network={stellarNetwork}
-      adapters={{ escrow: trustlessWorkAdapter }}
+      adapters={{ escrow: trustlessWorkAdapter, niriumX402: niriumAdapter }}
     >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -383,13 +426,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
                       <Link
                         key={g.key}
                         href={withApiKey(g.tabs[0].href)}
-                        className={`block rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                        className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                           active
                             ? "bg-primary-light text-primary"
                             : "text-muted hover:text-foreground hover:bg-surface"
                         }`}
                       >
-                        {t.nav.groups[g.key]}
+                        <span>{t.nav.groups[g.key]}</span>
+                        {g.soon && (
+                          <span className="shrink-0 rounded-full bg-warning-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-warning">
+                            {t.common.soon}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -408,39 +456,32 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 <Link
                   key={g.key}
                   href={withApiKey(g.tabs[0].href)}
-                  className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
                     active
                       ? "bg-primary text-white"
                       : "border border-border text-muted hover:text-foreground"
                   }`}
                 >
                   {t.nav.groups[g.key]}
+                  {g.soon && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-warning-light text-warning"
+                      }`}
+                    >
+                      {t.common.soon}
+                    </span>
+                  )}
                 </Link>
               );
             })}
           </div>
 
-          {/* tabs for the active group (scrollable on mobile); hidden when the
-              group has a single tab (the sidebar entry already names it) */}
-          {activeGroup && activeGroup.tabs.length > 1 && (
-            <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden border-b border-border mt-4 lg:mt-8">
-              {activeGroup.tabs.map(({ href, label }) => (
-                <Link
-                  key={href}
-                  href={withApiKey(href)}
-                  className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
-                    pathname === href
-                      ? "border-primary text-primary font-semibold"
-                      : "border-transparent text-muted hover:text-foreground"
-                  }`}
-                >
-                  {t.nav[label]}
-                </Link>
-              ))}
-            </nav>
-          )}
-
-          <main className="py-6 sm:py-10">{children}</main>
+          {/* A "soon" group blurs its whole body — tabs included — behind the
+              ComingSoon overlay; otherwise the tabs + content render normally. */}
+          {activeGroup?.soon ? <ComingSoon>{groupBody}</ComingSoon> : groupBody}
         </div>
       </div>
 

@@ -20,6 +20,7 @@ export const en = {
     save: "Save",
     comingSoon: "Coming soon",
     comingSoonDesc: "This feature will be available shortly.",
+    soon: "Soon",
   },
 
   nav: {
@@ -32,6 +33,7 @@ export const en = {
     ramp: "Ramp",
     kyc: "KYC",
     escrow: "Escrow",
+    payments: "Payments",
     sessions: "Sessions",
     distribution: "Distribution",
     lumenwipe: "LumenWipe",
@@ -53,6 +55,7 @@ export const en = {
       distribution: "Distribution",
       integrations: "Integrations",
       trustlessWork: "Trustless Work",
+      nirium: "Nirium",
       lumenwipe: "LumenWipe",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
@@ -91,6 +94,7 @@ export const en = {
       ramp: "Buy and sell crypto with local payment methods.",
       kyc: "Verify your identity to unlock higher limits.",
       escrow: "Trustless Work escrows with automatic XDR signing.",
+      payments: "x402 programmatic payments — Nirium plans, Pollar signs.",
       sessions: "Review active sessions and revoke devices.",
       distribution: "List distribution rules and claim your share.",
       lumenwipe: "Close a Stellar account and merge its balance out.",
@@ -1235,6 +1239,99 @@ export const en = {
       "Summary based on the official LumenWipe site and docs. All credit to the LumenWipe team.",
   },
 
+  niriumAbout: {
+    eyebrow: "Nirium",
+    title: "Treasury & payments for Stellar agents",
+    tagline: "Nirium plans the transactions; you sign with your own wallet.",
+    body: [
+      "Nirium is a non-custodial treasury and payments layer for Stellar. It plans and assembles transactions — returning unsigned XDR — while signing stays entirely with the connected wallet. Nirium thinks; you sign.",
+      "It ships as an npm package (npm i nirium) that exposes an Agent you can drive from the browser. The first integration is x402 (programmatic payments), followed by an audit trail, with treasury/CETES (yield via Etherfuse) as the flagship once it reaches mainnet.",
+      "In this demo, Nirium plugs into Pollar exactly like the DeFindex or Blend adapters: the adapter runs client-side with public information only, calls Nirium for the unsigned XDR, and the Pollar SDK signs and submits it with your connected wallet. No secret key ever touches the frontend — your signature is the authorization.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Non-custodial by design",
+        desc: "Nirium builds unsigned XDR; the connected Pollar wallet signs. No secret keys in the frontend.",
+      },
+      {
+        title: "x402 payments",
+        desc: "Software-only programmatic payments — the first integration, no API key required.",
+      },
+      {
+        title: "Audit trail",
+        desc: "A verifiable, non-custodial record of activity for compliance and trust.",
+      },
+      {
+        title: "Treasury & CETES",
+        desc: "Yield-bearing treasury via Etherfuse — the flagship track, headed to mainnet after audit.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Developers",
+    repoLabel: "SDK (GitHub)",
+    disclaimer:
+      "Summary based on materials shared by the Nirium team. Pollar is not affiliated with Nirium — all credit to their team.",
+  },
+
+  niriumX402: {
+    title: "x402 payments",
+    desc: "Send a programmatic x402 payment. Nirium plans and assembles the transaction; the Pollar SDK signs and submits the unsigned XDR with your connected wallet — no secret key, no API key.",
+    destination: "Destination",
+    destinationNote: "Recipient Stellar address (G…) on testnet.",
+    asset: "Asset",
+    assetNote: "'XLM' for native, or 'CODE:ISSUER' for an issued asset.",
+    amount: "Amount",
+    reference: "Reference",
+    referenceNote:
+      "Optional x402 resource / invoice id — stored as the tx memo (max 28 chars).",
+    pay: "Pay with Pollar",
+    signing: "Signing…",
+    setupSummary: "Setup — register the Nirium adapter once",
+    txIdle: "Fill in destination, amount and asset, then pay.",
+    coreFnsTitle: "@pollar/core — functions used",
+    coreFnsIntro:
+      "The adapter returns an unsigned XDR; the core client signs and submits it.",
+    coreFns: [
+      {
+        fn: "niriumAdapter.pay(params)",
+        tag: "async",
+        params:
+          "params: { to, amount, asset, reference?, signer }. Nirium plans the payment.",
+        returns:
+          "Promise<{ unsignedTransaction: string }> — the unsigned XDR, ready to sign.",
+      },
+      {
+        fn: "client.signAndSubmitTx(xdr)",
+        tag: "async",
+        params:
+          "xdr: string — the unsigned transaction returned by the adapter.",
+        returns:
+          "Promise<SubmitOutcome> — { status, hash, … }. Signs with the connected wallet, then submits.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook & values used",
+    reactFnsIntro:
+      "createPollarAdapterHook wires the adapter so Pollar auto-signs; usePollar exposes the live tx state.",
+    reactFns: [
+      {
+        fn: "useNiriumX402()",
+        tag: "hook",
+        params:
+          "No arguments. Returns the wrapped adapter — calling pay() builds, signs and submits in one step.",
+        returns:
+          "WrappedAdapter — { pay }. The unsigned XDR is signed + submitted automatically.",
+      },
+      {
+        fn: "usePollar().tx",
+        tag: "reactive value",
+        params: "No arguments — read it during render.",
+        returns:
+          "TransactionState — the live build → sign → submit progress (tx.step, tx.hash).",
+      },
+    ],
+  },
+
   ...nekoEn,
 };
 
@@ -1254,6 +1351,7 @@ export const es: Dictionary = {
     save: "Guardar",
     comingSoon: "Próximamente",
     comingSoonDesc: "Esta funcionalidad estará disponible pronto.",
+    soon: "Pronto",
   },
 
   nav: {
@@ -1266,6 +1364,7 @@ export const es: Dictionary = {
     ramp: "Ramp",
     kyc: "KYC",
     escrow: "Escrow",
+    payments: "Pagos",
     sessions: "Sesiones",
     distribution: "Distribución",
     lumenwipe: "LumenWipe",
@@ -1287,6 +1386,7 @@ export const es: Dictionary = {
       distribution: "Distribución",
       integrations: "Integraciones",
       trustlessWork: "Trustless Work",
+      nirium: "Nirium",
       lumenwipe: "LumenWipe",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
@@ -1326,6 +1426,7 @@ export const es: Dictionary = {
       ramp: "Compra y vende cripto con métodos de pago locales.",
       kyc: "Verifica tu identidad para desbloquear límites más altos.",
       escrow: "Escrows de Trustless Work con firma automática de XDR.",
+      payments: "Pagos x402 programáticos — Nirium planifica, Pollar firma.",
       sessions: "Revisa las sesiones activas y revoca dispositivos.",
       distribution: "Lista las reglas de distribución y reclama tu parte.",
       lumenwipe: "Cierra una cuenta Stellar y transfiere su saldo restante.",
@@ -2479,6 +2580,99 @@ export const es: Dictionary = {
       "Resumen basado en el sitio y la documentación oficiales de LumenWipe. Todo el crédito es del equipo de LumenWipe.",
   },
 
+  niriumAbout: {
+    eyebrow: "Nirium",
+    title: "Tesorería y pagos para agentes en Stellar",
+    tagline: "Nirium arma las transacciones; tú firmas con tu propia wallet.",
+    body: [
+      "Nirium es una capa de tesorería y pagos no custodial para Stellar. Planifica y arma las transacciones —devolviendo XDR sin firmar— mientras que la firma queda por completo en la wallet conectada. Nirium piensa; tú firmas.",
+      "Se distribuye como paquete de npm (npm i nirium) que expone un Agent que puedes usar desde el navegador. La primera integración es x402 (pagos programáticos), seguida de un audit trail, y con tesorería/CETES (rendimiento vía Etherfuse) como producto insignia una vez que llegue a mainnet.",
+      "En esta demo, Nirium se conecta a Pollar igual que los adaptadores de DeFindex o Blend: el adaptador corre del lado del cliente solo con información pública, llama a Nirium para obtener el XDR sin firmar, y el SDK de Pollar lo firma y lo envía con tu wallet conectada. Ninguna clave secreta toca el frontend: tu firma es la autorización.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "No custodial por diseño",
+        desc: "Nirium construye XDR sin firmar; la wallet de Pollar conectada firma. Sin claves secretas en el frontend.",
+      },
+      {
+        title: "Pagos x402",
+        desc: "Pagos programáticos solo por software: la primera integración, sin necesidad de API key.",
+      },
+      {
+        title: "Audit trail",
+        desc: "Un registro de actividad verificable y no custodial para cumplimiento y confianza.",
+      },
+      {
+        title: "Tesorería y CETES",
+        desc: "Tesorería con rendimiento vía Etherfuse: el producto insignia, rumbo a mainnet tras la auditoría.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Desarrolladores",
+    repoLabel: "SDK (GitHub)",
+    disclaimer:
+      "Resumen basado en los materiales compartidos por el equipo de Nirium. Pollar no está afiliado con Nirium; todo el crédito es de su equipo.",
+  },
+
+  niriumX402: {
+    title: "Pagos x402",
+    desc: "Envía un pago x402 programático. Nirium planifica y arma la transacción; el SDK de Pollar firma y envía el XDR sin firmar con tu wallet conectada — sin secret key, sin API key.",
+    destination: "Destino",
+    destinationNote: "Dirección Stellar del destinatario (G…) en testnet.",
+    asset: "Activo",
+    assetNote: "'XLM' para el nativo, o 'CODE:ISSUER' para un activo emitido.",
+    amount: "Monto",
+    reference: "Referencia",
+    referenceNote:
+      "Id de recurso / factura x402 opcional — se guarda como memo de la tx (máx. 28 caracteres).",
+    pay: "Pagar con Pollar",
+    signing: "Firmando…",
+    setupSummary: "Setup: registra el adaptador de Nirium una vez",
+    txIdle: "Completa destino, monto y activo, luego paga.",
+    coreFnsTitle: "@pollar/core — funciones utilizadas",
+    coreFnsIntro:
+      "El adaptador devuelve un XDR sin firmar; el cliente core lo firma y lo envía.",
+    coreFns: [
+      {
+        fn: "niriumAdapter.pay(params)",
+        tag: "async",
+        params:
+          "params: { to, amount, asset, reference?, signer }. Nirium planifica el pago.",
+        returns:
+          "Promise<{ unsignedTransaction: string }> — el XDR sin firmar, listo para firmar.",
+      },
+      {
+        fn: "client.signAndSubmitTx(xdr)",
+        tag: "async",
+        params:
+          "xdr: string — la transacción sin firmar devuelta por el adaptador.",
+        returns:
+          "Promise<SubmitOutcome> — { status, hash, … }. Firma con la wallet conectada y luego envía.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook y valores utilizados",
+    reactFnsIntro:
+      "createPollarAdapterHook conecta el adaptador para que Pollar firme solo; usePollar expone el estado de la tx en vivo.",
+    reactFns: [
+      {
+        fn: "useNiriumX402()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Devuelve el adaptador envuelto — al llamar pay() construye, firma y envía en un paso.",
+        returns:
+          "WrappedAdapter — { pay }. El XDR sin firmar se firma y envía automáticamente.",
+      },
+      {
+        fn: "usePollar().tx",
+        tag: "reactive value",
+        params: "Sin argumentos — léelo durante el render.",
+        returns:
+          "TransactionState — el progreso en vivo build → sign → submit (tx.step, tx.hash).",
+      },
+    ],
+  },
+
   ...nekoEs,
 };
 
@@ -2496,6 +2690,7 @@ export const pt: Dictionary = {
     save: "Salvar",
     comingSoon: "Em breve",
     comingSoonDesc: "Esta funcionalidade estará disponível em breve.",
+    soon: "Em breve",
   },
 
   nav: {
@@ -2508,6 +2703,7 @@ export const pt: Dictionary = {
     ramp: "Ramp",
     kyc: "KYC",
     escrow: "Escrow",
+    payments: "Pagamentos",
     sessions: "Sessões",
     distribution: "Distribuição",
     lumenwipe: "LumenWipe",
@@ -2529,6 +2725,7 @@ export const pt: Dictionary = {
       distribution: "Distribuição",
       integrations: "Integrações",
       trustlessWork: "Trustless Work",
+      nirium: "Nirium",
       lumenwipe: "LumenWipe",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
@@ -2568,6 +2765,8 @@ export const pt: Dictionary = {
       ramp: "Compre e venda cripto com métodos de pagamento locais.",
       kyc: "Verifique sua identidade para desbloquear limites maiores.",
       escrow: "Escrows da Trustless Work com assinatura automática de XDR.",
+      payments:
+        "Pagamentos x402 programáticos — Nirium planeja, Pollar assina.",
       sessions: "Revise as sessões ativas e revogue dispositivos.",
       distribution: "Liste as regras de distribuição e resgate sua parte.",
       lumenwipe: "Encerre uma conta Stellar e transfira o saldo restante.",
@@ -3715,6 +3914,99 @@ export const pt: Dictionary = {
     docsLabel: "Documentação",
     disclaimer:
       "Resumo baseado no site e na documentação oficiais do LumenWipe. Todo o crédito é da equipe do LumenWipe.",
+  },
+
+  niriumAbout: {
+    eyebrow: "Nirium",
+    title: "Tesouraria e pagamentos para agentes na Stellar",
+    tagline: "A Nirium monta as transações; você assina com sua carteira.",
+    body: [
+      "A Nirium é uma camada de tesouraria e pagamentos não custodial para a Stellar. Ela planeja e monta as transações — retornando XDR não assinado — enquanto a assinatura permanece inteiramente na carteira conectada. A Nirium pensa; você assina.",
+      "É distribuída como um pacote npm (npm i nirium) que expõe um Agent que você pode usar a partir do navegador. A primeira integração é x402 (pagamentos programáticos), seguida de um audit trail, com tesouraria/CETES (rendimento via Etherfuse) como produto principal assim que chegar à mainnet.",
+      "Nesta demo, a Nirium se conecta ao Pollar exatamente como os adaptadores DeFindex ou Blend: o adaptador roda no lado do cliente apenas com informações públicas, chama a Nirium para obter o XDR não assinado, e o SDK do Pollar o assina e envia com a sua carteira conectada. Nenhuma chave secreta toca o frontend — a sua assinatura é a autorização.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Não custodial por design",
+        desc: "A Nirium constrói XDR não assinado; a carteira Pollar conectada assina. Sem chaves secretas no frontend.",
+      },
+      {
+        title: "Pagamentos x402",
+        desc: "Pagamentos programáticos somente por software: a primeira integração, sem necessidade de API key.",
+      },
+      {
+        title: "Audit trail",
+        desc: "Um registro de atividade verificável e não custodial para conformidade e confiança.",
+      },
+      {
+        title: "Tesouraria e CETES",
+        desc: "Tesouraria com rendimento via Etherfuse: o produto principal, rumo à mainnet após a auditoria.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Desenvolvedores",
+    repoLabel: "SDK (GitHub)",
+    disclaimer:
+      "Resumo baseado nos materiais compartilhados pela equipe da Nirium. A Pollar não é afiliada à Nirium — todo o crédito é da equipe deles.",
+  },
+
+  niriumX402: {
+    title: "Pagamentos x402",
+    desc: "Envie um pagamento x402 programático. A Nirium planeja e monta a transação; o SDK do Pollar assina e envia o XDR não assinado com a sua carteira conectada — sem secret key, sem API key.",
+    destination: "Destino",
+    destinationNote: "Endereço Stellar do destinatário (G…) na testnet.",
+    asset: "Ativo",
+    assetNote: "'XLM' para o nativo, ou 'CODE:ISSUER' para um ativo emitido.",
+    amount: "Valor",
+    reference: "Referência",
+    referenceNote:
+      "Id de recurso / fatura x402 opcional — salvo como memo da tx (máx. 28 caracteres).",
+    pay: "Pagar com Pollar",
+    signing: "Assinando…",
+    setupSummary: "Setup: registre o adaptador da Nirium uma vez",
+    txIdle: "Preencha destino, valor e ativo, depois pague.",
+    coreFnsTitle: "@pollar/core — funções utilizadas",
+    coreFnsIntro:
+      "O adaptador retorna um XDR não assinado; o cliente core o assina e envia.",
+    coreFns: [
+      {
+        fn: "niriumAdapter.pay(params)",
+        tag: "async",
+        params:
+          "params: { to, amount, asset, reference?, signer }. A Nirium planeja o pagamento.",
+        returns:
+          "Promise<{ unsignedTransaction: string }> — o XDR não assinado, pronto para assinar.",
+      },
+      {
+        fn: "client.signAndSubmitTx(xdr)",
+        tag: "async",
+        params:
+          "xdr: string — a transação não assinada retornada pelo adaptador.",
+        returns:
+          "Promise<SubmitOutcome> — { status, hash, … }. Assina com a carteira conectada e então envia.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook e valores utilizados",
+    reactFnsIntro:
+      "createPollarAdapterHook conecta o adaptador para o Pollar assinar sozinho; usePollar expõe o estado da tx ao vivo.",
+    reactFns: [
+      {
+        fn: "useNiriumX402()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Retorna o adaptador encapsulado — chamar pay() constrói, assina e envia em um passo.",
+        returns:
+          "WrappedAdapter — { pay }. O XDR não assinado é assinado e enviado automaticamente.",
+      },
+      {
+        fn: "usePollar().tx",
+        tag: "reactive value",
+        params: "Sem argumentos — leia durante o render.",
+        returns:
+          "TransactionState — o progresso ao vivo build → sign → submit (tx.step, tx.hash).",
+      },
+    ],
   },
 
   ...nekoPt,

@@ -22,6 +22,9 @@ export type NavGroup = {
   key: keyof Dictionary["nav"]["groups"];
   section: SidebarSection;
   tabs: { href: string; label: TabLabel }[];
+  // Marks the group as not-yet-live: the sidebar shows a "Soon" badge and the
+  // pages blur their content behind the ComingSoon overlay.
+  soon?: boolean;
 };
 
 // The sidebar groups. Each group is its own entry; its tabs are the routes
@@ -86,6 +89,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "acceslyAdapter",
     section: "walletAdapters",
+    soon: true,
     tabs: [
       { href: "/wallet-adapters/accesly", label: "overview" },
       { href: "/wallet-adapters/accesly/setup", label: "setup" },
@@ -97,8 +101,16 @@ export const ALL_GROUPS: NavGroup[] = [
     key: "trustlessWork",
     section: "builtWith",
     tabs: [
-      { href: "/trustless-work/about", label: "overview" },
-      { href: "/trustless-work/escrow", label: "escrow" },
+      { href: "/built-with-pollar/trustless-work", label: "overview" },
+      { href: "/built-with-pollar/trustless-work/escrow", label: "escrow" },
+    ],
+  },
+  {
+    key: "nirium",
+    section: "builtWith",
+    tabs: [
+      { href: "/built-with-pollar/nirium", label: "overview" },
+      { href: "/built-with-pollar/nirium/x402", label: "payments" },
     ],
   },
   {
@@ -115,8 +127,8 @@ export const ALL_GROUPS: NavGroup[] = [
     key: "lumenwipe",
     section: "builtWith",
     tabs: [
-      { href: "/lumenwipe/about", label: "overview" },
-      { href: "/lumenwipe/wipe", label: "lumenwipe" },
+      { href: "/built-with-pollar/lumenwipe", label: "overview" },
+      { href: "/built-with-pollar/lumenwipe/wipe", label: "lumenwipe" },
     ],
   },
 ];

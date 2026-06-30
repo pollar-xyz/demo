@@ -22,6 +22,7 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
   }
   if (label === "overview") {
     if (group.key === "trustlessWork") return t.twAbout.tagline;
+    if (group.key === "nirium") return t.niriumAbout.tagline;
     if (group.key === "lumenwipe") return t.lwAbout.tagline;
     return "";
   }
