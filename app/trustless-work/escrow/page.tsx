@@ -89,7 +89,8 @@ export const useEscrow =
 
 export default function EscrowPage() {
   const { t } = useI18n();
-  const { walletAddress, isAuthenticated, tx, openTxModal } = usePollar();
+  const { wallet, isAuthenticated, tx, openTxModal } = usePollar();
+  const walletAddress = wallet?.address ?? "";
   const escrow = useEscrow();
 
   const [tab, setTab] = useState<Tab>("deploy");

@@ -1,0 +1,29 @@
+{
+  "version": "v1",
+  "packages": {
+    "@pollar/react": {
+      "signature": "0188d18cedf7ec6e3d0fec1c1e5213f8",
+      "file": true,
+      "replaced": "0.10.0-rc.8"
+    },
+    "@pollar/core": {
+      "signature": "797d968de417634dd66e29af12fba39a",
+      "file": true,
+      "replaced": "0.10.0-rc.8"
+    },
+    "@pollar/stellar-wallets-kit-adapter": {
+      "signature": "3dd7e7f2b1fab21746c3cbd18558ff5b",
+      "file": true,
+      "replaced": "0.10.0-rc.8"
+    },
+    "@pollar/privy-adapter": {
+      "signature": "6330e6e900da5d676987d78556ed15bc",
+      "file": true,
+      "replaced": "0.10.0-rc.8"
+    },
+    "@pollar/accesly-adapter": {
+      "signature": "b3e31d239166b60895e73a23221468a0",
+      "file": true
+    }
+  }
+}

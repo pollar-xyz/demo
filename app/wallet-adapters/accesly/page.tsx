@@ -2,10 +2,11 @@
 
 import { AboutPage } from "@/app/_components/AboutPage";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
+import { acceslyAboutDict } from "./_about";
 
-export default function AcceslyOverviewPage() {
-  const { t } = useI18n();
-  const s = t.acceslyAbout;
+export default function AcceslyAdapterOverviewPage() {
+  const { locale } = useI18n();
+  const s = acceslyAboutDict[locale];
   return (
     <AboutPage
       section={s}

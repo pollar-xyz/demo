@@ -13,6 +13,7 @@ import {
   type PrepareResult,
   type TxStatus,
 } from "../_lib";
+import { useNekoMainnet } from "../_MainnetGate";
 
 const lbl = "block text-xs font-mono text-muted mb-1";
 const inp =
@@ -150,7 +151,9 @@ function AuditTable({ rows }: { rows: AuditRecord[] }) {
 
 export default function NekoDashboardPage() {
   const { t } = useI18n();
-  const { isAuthenticated, walletAddress, getClient } = usePollar();
+  const { isAuthenticated, wallet, getClient } = usePollar();
+  const walletAddress = wallet?.address ?? "";
+  const isMainnet = useNekoMainnet();
 
   const [yields, setYields] = useState<BondYield[] | null>(null);
   const [prices, setPrices] = useState<unknown>(null);
@@ -398,7 +401,7 @@ export default function NekoDashboardPage() {
               </div>
               <button
                 onClick={runFlow}
-                disabled={busy}
+                disabled={busy || !isMainnet}
                 className={btn("primary")}
               >
                 {busy ? t.neko.running : t.neko.run}

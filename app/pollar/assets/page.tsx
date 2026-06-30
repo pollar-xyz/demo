@@ -114,9 +114,10 @@ export default function AssetsPage() {
     runTx,
     tx,
     openTxModal,
-    walletAddress,
+    wallet,
     isAuthenticated,
   } = usePollar();
+  const walletAddress = wallet?.address ?? "";
 
   const [sdk, setSdk] = useState<Sdk>("react");
   const [lastError, setLastError] = useState<string | null>(null);

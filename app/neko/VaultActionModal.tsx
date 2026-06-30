@@ -4,6 +4,7 @@ import { usePollar } from "@pollar/react";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 import { nekoPost, type VaultCatalogEntry } from "./_lib";
+import { useNekoMainnet } from "./_MainnetGate";
 import {
   depositArgs,
   sharesForDeposit,
@@ -43,8 +44,10 @@ export function VaultActionModal({
   onDone: () => void;
 }) {
   const { t } = useI18n();
-  const { walletAddress, getClient, enabledAssets, refreshAssets, setTrustline } =
+  const { wallet, getClient, enabledAssets, refreshAssets, setTrustline } =
     usePollar();
+  const walletAddress = wallet?.address ?? "";
+  const isMainnet = useNekoMainnet();
   const [amount, setAmount] = useState("");
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Steps>(IDLE);
@@ -155,11 +158,13 @@ export function VaultActionModal({
             : Number(sharesBurned) / 10 ** SHARES_DP;
         const amountOut =
           mode === "deposit"
-            ? (sharesForDeposit(amount, position?.pricePerShare) ?? Number(amount))
+            ? (sharesForDeposit(amount, position?.pricePerShare) ??
+              Number(amount))
             : Number(amount);
         await nekoPost("/v1/audit", {
           wallet_address: walletAddress,
-          action_type: mode === "deposit" ? "vaults_deposit" : "vaults_withdraw",
+          action_type:
+            mode === "deposit" ? "vaults_deposit" : "vaults_withdraw",
           asset_in: mode === "deposit" ? asset : vault.name,
           token_amount_in: tokenIn,
           asset_out: mode === "deposit" ? vault.name : asset,
@@ -196,7 +201,9 @@ export function VaultActionModal({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-foreground">
-              {mode === "deposit" ? t.nekoVaults.deposit : t.nekoVaults.withdraw}
+              {mode === "deposit"
+                ? t.nekoVaults.deposit
+                : t.nekoVaults.withdraw}
             </h2>
             <p className="text-xs text-muted mt-0.5">{vault.name}</p>
           </div>
@@ -227,7 +234,7 @@ export function VaultActionModal({
             <p className="text-xs text-muted">{t.nekoVaults.needTrustline}</p>
             <button
               onClick={activateTrustline}
-              disabled={tlBusy || !assetRecord?.issuer}
+              disabled={tlBusy || !assetRecord?.issuer || !isMainnet}
               className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
             >
               {tlBusy
@@ -235,13 +242,15 @@ export function VaultActionModal({
                 : `${t.nekoVaults.activateTrustline} (${asset})`}
             </button>
             {tlError && (
-              <p className="text-xs font-mono text-error break-all">{tlError}</p>
+              <p className="text-xs font-mono text-error break-all">
+                {tlError}
+              </p>
             )}
           </div>
         ) : (
           <button
             onClick={run}
-            disabled={busy}
+            disabled={busy || !isMainnet}
             className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
           >
             {busy ? t.nekoVaults.working : t.nekoVaults.run}
@@ -264,9 +273,13 @@ export function VaultActionModal({
                 key={key}
                 className="flex items-center gap-1.5 text-[11px] font-mono"
               >
-                <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
                 <span
-                  className={s === "idle" ? "text-muted-light" : "text-foreground"}
+                  className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`}
+                />
+                <span
+                  className={
+                    s === "idle" ? "text-muted-light" : "text-foreground"
+                  }
                 >
                   {label}
                 </span>

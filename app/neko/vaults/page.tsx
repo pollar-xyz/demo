@@ -13,10 +13,8 @@ import {
 } from "../_lib";
 import { fmtUsd, scaleAmount } from "../_format";
 import { ASSET_DP } from "../_vault";
-import {
-  VaultActionModal,
-  type VaultPositionLite,
-} from "../VaultActionModal";
+import { VaultActionModal, type VaultPositionLite } from "../VaultActionModal";
+import { useNekoMainnet } from "../_MainnetGate";
 
 const NEKO_APP = "https://app.nekoprotocol.xyz";
 const SHARES_DP = 7; // DeFindex vault share decimals
@@ -167,7 +165,9 @@ function VaultCard({
 
 export default function NekoVaultsPage() {
   const { t } = useI18n();
-  const { isAuthenticated, walletAddress } = usePollar();
+  const { isAuthenticated, wallet } = usePollar();
+  const walletAddress = wallet?.address ?? "";
+  const isMainnet = useNekoMainnet();
 
   const [vaults, setVaults] = useState<VaultCatalogEntry[]>([]);
   const [positions, setPositions] = useState<Positions | null>(null);
@@ -202,19 +202,19 @@ export default function NekoVaultsPage() {
       setAudit(aud.status === "fulfilled" ? aud.value : []);
       // Prices for the assets of vaults the wallet actually holds.
       const ids = new Set(
-        (pos.status === "fulfilled" ? pos.value.vaultPositions : []).map(
-          (vp) => String(vp.vaultId),
+        (pos.status === "fulfilled" ? pos.value.vaultPositions : []).map((vp) =>
+          String(vp.vaultId),
         ),
       );
       const symbols = Array.from(
         new Set(
-          catalog
-            .filter((v) => ids.has(v.id))
-            .map((v) => v.supplyAsset.symbol),
+          catalog.filter((v) => ids.has(v.id)).map((v) => v.supplyAsset.symbol),
         ),
       );
       if (symbols.length) {
-        await nekoGet<PriceMap>(`/dashboard/prices?symbols=${symbols.join(",")}`)
+        await nekoGet<PriceMap>(
+          `/dashboard/prices?symbols=${symbols.join(",")}`,
+        )
           .then(setPrices)
           .catch(() => {});
       }
@@ -320,7 +320,9 @@ export default function NekoVaultsPage() {
                 : "border border-border text-muted hover:text-foreground"
             }`}
           >
-            {v === "vaults" ? t.nekoVaults.tabVaults : t.nekoVaults.tabPositions}
+            {v === "vaults"
+              ? t.nekoVaults.tabVaults
+              : t.nekoVaults.tabPositions}
           </button>
         ))}
       </div>
@@ -344,7 +346,7 @@ export default function NekoVaultsPage() {
                   key={v.id}
                   v={v}
                   t={t}
-                  canAct={isAuthenticated}
+                  canAct={isAuthenticated && isMainnet}
                   canWithdraw={posByVault.has(v.id)}
                   onDeposit={() => setAction({ mode: "deposit", vault: v })}
                   onWithdraw={() =>

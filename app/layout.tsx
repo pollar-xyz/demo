@@ -4,11 +4,9 @@ import { cookies } from "next/headers";
 import { Suspense } from "react";
 import { Shell } from "@/app/Shell";
 import { NekoGateProvider } from "@/app/neko/_GateProvider";
-import { AcceslyGateProvider } from "@/app/accesly/_GateProvider";
 import { LanguageProvider } from "@/app/_i18n/LanguageProvider";
 import { resolveLocale } from "@/app/_i18n/locale";
 import { NEKO_COOKIE, NEKO_COOKIE_VALUE } from "@/app/neko/_gate";
-import { ACCESLY_COOKIE, ACCESLY_COOKIE_VALUE } from "@/app/accesly/_gate";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -36,8 +34,6 @@ export default async function RootLayout({
   const cookieStore = await cookies();
   const nekoUnlocked =
     cookieStore.get(NEKO_COOKIE)?.value === NEKO_COOKIE_VALUE;
-  const acceslyUnlocked =
-    cookieStore.get(ACCESLY_COOKIE)?.value === ACCESLY_COOKIE_VALUE;
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -53,11 +49,9 @@ export default async function RootLayout({
       >
         <LanguageProvider initialLocale={locale}>
           <NekoGateProvider unlocked={nekoUnlocked}>
-            <AcceslyGateProvider unlocked={acceslyUnlocked}>
-              <Suspense>
-                <Shell>{children}</Shell>
-              </Suspense>
-            </AcceslyGateProvider>
+            <Suspense>
+              <Shell>{children}</Shell>
+            </Suspense>
           </NekoGateProvider>
         </LanguageProvider>
       </body>

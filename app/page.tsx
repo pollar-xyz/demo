@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { visibleGroups, type NavGroup, type TabLabel } from "./_nav";
 import { useNekoUnlocked } from "./neko/_GateProvider";
-import { useAcceslyUnlocked } from "./accesly/_GateProvider";
 import { nekoTabDesc } from "./neko/_cards";
 import { useApiKeyHref } from "./_useApiKeyHref";
 import { useI18n } from "./_i18n/LanguageProvider";
@@ -12,12 +11,18 @@ import type { Dictionary } from "./_i18n/translations";
 // Short blurb for each landing card. Native tabs reuse the existing home
 // descriptions; the explainer "overview" tabs borrow their about-page tagline.
 function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
-  // Neko owns its card copy (app/neko/_cards.ts) so its strings stay with it.
-  if (group.key === "nekoProtocol") return nekoTabDesc(t, label);
+  // Each partner owns its card copy (app/<partner>/_cards.ts) so its strings
+  // stay with its code rather than hardcoded here.
+  if (group.key === "neko") return nekoTabDesc(t, label);
+  // Wallet adapters: the overview card uses the adapter blurb, setup is generic.
+  if (group.section === "walletAdapters") {
+    return label === "setup"
+      ? t.home.descs.setup
+      : t.home.descs[group.key as keyof Dictionary["home"]["descs"]];
+  }
   if (label === "overview") {
     if (group.key === "trustlessWork") return t.twAbout.tagline;
     if (group.key === "lumenwipe") return t.lwAbout.tagline;
-    if (group.key === "accesly") return ""; // TODO: add description if needed
     return "";
   }
   return t.home.descs[label as keyof Dictionary["home"]["descs"]];
@@ -26,7 +31,7 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
 export default function Home() {
   const { t } = useI18n();
   const withApiKey = useApiKeyHref();
-  const GROUPS = visibleGroups(useNekoUnlocked(), useAcceslyUnlocked());
+  const GROUPS = visibleGroups(useNekoUnlocked());
 
   return (
     <div className="w-full">

@@ -24,7 +24,8 @@ function flatten(cat: PoolCatalog): PoolEntry[] {
 
 export default function NekoPoolsPage() {
   const { t } = useI18n();
-  const { isAuthenticated, walletAddress } = usePollar();
+  const { isAuthenticated, wallet } = usePollar();
+  const walletAddress = wallet?.address ?? "";
 
   const [pools, setPools] = useState<PoolEntry[]>([]);
   const [prices, setPrices] = useState<PriceMap | null>(null);
@@ -131,7 +132,9 @@ export default function NekoPoolsPage() {
                   <th className="px-3 py-2.5 font-medium">
                     {t.nekoPools.protocol}
                   </th>
-                  <th className="px-3 py-2.5 font-medium">{t.nekoPools.pool}</th>
+                  <th className="px-3 py-2.5 font-medium">
+                    {t.nekoPools.pool}
+                  </th>
                   <th className="px-3 py-2.5 font-medium text-right">
                     {t.nekoPools.supplyApy}
                   </th>

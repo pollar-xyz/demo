@@ -4,6 +4,8 @@
 
 import { nekoEn, nekoEs, nekoPt, nekoNavLabel } from "@/app/neko/_i18n";
 
+import { walletAdaptersNavLabel } from "@/app/wallet-adapters/_i18n";
+
 export const en = {
   langName: "English",
 
@@ -38,12 +40,24 @@ export const en = {
     pools: "Pools",
     vaults: "Vaults",
     wallet: "Wallet",
+    privy: "Privy",
+    stellarWalletsKit: "Stellar Wallets Kit",
+    acceslyAdapter: "Accesly",
+    anclap: "Anclap",
+    soroswap: "Soroswap",
+    setup: "Setup",
     groups: {
-      pollarNative: "Pollar native",
+      pollarWallet: "Wallet",
+      transactions: "Transactions",
+      sessions: "Sessions",
+      distribution: "Distribution",
+      integrations: "Integrations",
       trustlessWork: "Trustless Work",
       lumenwipe: "LumenWipe",
-      nekoProtocol: nekoNavLabel,
-      accesly: "Accesly",
+      stellarWalletsKit: "Stellar Wallets Kit",
+      privy: "Privy",
+      acceslyAdapter: "Accesly",
+      neko: nekoNavLabel,
     },
   },
 
@@ -55,7 +69,9 @@ export const en = {
     changeLanguage: "Change language",
     openMenu: "Open menu",
     closeMenu: "Close menu",
-    products: "Products & partners",
+    products: "Products & integrations",
+    walletAdapters: walletAdaptersNavLabel,
+    builtWith: "Built with Pollar",
   },
 
   home: {
@@ -78,6 +94,14 @@ export const en = {
       sessions: "Review active sessions and revoke devices.",
       distribution: "List distribution rules and claim your share.",
       lumenwipe: "Close a Stellar account and merge its balance out.",
+      stellarWalletsKit:
+        "Register Stellar Wallets Kit wallets (Freighter, Albedo, xBull…) as Pollar adapters.",
+      privy: "Email / Google login backed by a Privy embedded Stellar wallet.",
+      acceslyAdapter:
+        "Sign Pollar transactions with an Accesly smart account (passkey + Shamir-MPC).",
+      anclap: "On/off-ramp local currency through the Anclap anchor.",
+      soroswap: "Swap tokens on Soroban through the Soroswap DEX.",
+      setup: "Wire it up with @pollar/core or @pollar/react.",
     },
   },
 
@@ -250,12 +274,12 @@ export const en = {
           "void — opens the prebuilt modal with the address and QR code.",
       },
       {
-        fn: "walletAddress",
+        fn: "wallet",
         tag: "reactive value",
         params:
-          "Not a function — a string read from usePollar() (empty when not connected).",
+          "Not a function — a WalletInfo object read from usePollar(), or null when not connected.",
         returns:
-          "The connected wallet's public key; re-renders when the session changes.",
+          "The connected wallet (wallet.address holds the public key, wallet.custody/provider its type); re-renders when the session changes.",
       },
     ],
   },
@@ -1212,121 +1236,6 @@ export const en = {
   },
 
   ...nekoEn,
-
-  acceslyAbout: {
-    eyebrow: "Accesly",
-    title: "Non-custodial Stellar wallets with passkeys",
-    tagline:
-      "Embedded smart-account wallets secured by WebAuthn passkeys and MPC — no seed phrases.",
-    body: [
-      "Accesly is a non-custodial wallet SDK for Stellar. It deploys a Soroban smart account per user and secures it with a device passkey (Face ID / Touch ID / Windows Hello) plus a Shamir-split key — the private key never exists whole in one place and there is no seed phrase to write down.",
-      "The SDK runs the full lifecycle client-side: passkey registration, key derivation, wallet deploy, balance and activity streaming over SSE, transfers, swaps, and email-OTP recovery. Cognito backs the account layer and Stellar testnet is the default network.",
-      "This tab integrates @accesly/react directly — it mounts its own AcceslyProvider and does not touch the Pollar wallet. Sign up, create a wallet, fund it on testnet, and send XLM, all from the Accesly SDK.",
-    ],
-    featuresTitle: "What it offers",
-    features: [
-      {
-        title: "Passkey-secured",
-        desc: "WebAuthn passkeys gate every signature — no seed phrase, no raw private key on a server.",
-      },
-      {
-        title: "MPC key shares",
-        desc: "The signing key is Shamir-split 2-of-3 across device, backend, and recovery.",
-      },
-      {
-        title: "Soroban smart accounts",
-        desc: "Each user gets a smart account with per-asset spending rules on-chain.",
-      },
-      {
-        title: "Built-in recovery",
-        desc: "Email OTP plus a password rotates the signer onto a new device.",
-      },
-    ],
-    resourcesTitle: "Official resources",
-    reactPkgLabel: "@accesly/react on npm",
-    corePkgLabel: "@accesly/core on npm",
-    disclaimer:
-      "Summary based on the public @accesly/react and @accesly/core packages. Pollar is not affiliated with Accesly — all credit to their team.",
-  },
-
-  accesly: {
-    title: "Accesly wallet",
-    subtitle:
-      "A non-custodial Stellar smart-account wallet — passkeys + MPC, with no Pollar wallet required.",
-    testnetBadge: "Stellar testnet",
-    needSignIn: "Sign in to create a wallet and send payments.",
-    errorPrefix: "Error",
-    status: {
-      anonymous: "Signed out",
-      bootstrapping: "Loading…",
-      authenticated: "Signed in",
-      expired: "Session expired",
-    },
-    auth: {
-      title: "Account",
-      email: "Email",
-      emailPlaceholder: "you@example.com",
-      password: "Password",
-      passwordPlaceholder: "Your password",
-      signUp: "Sign up",
-      signingUp: "Signing up…",
-      confirmTitle: "Confirm your email",
-      confirmHint: "Enter the 6-digit code we emailed you.",
-      code: "Confirmation code",
-      codePlaceholder: "123456",
-      confirm: "Confirm",
-      confirming: "Confirming…",
-      resend: "Resend code",
-      signIn: "Sign in",
-      signingIn: "Signing in…",
-      signOut: "Sign out",
-      statusLabel: "Status",
-      signedInAs: "Signed in as",
-    },
-    wallet: {
-      title: "Wallet",
-      create: "Create / restore wallet",
-      creating: "Working… approve the passkey prompt",
-      address: "Smart account",
-      statusLabel: "Deploy status",
-      none: "No wallet yet.",
-      copy: "Copy",
-      copied: "Copied",
-      fund: "Fund with testnet XLM",
-      funding: "Funding…",
-      funded: "Funded with testnet XLM.",
-      alreadyFunded: "This wallet is already funded.",
-      statusOnChain: "On-chain",
-      statusPending: "Pending deploy",
-      statusUnknown: "Unknown",
-      statusNoWallet: "No wallet",
-    },
-    balance: {
-      title: "Balance",
-      refresh: "Refresh",
-      loading: "Loading…",
-    },
-    send: {
-      title: "Send XLM",
-      destination: "Destination address",
-      destinationPlaceholder: "G… or C…",
-      amount: "Amount (XLM)",
-      amountPlaceholder: "1.5",
-      submit: "Send",
-      sending: "Sending… approve the passkey prompt",
-      success: "Sent",
-      explorer: "View on explorer",
-      needWallet: "Create a wallet first.",
-    },
-    activity: {
-      title: "Activity",
-      empty: "No activity yet.",
-      created: "Wallet created",
-      signerRotated: "Signer rotated",
-      transferIn: "Received",
-      transferOut: "Sent",
-    },
-  },
 };
 
 export type Dictionary = typeof en;
@@ -1365,12 +1274,24 @@ export const es: Dictionary = {
     pools: "Pools",
     vaults: "Vaults",
     wallet: "Billetera",
+    privy: "Privy",
+    stellarWalletsKit: "Stellar Wallets Kit",
+    acceslyAdapter: "Accesly",
+    anclap: "Anclap",
+    soroswap: "Soroswap",
+    setup: "Setup",
     groups: {
-      pollarNative: "Pollar nativo",
+      pollarWallet: "Billetera",
+      transactions: "Transacciones",
+      sessions: "Sesiones",
+      distribution: "Distribución",
+      integrations: "Integraciones",
       trustlessWork: "Trustless Work",
       lumenwipe: "LumenWipe",
-      nekoProtocol: nekoNavLabel,
-      accesly: "Accesly",
+      stellarWalletsKit: "Stellar Wallets Kit",
+      privy: "Privy",
+      acceslyAdapter: "Accesly",
+      neko: nekoNavLabel,
     },
   },
 
@@ -1382,7 +1303,9 @@ export const es: Dictionary = {
     changeLanguage: "Cambiar idioma",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
-    products: "Productos y partners",
+    products: "Productos e integraciones",
+    walletAdapters: walletAdaptersNavLabel,
+    builtWith: "Hecho con Pollar",
   },
 
   home: {
@@ -1406,6 +1329,15 @@ export const es: Dictionary = {
       sessions: "Revisa las sesiones activas y revoca dispositivos.",
       distribution: "Lista las reglas de distribución y reclama tu parte.",
       lumenwipe: "Cierra una cuenta Stellar y transfiere su saldo restante.",
+      stellarWalletsKit:
+        "Registra wallets de Stellar Wallets Kit (Freighter, Albedo, xBull…) como adaptadores de Pollar.",
+      privy:
+        "Login con email / Google respaldado por una billetera Stellar embebida de Privy.",
+      acceslyAdapter:
+        "Firma transacciones de Pollar con una smart account de Accesly (passkey + Shamir-MPC).",
+      anclap: "Compra/venta de moneda local a través del anchor Anclap.",
+      soroswap: "Intercambia tokens en Soroban a través del DEX Soroswap.",
+      setup: "Conectalo con @pollar/core o @pollar/react.",
     },
   },
 
@@ -1578,12 +1510,12 @@ export const es: Dictionary = {
           "void: abre el modal prearmado con la dirección y el código QR.",
       },
       {
-        fn: "walletAddress",
+        fn: "wallet",
         tag: "reactive value",
         params:
-          "No es una función: es una cadena que se lee de usePollar() (vacía cuando no hay conexión).",
+          "No es una función: es un objeto WalletInfo que se lee de usePollar(), o null cuando no hay conexión.",
         returns:
-          "La clave pública de la billetera conectada; vuelve a renderizar cuando cambia la sesión.",
+          "La billetera conectada (wallet.address contiene la clave pública, wallet.custody/provider su tipo); vuelve a renderizar cuando cambia la sesión.",
       },
     ],
   },
@@ -2548,121 +2480,6 @@ export const es: Dictionary = {
   },
 
   ...nekoEs,
-
-  acceslyAbout: {
-    eyebrow: "Accesly",
-    title: "Billeteras Stellar no custodiales con passkeys",
-    tagline:
-      "Billeteras de smart account embebidas, protegidas con passkeys WebAuthn y MPC — sin frases semilla.",
-    body: [
-      "Accesly es un SDK de billetera no custodial para Stellar. Despliega una smart account de Soroban por usuario y la protege con un passkey del dispositivo (Face ID / Touch ID / Windows Hello) más una clave dividida con Shamir — la clave privada nunca existe completa en un solo lugar y no hay frase semilla que anotar.",
-      "El SDK ejecuta todo el ciclo de vida del lado del cliente: registro del passkey, derivación de claves, despliegue de la billetera, streaming de saldo y actividad por SSE, transferencias, swaps y recuperación por OTP de email. Cognito respalda la capa de cuenta y la red por defecto es Stellar testnet.",
-      "Esta pestaña integra @accesly/react directamente — monta su propio AcceslyProvider y no usa la billetera de Pollar. Regístrate, crea una billetera, fondéala en testnet y envía XLM, todo desde el SDK de Accesly.",
-    ],
-    featuresTitle: "Qué ofrece",
-    features: [
-      {
-        title: "Protegida con passkeys",
-        desc: "Los passkeys WebAuthn autorizan cada firma — sin frase semilla ni clave privada en bruto en un servidor.",
-      },
-      {
-        title: "Fragmentos de clave MPC",
-        desc: "La clave de firma se divide 2 de 3 con Shamir entre dispositivo, backend y recuperación.",
-      },
-      {
-        title: "Smart accounts de Soroban",
-        desc: "Cada usuario obtiene una smart account con reglas de gasto por activo en cadena.",
-      },
-      {
-        title: "Recuperación integrada",
-        desc: "Un OTP de email más una contraseña rota el firmante hacia un nuevo dispositivo.",
-      },
-    ],
-    resourcesTitle: "Recursos oficiales",
-    reactPkgLabel: "@accesly/react en npm",
-    corePkgLabel: "@accesly/core en npm",
-    disclaimer:
-      "Resumen basado en los paquetes públicos @accesly/react y @accesly/core. Pollar no está afiliado a Accesly — todo el crédito a su equipo.",
-  },
-
-  accesly: {
-    title: "Billetera Accesly",
-    subtitle:
-      "Una billetera Stellar no custodial de smart account — passkeys + MPC, sin necesidad de la billetera de Pollar.",
-    testnetBadge: "Stellar testnet",
-    needSignIn: "Inicia sesión para crear una billetera y enviar pagos.",
-    errorPrefix: "Error",
-    status: {
-      anonymous: "Sesión cerrada",
-      bootstrapping: "Cargando…",
-      authenticated: "Sesión iniciada",
-      expired: "Sesión expirada",
-    },
-    auth: {
-      title: "Cuenta",
-      email: "Email",
-      emailPlaceholder: "tu@ejemplo.com",
-      password: "Contraseña",
-      passwordPlaceholder: "Tu contraseña",
-      signUp: "Crear cuenta",
-      signingUp: "Creando cuenta…",
-      confirmTitle: "Confirma tu email",
-      confirmHint: "Ingresa el código de 6 dígitos que te enviamos por email.",
-      code: "Código de confirmación",
-      codePlaceholder: "123456",
-      confirm: "Confirmar",
-      confirming: "Confirmando…",
-      resend: "Reenviar código",
-      signIn: "Iniciar sesión",
-      signingIn: "Iniciando sesión…",
-      signOut: "Cerrar sesión",
-      statusLabel: "Estado",
-      signedInAs: "Sesión iniciada como",
-    },
-    wallet: {
-      title: "Billetera",
-      create: "Crear / restaurar billetera",
-      creating: "Trabajando… aprueba el aviso del passkey",
-      address: "Smart account",
-      statusLabel: "Estado del despliegue",
-      none: "Aún no hay billetera.",
-      copy: "Copiar",
-      copied: "Copiado",
-      fund: "Fondear con XLM de testnet",
-      funding: "Fondeando…",
-      funded: "Fondeada con XLM de testnet.",
-      alreadyFunded: "Esta billetera ya está fondeada.",
-      statusOnChain: "En cadena",
-      statusPending: "Despliegue pendiente",
-      statusUnknown: "Desconocido",
-      statusNoWallet: "Sin billetera",
-    },
-    balance: {
-      title: "Saldo",
-      refresh: "Actualizar",
-      loading: "Cargando…",
-    },
-    send: {
-      title: "Enviar XLM",
-      destination: "Dirección de destino",
-      destinationPlaceholder: "G… o C…",
-      amount: "Monto (XLM)",
-      amountPlaceholder: "1.5",
-      submit: "Enviar",
-      sending: "Enviando… aprueba el aviso del passkey",
-      success: "Enviado",
-      explorer: "Ver en el explorador",
-      needWallet: "Crea una billetera primero.",
-    },
-    activity: {
-      title: "Actividad",
-      empty: "Aún no hay actividad.",
-      created: "Billetera creada",
-      signerRotated: "Firmante rotado",
-      transferIn: "Recibido",
-      transferOut: "Enviado",
-    },
-  },
 };
 
 export const pt: Dictionary = {
@@ -2699,12 +2516,24 @@ export const pt: Dictionary = {
     pools: "Pools",
     vaults: "Vaults",
     wallet: "Carteira",
+    privy: "Privy",
+    stellarWalletsKit: "Stellar Wallets Kit",
+    acceslyAdapter: "Accesly",
+    anclap: "Anclap",
+    soroswap: "Soroswap",
+    setup: "Setup",
     groups: {
-      pollarNative: "Pollar nativo",
+      pollarWallet: "Carteira",
+      transactions: "Transações",
+      sessions: "Sessões",
+      distribution: "Distribuição",
+      integrations: "Integrações",
       trustlessWork: "Trustless Work",
       lumenwipe: "LumenWipe",
-      nekoProtocol: nekoNavLabel,
-      accesly: "Accesly",
+      stellarWalletsKit: "Stellar Wallets Kit",
+      privy: "Privy",
+      acceslyAdapter: "Accesly",
+      neko: nekoNavLabel,
     },
   },
 
@@ -2716,7 +2545,9 @@ export const pt: Dictionary = {
     changeLanguage: "Alterar idioma",
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
-    products: "Produtos e parceiros",
+    products: "Produtos e integrações",
+    walletAdapters: walletAdaptersNavLabel,
+    builtWith: "Feito com Pollar",
   },
 
   home: {
@@ -2740,6 +2571,15 @@ export const pt: Dictionary = {
       sessions: "Revise as sessões ativas e revogue dispositivos.",
       distribution: "Liste as regras de distribuição e resgate sua parte.",
       lumenwipe: "Encerre uma conta Stellar e transfira o saldo restante.",
+      stellarWalletsKit:
+        "Registre carteiras do Stellar Wallets Kit (Freighter, Albedo, xBull…) como adaptadores da Pollar.",
+      privy:
+        "Login com e-mail / Google com uma carteira Stellar embutida da Privy.",
+      acceslyAdapter:
+        "Assine transações da Pollar com uma smart account da Accesly (passkey + Shamir-MPC).",
+      anclap: "Compra/venda de moeda local através do anchor Anclap.",
+      soroswap: "Troque tokens na Soroban através da DEX Soroswap.",
+      setup: "Conecte com @pollar/core ou @pollar/react.",
     },
   },
 
@@ -2911,12 +2751,12 @@ export const pt: Dictionary = {
         returns: "void: abre o modal pré-montado com o endereço e o código QR.",
       },
       {
-        fn: "walletAddress",
+        fn: "wallet",
         tag: "reactive value",
         params:
-          "Não é uma função: é uma string lida de usePollar() (vazia quando não conectado).",
+          "Não é uma função: é um objeto WalletInfo lido de usePollar(), ou null quando não conectado.",
         returns:
-          "A chave pública da carteira conectada; re-renderiza quando a sessão muda.",
+          "A carteira conectada (wallet.address contém a chave pública, wallet.custody/provider seu tipo); re-renderiza quando a sessão muda.",
       },
     ],
   },
@@ -3878,121 +3718,6 @@ export const pt: Dictionary = {
   },
 
   ...nekoPt,
-
-  acceslyAbout: {
-    eyebrow: "Accesly",
-    title: "Carteiras Stellar não custodiais com passkeys",
-    tagline:
-      "Carteiras de smart account integradas, protegidas por passkeys WebAuthn e MPC — sem frases-semente.",
-    body: [
-      "A Accesly é um SDK de carteira não custodial para Stellar. Implanta uma smart account de Soroban por usuário e a protege com um passkey do dispositivo (Face ID / Touch ID / Windows Hello) mais uma chave dividida com Shamir — a chave privada nunca existe inteira em um só lugar e não há frase-semente para anotar.",
-      "O SDK roda todo o ciclo de vida no lado do cliente: registro do passkey, derivação de chaves, deploy da carteira, streaming de saldo e atividade por SSE, transferências, swaps e recuperação por OTP de e-mail. O Cognito sustenta a camada de conta e a rede padrão é a Stellar testnet.",
-      "Esta aba integra o @accesly/react diretamente — monta seu próprio AcceslyProvider e não usa a carteira da Pollar. Cadastre-se, crie uma carteira, abasteça-a na testnet e envie XLM, tudo pelo SDK da Accesly.",
-    ],
-    featuresTitle: "O que oferece",
-    features: [
-      {
-        title: "Protegida por passkeys",
-        desc: "Passkeys WebAuthn autorizam cada assinatura — sem frase-semente nem chave privada em texto puro num servidor.",
-      },
-      {
-        title: "Frações de chave MPC",
-        desc: "A chave de assinatura é dividida 2 de 3 com Shamir entre dispositivo, backend e recuperação.",
-      },
-      {
-        title: "Smart accounts de Soroban",
-        desc: "Cada usuário recebe uma smart account com regras de gasto por ativo na blockchain.",
-      },
-      {
-        title: "Recuperação integrada",
-        desc: "Um OTP de e-mail mais uma senha rotaciona o signatário para um novo dispositivo.",
-      },
-    ],
-    resourcesTitle: "Recursos oficiais",
-    reactPkgLabel: "@accesly/react no npm",
-    corePkgLabel: "@accesly/core no npm",
-    disclaimer:
-      "Resumo baseado nos pacotes públicos @accesly/react e @accesly/core. A Pollar não é afiliada à Accesly — todo o crédito à equipe deles.",
-  },
-
-  accesly: {
-    title: "Carteira Accesly",
-    subtitle:
-      "Uma carteira Stellar não custodial de smart account — passkeys + MPC, sem precisar da carteira da Pollar.",
-    testnetBadge: "Stellar testnet",
-    needSignIn: "Faça login para criar uma carteira e enviar pagamentos.",
-    errorPrefix: "Erro",
-    status: {
-      anonymous: "Sessão encerrada",
-      bootstrapping: "Carregando…",
-      authenticated: "Sessão iniciada",
-      expired: "Sessão expirada",
-    },
-    auth: {
-      title: "Conta",
-      email: "E-mail",
-      emailPlaceholder: "voce@exemplo.com",
-      password: "Senha",
-      passwordPlaceholder: "Sua senha",
-      signUp: "Criar conta",
-      signingUp: "Criando conta…",
-      confirmTitle: "Confirme seu e-mail",
-      confirmHint: "Digite o código de 6 dígitos que enviamos por e-mail.",
-      code: "Código de confirmação",
-      codePlaceholder: "123456",
-      confirm: "Confirmar",
-      confirming: "Confirmando…",
-      resend: "Reenviar código",
-      signIn: "Entrar",
-      signingIn: "Entrando…",
-      signOut: "Sair",
-      statusLabel: "Estado",
-      signedInAs: "Conectado como",
-    },
-    wallet: {
-      title: "Carteira",
-      create: "Criar / restaurar carteira",
-      creating: "Trabalhando… aprove o aviso do passkey",
-      address: "Smart account",
-      statusLabel: "Status do deploy",
-      none: "Ainda não há carteira.",
-      copy: "Copiar",
-      copied: "Copiado",
-      fund: "Abastecer com XLM de testnet",
-      funding: "Abastecendo…",
-      funded: "Abastecida com XLM de testnet.",
-      alreadyFunded: "Esta carteira já está abastecida.",
-      statusOnChain: "On-chain",
-      statusPending: "Deploy pendente",
-      statusUnknown: "Desconhecido",
-      statusNoWallet: "Sem carteira",
-    },
-    balance: {
-      title: "Saldo",
-      refresh: "Atualizar",
-      loading: "Carregando…",
-    },
-    send: {
-      title: "Enviar XLM",
-      destination: "Endereço de destino",
-      destinationPlaceholder: "G… ou C…",
-      amount: "Valor (XLM)",
-      amountPlaceholder: "1.5",
-      submit: "Enviar",
-      sending: "Enviando… aprove o aviso do passkey",
-      success: "Enviado",
-      explorer: "Ver no explorer",
-      needWallet: "Crie uma carteira primeiro.",
-    },
-    activity: {
-      title: "Atividade",
-      empty: "Ainda não há atividade.",
-      created: "Carteira criada",
-      signerRotated: "Signatário rotacionado",
-      transferIn: "Recebido",
-      transferOut: "Enviado",
-    },
-  },
 };
 
 export const LOCALES = ["en", "es", "pt"] as const;

@@ -167,11 +167,12 @@ export default function LumenWipePage() {
   // Pollar wallet — used to fill the G-address fields and, when the account
   // being closed IS the connected wallet, to sign + submit each step's XDR.
   const {
-    walletAddress,
+    wallet,
     isAuthenticated,
     network: pollarNetwork,
     signAndSubmitTx,
   } = usePollar();
+  const walletAddress = wallet?.address ?? "";
   const hasWallet = isAuthenticated && walletAddress.startsWith("G");
 
   const [network, setNetwork] = useState<Network>("testnet");

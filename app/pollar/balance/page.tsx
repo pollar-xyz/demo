@@ -76,9 +76,10 @@ export default function BalancePage() {
     walletBalance,
     openWalletBalanceModal,
     getClient,
-    walletAddress,
+    wallet,
     isAuthenticated,
   } = usePollar();
+  const walletAddress = wallet?.address ?? "";
 
   const [sdk, setSdk] = useState<Sdk>("react");
   const [publicKey, setPublicKey] = useState("");
