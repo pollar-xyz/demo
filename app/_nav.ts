@@ -65,6 +65,7 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/pollar/kyc", label: "kyc" },
       { href: "/pollar/ramp", label: "ramp" },
       { href: "/pollar/anclap", label: "anclap" },
+      { href: "/pollar/swap", label: "swap" },
       { href: "/pollar/soroswap", label: "soroswap" },
     ],
   },

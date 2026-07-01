@@ -46,6 +46,7 @@ export const en = {
     stellarWalletsKit: "Stellar Wallets Kit",
     acceslyAdapter: "Accesly",
     anclap: "Anclap",
+    swap: "Swap",
     soroswap: "Soroswap",
     setup: "Setup",
     groups: {
@@ -104,6 +105,7 @@ export const en = {
       acceslyAdapter:
         "Sign Pollar transactions with an Accesly smart account (passkey + Shamir-MPC).",
       anclap: "On/off-ramp local currency through the Anclap anchor.",
+      swap: "Swap one asset for another at the best on-chain price.",
       soroswap: "Swap tokens on Soroban through the Soroswap DEX.",
       setup: "Wire it up with @pollar/core or @pollar/react.",
     },
@@ -543,6 +545,58 @@ export const en = {
         tag: "sync",
         params:
           "No arguments — country, currency and direction are picked inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+    ],
+  },
+
+  swap: {
+    title: "Swap",
+    desc: "Swap one asset for another across on-chain venues (Aquarius AMM, Soroswap, SDEX). Pollar quotes every route, ranks them best-first and renders the whole quote-and-swap flow inside a modal.",
+    open: "Open Swap modal",
+    note: "takes no arguments — assets, amount and venue are picked inside the modal.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — the whole quote → swap flow (trustline included) is rendered for you.",
+    coreDesc:
+      "Drive the swap yourself: quote across venues, then execute the best route.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "getSwapQuote(params)",
+        tag: "async",
+        params:
+          "params: SwapQuoteParams — { sellAsset, buyAsset, amount, provider?: 'auto' | 'aquarius' | 'soroswap' | 'sdex', slippageBps? }.",
+        returns:
+          "Promise<SwapQuote[]> — routes ranked by output, best first; empty when no route exists.",
+      },
+      {
+        fn: "swap(quote, opts?)",
+        tag: "async",
+        params:
+          "quote: SwapQuote (a route from getSwapQuote); opts?: { autoTrustline? } — adds the buy-asset trustline first when needed.",
+        returns:
+          "Promise<SubmitOutcome> — runs the quote's build payload through the tx pipeline (on-chain minReceived enforces slippage).",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openSwapModal()",
+        tag: "sync",
+        params:
+          "No arguments — assets, amount and venue are picked inside the modal.",
         returns: "void — opens the prebuilt modal; there is nothing to await.",
       },
     ],
@@ -1377,6 +1431,7 @@ export const es: Dictionary = {
     stellarWalletsKit: "Stellar Wallets Kit",
     acceslyAdapter: "Accesly",
     anclap: "Anclap",
+    swap: "Swap",
     soroswap: "Soroswap",
     setup: "Setup",
     groups: {
@@ -1437,6 +1492,7 @@ export const es: Dictionary = {
       acceslyAdapter:
         "Firma transacciones de Pollar con una smart account de Accesly (passkey + Shamir-MPC).",
       anclap: "Compra/venta de moneda local a través del anchor Anclap.",
+      swap: "Intercambia un activo por otro al mejor precio on-chain.",
       soroswap: "Intercambia tokens en Soroban a través del DEX Soroswap.",
       setup: "Conectalo con @pollar/core o @pollar/react.",
     },
@@ -1878,6 +1934,58 @@ export const es: Dictionary = {
         tag: "sync",
         params:
           "Sin argumentos: el país, la moneda y el tipo de operación se eligen dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+    ],
+  },
+
+  swap: {
+    title: "Swap",
+    desc: "Intercambia un activo por otro en venues on-chain (AMM de Aquarius, Soroswap, SDEX). Pollar cotiza cada ruta, las ordena de mejor a peor y renderiza todo el flujo de cotización e intercambio dentro de un modal.",
+    open: "Abrir modal de swap",
+    note: "no recibe argumentos: los activos, el monto y el venue se eligen dentro del modal.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: todo el flujo cotización → swap (trustline incluida) ya viene renderizado.",
+    coreDesc:
+      "Controla el swap tú mismo: cotiza entre venues y luego ejecuta la mejor ruta.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getSwapQuote(params)",
+        tag: "async",
+        params:
+          "params: SwapQuoteParams — { sellAsset, buyAsset, amount, provider?: 'auto' | 'aquarius' | 'soroswap' | 'sdex', slippageBps? }.",
+        returns:
+          "Promise<SwapQuote[]>: rutas ordenadas por output, la mejor primero; vacío cuando no existe ruta.",
+      },
+      {
+        fn: "swap(quote, opts?)",
+        tag: "async",
+        params:
+          "quote: SwapQuote (una ruta de getSwapQuote); opts?: { autoTrustline? } — agrega primero la trustline del activo a recibir si hace falta.",
+        returns:
+          "Promise<SubmitOutcome>: corre el payload build de la cotización por el pipeline de tx (el minReceived on-chain aplica el slippage).",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openSwapModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: los activos, el monto y el venue se eligen dentro del modal.",
         returns: "void: abre el modal prearmado; no hay nada que esperar.",
       },
     ],
@@ -2716,6 +2824,7 @@ export const pt: Dictionary = {
     stellarWalletsKit: "Stellar Wallets Kit",
     acceslyAdapter: "Accesly",
     anclap: "Anclap",
+    swap: "Swap",
     soroswap: "Soroswap",
     setup: "Setup",
     groups: {
@@ -2777,6 +2886,7 @@ export const pt: Dictionary = {
       acceslyAdapter:
         "Assine transações da Pollar com uma smart account da Accesly (passkey + Shamir-MPC).",
       anclap: "Compra/venda de moeda local através do anchor Anclap.",
+      swap: "Troque um ativo por outro pelo melhor preço on-chain.",
       soroswap: "Troque tokens na Soroban através da DEX Soroswap.",
       setup: "Conecte com @pollar/core ou @pollar/react.",
     },
@@ -3217,6 +3327,58 @@ export const pt: Dictionary = {
         tag: "sync",
         params:
           "Sem argumentos: o país, a moeda e o tipo de operação são escolhidos dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+    ],
+  },
+
+  swap: {
+    title: "Swap",
+    desc: "Troque um ativo por outro em venues on-chain (AMM da Aquarius, Soroswap, SDEX). A Pollar cota cada rota, ordena da melhor para a pior e renderiza todo o fluxo de cotação e troca dentro de um modal.",
+    open: "Abrir modal de swap",
+    note: "não recebe argumentos: os ativos, o valor e o venue são escolhidos dentro do modal.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: todo o fluxo cotação → troca (trustline incluída) já vem renderizado.",
+    coreDesc:
+      "Controle a troca você mesmo: cote entre venues e depois execute a melhor rota.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente retornado por getClient(): a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getSwapQuote(params)",
+        tag: "async",
+        params:
+          "params: SwapQuoteParams — { sellAsset, buyAsset, amount, provider?: 'auto' | 'aquarius' | 'soroswap' | 'sdex', slippageBps? }.",
+        returns:
+          "Promise<SwapQuote[]>: rotas ordenadas por output, a melhor primeiro; vazio quando não existe rota.",
+      },
+      {
+        fn: "swap(quote, opts?)",
+        tag: "async",
+        params:
+          "quote: SwapQuote (uma rota de getSwapQuote); opts?: { autoTrustline? } — adiciona primeiro a trustline do ativo a receber quando necessário.",
+        returns:
+          "Promise<SubmitOutcome>: roda o payload build da cotação pelo pipeline de tx (o minReceived on-chain aplica o slippage).",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar(): a camada de react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openSwapModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: os ativos, o valor e o venue são escolhidos dentro do modal.",
         returns: "void: abre o modal pré-montado; não há nada para aguardar.",
       },
     ],
