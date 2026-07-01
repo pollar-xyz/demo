@@ -21,6 +21,7 @@ export const en = {
     comingSoon: "Coming soon",
     comingSoonDesc: "This feature will be available shortly.",
     soon: "Soon",
+    new: "New",
   },
 
   nav: {
@@ -1496,6 +1497,7 @@ export const es: Dictionary = {
     comingSoon: "Próximamente",
     comingSoonDesc: "Esta funcionalidad estará disponible pronto.",
     soon: "Pronto",
+    new: "Nuevo",
   },
 
   nav: {
@@ -2979,6 +2981,7 @@ export const pt: Dictionary = {
     comingSoon: "Em breve",
     comingSoonDesc: "Esta funcionalidade estará disponível em breve.",
     soon: "Em breve",
+    new: "Novo",
   },
 
   nav: {

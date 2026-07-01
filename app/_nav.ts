@@ -30,6 +30,8 @@ export type NavGroup = {
   // Marks the group as not-yet-live: the sidebar shows a "Soon" badge and the
   // pages blur their content behind the ComingSoon overlay.
   soon?: boolean;
+  // Marks the group as recently added: the sidebar shows a "New" badge.
+  isNew?: boolean;
 };
 
 // The sidebar groups. Each group is its own entry; its tabs are the routes
@@ -73,6 +75,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "ramp",
     section: "integrations",
+    isNew: true,
     tabs: [
       { href: "/pollar/ramp", label: "overview" },
       { href: "/pollar/ramp/implementation", label: "implementation" },
@@ -81,6 +84,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "swap",
     section: "integrations",
+    isNew: true,
     tabs: [
       { href: "/pollar/swap", label: "overview" },
       { href: "/pollar/swap/implementation", label: "implementation" },
@@ -99,6 +103,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "privy",
     section: "walletAdapters",
+    isNew: true,
     tabs: [
       { href: "/wallet-adapters/privy", label: "overview" },
       { href: "/wallet-adapters/privy/setup", label: "setup" },
@@ -126,6 +131,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "nirium",
     section: "builtWith",
+    isNew: true,
     tabs: [
       { href: "/built-with-pollar/nirium", label: "overview" },
       { href: "/built-with-pollar/nirium/x402", label: "payments" },
@@ -134,6 +140,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "neko",
     section: "builtWith",
+    isNew: true,
     tabs: [
       { href: "/neko/overview", label: "overview" },
       { href: "/neko/dashboard", label: "dashboard" },
@@ -144,6 +151,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "lumenwipe",
     section: "builtWith",
+    isNew: true,
     tabs: [
       { href: "/built-with-pollar/lumenwipe", label: "overview" },
       { href: "/built-with-pollar/lumenwipe/wipe", label: "lumenwipe" },

@@ -438,6 +438,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
                             {t.common.soon}
                           </span>
                         )}
+                        {g.isNew && !g.soon && (
+                          <span className="shrink-0 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                            {t.common.new}
+                          </span>
+                        )}
                       </Link>
                     );
                   })}
@@ -472,6 +477,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
                       }`}
                     >
                       {t.common.soon}
+                    </span>
+                  )}
+                  {g.isNew && !g.soon && (
+                    <span
+                      className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
+                        active
+                          ? "bg-white/20 text-white"
+                          : "bg-primary-light text-primary"
+                      }`}
+                    >
+                      {t.common.new}
                     </span>
                   )}
                 </Link>
