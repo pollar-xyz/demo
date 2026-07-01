@@ -34,21 +34,33 @@ export function VaultActionModal({
   mode,
   vault,
   position,
+  presetAmount,
   onClose,
   onDone,
 }: {
-  mode: "deposit" | "withdraw";
+  mode: "deposit" | "withdraw" | "claim";
   vault: VaultCatalogEntry;
   position?: VaultPositionLite;
+  presetAmount?: string;
   onClose: () => void;
   onDone: () => void;
 }) {
   const { t } = useI18n();
-  const { wallet, getClient, enabledAssets, refreshAssets, setTrustline } =
-    usePollar();
+  const {
+    wallet,
+    getClient,
+    openTxModal,
+    enabledAssets,
+    refreshAssets,
+    setTrustline,
+  } = usePollar();
   const walletAddress = wallet?.address ?? "";
   const isMainnet = useNekoMainnet();
-  const [amount, setAmount] = useState("");
+  // "claim" is a withdraw of just the accrued yield: same on-chain `withdraw`
+  // call, with the amount locked to the position's earnings.
+  const isClaim = mode === "claim";
+  const isWithdraw = mode === "withdraw" || isClaim;
+  const [amount, setAmount] = useState(presetAmount ?? "");
   const [busy, setBusy] = useState(false);
   const [steps, setSteps] = useState<Steps>(IDLE);
   const [result, setResult] = useState<Result | null>(null);
@@ -117,23 +129,26 @@ export function VaultActionModal({
     setSteps(IDLE);
     try {
       // 1. Build + sign + submit with Pollar in one call (invoke_contract).
+      // Opening the Pollar transaction modal surfaces the build → sign → submit
+      // flow the SDK already drives via runTx.
       let sharesBurned = BigInt(0);
       let args;
-      if (mode === "deposit") {
-        args = depositArgs(walletAddress, toRaw(amount));
-      } else {
+      if (isWithdraw) {
         sharesBurned = sharesForWithdraw(
           amount,
           position?.userShares ?? "0",
           position?.pricePerShare ?? "0",
         );
         args = withdrawArgs(walletAddress, sharesBurned);
+      } else {
+        args = depositArgs(walletAddress, toRaw(amount));
       }
 
       mark("submit", "running");
+      openTxModal();
       const outcome = await getClient().runTx("invoke_contract", {
         contractId: vault.id,
-        method: mode,
+        method: isWithdraw ? "withdraw" : "deposit",
         args,
       } as never);
       const status =
@@ -152,22 +167,19 @@ export function VaultActionModal({
       // 2. Record the action so Neko can track it (POST /v1/audit).
       if (outcome.status === "success") {
         mark("audit", "running");
-        const tokenIn =
-          mode === "deposit"
-            ? Number(amount)
-            : Number(sharesBurned) / 10 ** SHARES_DP;
-        const amountOut =
-          mode === "deposit"
-            ? (sharesForDeposit(amount, position?.pricePerShare) ??
-              Number(amount))
-            : Number(amount);
+        const tokenIn = isWithdraw
+          ? Number(sharesBurned) / 10 ** SHARES_DP
+          : Number(amount);
+        const amountOut = isWithdraw
+          ? Number(amount)
+          : (sharesForDeposit(amount, position?.pricePerShare) ??
+            Number(amount));
         await nekoPost("/v1/audit", {
           wallet_address: walletAddress,
-          action_type:
-            mode === "deposit" ? "vaults_deposit" : "vaults_withdraw",
-          asset_in: mode === "deposit" ? asset : vault.name,
+          action_type: isWithdraw ? "vaults_withdraw" : "vaults_deposit",
+          asset_in: isWithdraw ? vault.name : asset,
           token_amount_in: tokenIn,
-          asset_out: mode === "deposit" ? vault.name : asset,
+          asset_out: isWithdraw ? asset : vault.name,
           amount_out: amountOut,
           pool_id: vault.id,
           tx_hash: outcome.hash,
@@ -201,9 +213,11 @@ export function VaultActionModal({
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 className="text-lg font-bold text-foreground">
-              {mode === "deposit"
-                ? t.nekoVaults.deposit
-                : t.nekoVaults.withdraw}
+              {isClaim
+                ? t.nekoVaults.claimTitle
+                : mode === "deposit"
+                  ? t.nekoVaults.deposit
+                  : t.nekoVaults.withdraw}
             </h2>
             <p className="text-xs text-muted mt-0.5">{vault.name}</p>
           </div>
@@ -224,8 +238,9 @@ export function VaultActionModal({
             onChange={(e) => setAmount(e.target.value)}
             inputMode="decimal"
             placeholder="0.0"
-            disabled={busy}
-            className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light"
+            disabled={busy || isClaim}
+            readOnly={isClaim}
+            className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light disabled:opacity-70"
           />
         </div>
 
@@ -253,7 +268,11 @@ export function VaultActionModal({
             disabled={busy || !isMainnet}
             className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
           >
-            {busy ? t.nekoVaults.working : t.nekoVaults.run}
+            {busy
+              ? t.nekoVaults.working
+              : isClaim
+                ? t.nekoVaults.claim
+                : t.nekoVaults.run}
           </button>
         )}
 

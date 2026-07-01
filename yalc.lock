@@ -2,28 +2,29 @@
   "version": "v1",
   "packages": {
     "@pollar/react": {
-      "signature": "803ffe083ba55292f4f48f1a82ef1016",
+      "signature": "18bafd5b09934d45999e120df4cb782d",
       "file": true,
-      "replaced": "0.10.0-rc.8"
+      "replaced": "0.10.0"
     },
     "@pollar/core": {
-      "signature": "3f28d45644ce49f49660d80f30879cba",
+      "signature": "0fa8c1fe281d8903f54626596eb705a6",
       "file": true,
-      "replaced": "0.10.0-rc.8"
+      "replaced": "0.10.0"
     },
     "@pollar/stellar-wallets-kit-adapter": {
-      "signature": "3dd7e7f2b1fab21746c3cbd18558ff5b",
+      "signature": "cbc27fb1513ffcede4e89066a5d131be",
       "file": true,
-      "replaced": "0.10.0-rc.8"
+      "replaced": "0.10.0"
     },
     "@pollar/privy-adapter": {
-      "signature": "6330e6e900da5d676987d78556ed15bc",
+      "signature": "68f43a25e368844ae29384646bc6c96e",
       "file": true,
-      "replaced": "0.10.0-rc.8"
+      "replaced": "0.10.0"
     },
     "@pollar/accesly-adapter": {
-      "signature": "b3e31d239166b60895e73a23221468a0",
-      "file": true
+      "signature": "80f24b8f8ccf099fe5569c5da6d131e5",
+      "file": true,
+      "replaced": "0.10.0-rc.10"
     }
   }
 }

@@ -61,6 +61,20 @@ const nextConfig: NextConfig = {
         destination: "/built-with-pollar/nirium",
         permanent: false,
       },
+      // Soroswap is no longer a standalone route — it's just one of the swap
+      // venues inside the unified /pollar/swap modal now.
+      {
+        source: "/pollar/soroswap",
+        destination: "/pollar/swap",
+        permanent: false,
+      },
+      // Anclap is no longer a standalone route — it's one of the anchors behind
+      // the unified /pollar/ramp modal now.
+      {
+        source: "/pollar/anclap",
+        destination: "/pollar/ramp",
+        permanent: false,
+      },
       // Group bases -> their first tab.
       {
         source: "/pollar",

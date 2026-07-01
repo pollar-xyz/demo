@@ -45,16 +45,17 @@ export const en = {
     privy: "Privy",
     stellarWalletsKit: "Stellar Wallets Kit",
     acceslyAdapter: "Accesly",
-    anclap: "Anclap",
     swap: "Swap",
-    soroswap: "Soroswap",
     setup: "Setup",
+    implementation: "Implementation",
     groups: {
       pollarWallet: "Wallet",
       transactions: "Transactions",
       sessions: "Sessions",
       distribution: "Distribution",
-      integrations: "Integrations",
+      kyc: "KYC",
+      ramp: "Ramp",
+      swap: "Swap",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
       lumenwipe: "LumenWipe",
@@ -73,7 +74,8 @@ export const en = {
     changeLanguage: "Change language",
     openMenu: "Open menu",
     closeMenu: "Close menu",
-    products: "Products & integrations",
+    products: "Products",
+    integrations: "Integrations",
     walletAdapters: walletAdaptersNavLabel,
     builtWith: "Built with Pollar",
   },
@@ -104,9 +106,7 @@ export const en = {
       privy: "Email / Google login backed by a Privy embedded Stellar wallet.",
       acceslyAdapter:
         "Sign Pollar transactions with an Accesly smart account (passkey + Shamir-MPC).",
-      anclap: "On/off-ramp local currency through the Anclap anchor.",
       swap: "Swap one asset for another at the best on-chain price.",
-      soroswap: "Swap tokens on Soroban through the Soroswap DEX.",
       setup: "Wire it up with @pollar/core or @pollar/react.",
     },
   },
@@ -487,7 +487,7 @@ export const en = {
 
   ramp: {
     title: "Ramp",
-    desc: "Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH). Pollar renders the entire quote-and-payment flow inside a modal.",
+    desc: "Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH) through anchors like Anclap. Pollar renders the entire quote-and-payment flow inside a modal.",
     open: "Open Ramp modal",
     note: "takes no arguments — country, currency and direction are picked inside the modal.",
     reactDesc:
@@ -555,6 +555,9 @@ export const en = {
     desc: "Swap one asset for another across on-chain venues (Aquarius AMM, Soroswap, SDEX). Pollar quotes every route, ranks them best-first and renders the whole quote-and-swap flow inside a modal.",
     open: "Open Swap modal",
     note: "takes no arguments — assets, amount and venue are picked inside the modal.",
+    venuesTitle: "Venues are configured in your dashboard",
+    venuesBody:
+      "The swap modal only offers the venues you enable under Treasury → Swap in the Pollar dashboard. The SDK reads that selection at runtime via getSwapConfig() (the SDK_SWAP_CONFIG response) — no code change needed. An empty list hides the swap UI entirely.",
     reactDesc:
       "Drop-in button that opens a prebuilt modal — the whole quote → swap flow (trustline included) is rendered for you.",
     coreDesc:
@@ -563,6 +566,14 @@ export const en = {
     coreFnsIntro:
       "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
     coreFns: [
+      {
+        fn: "getSwapConfig()",
+        tag: "async",
+        params:
+          "No arguments — reads the app's dashboard selection (Treasury → Swap), intersected with server capability.",
+        returns:
+          "Promise<SwapVenue[]> — the enabled venues (e.g. ['aquarius', 'sdex']); empty means swap is disabled, so hide the UI.",
+      },
       {
         fn: "getSwapQuote(params)",
         tag: "async",
@@ -591,6 +602,14 @@ export const en = {
           "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
         returns:
           "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "getSwapConfig()",
+        tag: "async",
+        params:
+          "No arguments — resolves the venues this app exposes, from your dashboard selection (Treasury → Swap).",
+        returns:
+          "Promise<SwapVenue[]> — enabled venues; empty means swap is disabled for this app, so hide the swap UI.",
       },
       {
         fn: "openSwapModal()",
@@ -1328,6 +1347,77 @@ export const en = {
       "Summary based on materials shared by the Nirium team. Pollar is not affiliated with Nirium — all credit to their team.",
   },
 
+  rampAbout: {
+    eyebrow: "Integration",
+    title: "On/off-ramp with local payment methods",
+    tagline:
+      "Buy and sell crypto through regional anchors — one modal, one flow.",
+    body: [
+      "Ramp connects your users to fiat: they buy crypto with a local payment method (SPEI, PIX, PSE, ACH) or cash out the other way. Pollar quotes the anchor, creates the on/off-ramp and surfaces the payment instructions inside a single modal.",
+      "Which anchors and rails are available is decided in your dashboard — the SDK reads that selection at runtime from the app config, so enabling a new anchor is a dashboard toggle, not a redeploy. If nothing is enabled, the ramp UI stays hidden.",
+      "Under the hood the flow is quote → create ramp → poll until it settles, all through @pollar/core. See the Implementation tab for the live demo and the exact calls.",
+    ],
+    featuresTitle: "Anchors & status",
+    features: [
+      {
+        title: "Anclap — live",
+        desc: "On/off-ramp local currency across regional rails (SPEI, PIX, PSE…), settled on Stellar.",
+      },
+      {
+        title: "More anchors — in progress",
+        desc: "Additional regional anchors and payment rails are being wired in; enable them from the dashboard as they ship.",
+      },
+      {
+        title: "Configured in your dashboard",
+        desc: "Toggle anchors under Treasury — the SDK reads your selection at runtime, with no code change.",
+      },
+      {
+        title: "One modal, core or React",
+        desc: "openRampModal() renders the whole quote → payment → settle flow; or drive it yourself with @pollar/core.",
+      },
+    ],
+    resourcesTitle: "Resources",
+    anclapLabel: "Anclap",
+    docsLabel: "Stellar anchors & SEPs",
+    disclaimer:
+      "Anchor availability depends on your dashboard configuration and each anchor's coverage. Anclap is a third party — all credit to their team.",
+  },
+
+  swapAbout: {
+    eyebrow: "Integration",
+    title: "Swap across on-chain venues",
+    tagline: "One modal, best price across every venue you enable.",
+    body: [
+      "Swap lets your users exchange one asset for another on-chain. Pollar quotes every enabled venue, ranks the routes best-first and renders the whole quote → swap flow — trustline included — inside a single modal.",
+      "The venues on offer are decided in your dashboard (Treasury → Swap). The SDK reads that selection at runtime via getSwapConfig() (the SDK_SWAP_CONFIG response), so turning a venue on or off is a dashboard toggle. An empty list hides the swap UI entirely.",
+      "Under the hood the flow is getSwapQuote → swap, all through @pollar/core. See the Implementation tab for the live demo and the exact calls.",
+    ],
+    featuresTitle: "Venues & status",
+    features: [
+      {
+        title: "Aquarius — live",
+        desc: "Soroban AMM (liquidity pools). Works for classic and smart wallets.",
+      },
+      {
+        title: "Stellar DEX — live",
+        desc: "Stellar's native order book via path payments. Classic wallets only.",
+      },
+      {
+        title: "Soroswap — in progress",
+        desc: "DEX aggregator across Soroban protocols. Needs a platform Soroswap API key; skipped until it's set.",
+      },
+      {
+        title: "Configured in your dashboard",
+        desc: "Enable venues under Treasury → Swap; the SDK reads getSwapConfig() at runtime, with no code change.",
+      },
+    ],
+    resourcesTitle: "Resources",
+    aquariusLabel: "Aquarius",
+    soroswapLabel: "Soroswap",
+    disclaimer:
+      "Venue availability depends on your dashboard configuration and platform capability. Aquarius and Soroswap are third parties — all credit to their teams.",
+  },
+
   niriumX402: {
     title: "x402 payments",
     desc: "Send a programmatic x402 payment. Nirium plans and assembles the transaction; the Pollar SDK signs and submits the unsigned XDR with your connected wallet — no secret key, no API key.",
@@ -1430,16 +1520,17 @@ export const es: Dictionary = {
     privy: "Privy",
     stellarWalletsKit: "Stellar Wallets Kit",
     acceslyAdapter: "Accesly",
-    anclap: "Anclap",
     swap: "Swap",
-    soroswap: "Soroswap",
     setup: "Setup",
+    implementation: "Implementación",
     groups: {
       pollarWallet: "Billetera",
       transactions: "Transacciones",
       sessions: "Sesiones",
       distribution: "Distribución",
-      integrations: "Integraciones",
+      kyc: "KYC",
+      ramp: "Ramp",
+      swap: "Swap",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
       lumenwipe: "LumenWipe",
@@ -1458,7 +1549,8 @@ export const es: Dictionary = {
     changeLanguage: "Cambiar idioma",
     openMenu: "Abrir menú",
     closeMenu: "Cerrar menú",
-    products: "Productos e integraciones",
+    products: "Productos",
+    integrations: "Integraciones",
     walletAdapters: walletAdaptersNavLabel,
     builtWith: "Hecho con Pollar",
   },
@@ -1491,9 +1583,7 @@ export const es: Dictionary = {
         "Login con email / Google respaldado por una billetera Stellar embebida de Privy.",
       acceslyAdapter:
         "Firma transacciones de Pollar con una smart account de Accesly (passkey + Shamir-MPC).",
-      anclap: "Compra/venta de moneda local a través del anchor Anclap.",
       swap: "Intercambia un activo por otro al mejor precio on-chain.",
-      soroswap: "Intercambia tokens en Soroban a través del DEX Soroswap.",
       setup: "Conectalo con @pollar/core o @pollar/react.",
     },
   },
@@ -1875,7 +1965,7 @@ export const es: Dictionary = {
 
   ramp: {
     title: "Ramp",
-    desc: "Compra y vende cripto con métodos de pago locales (SPEI, PIX, PSE, ACH). Pollar renderiza todo el flujo de cotización y pago dentro de un modal.",
+    desc: "Compra y vende cripto con métodos de pago locales (SPEI, PIX, PSE, ACH) a través de anchors como Anclap. Pollar renderiza todo el flujo de cotización y pago dentro de un modal.",
     open: "Abrir modal de ramp",
     note: "no recibe argumentos: el país, la moneda y el tipo de operación se eligen dentro del modal.",
     reactDesc:
@@ -1944,6 +2034,9 @@ export const es: Dictionary = {
     desc: "Intercambia un activo por otro en venues on-chain (AMM de Aquarius, Soroswap, SDEX). Pollar cotiza cada ruta, las ordena de mejor a peor y renderiza todo el flujo de cotización e intercambio dentro de un modal.",
     open: "Abrir modal de swap",
     note: "no recibe argumentos: los activos, el monto y el venue se eligen dentro del modal.",
+    venuesTitle: "Los venues se configuran desde tu dashboard",
+    venuesBody:
+      "El modal de swap solo ofrece los venues que habilites en Treasury → Swap del dashboard de Pollar. El SDK lee esa selección en tiempo de ejecución vía getSwapConfig() (la respuesta SDK_SWAP_CONFIG), sin cambiar código. Una lista vacía oculta por completo la UI de swap.",
     reactDesc:
       "Botón listo que abre un modal prearmado: todo el flujo cotización → swap (trustline incluida) ya viene renderizado.",
     coreDesc:
@@ -1952,6 +2045,14 @@ export const es: Dictionary = {
     coreFnsIntro:
       "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
     coreFns: [
+      {
+        fn: "getSwapConfig()",
+        tag: "async",
+        params:
+          "Sin argumentos: lee la selección del dashboard de la app (Treasury → Swap), intersectada con la capacidad del servidor.",
+        returns:
+          "Promise<SwapVenue[]>: los venues habilitados (p. ej. ['aquarius', 'sdex']); vacío significa que el swap está deshabilitado, así que oculta la UI.",
+      },
       {
         fn: "getSwapQuote(params)",
         tag: "async",
@@ -1980,6 +2081,14 @@ export const es: Dictionary = {
           "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
         returns:
           "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "getSwapConfig()",
+        tag: "async",
+        params:
+          "Sin argumentos: resuelve los venues que expone esta app, desde tu selección del dashboard (Treasury → Swap).",
+        returns:
+          "Promise<SwapVenue[]>: venues habilitados; vacío significa que el swap está deshabilitado para esta app, así que oculta la UI de swap.",
       },
       {
         fn: "openSwapModal()",
@@ -2723,6 +2832,77 @@ export const es: Dictionary = {
       "Resumen basado en los materiales compartidos por el equipo de Nirium. Pollar no está afiliado con Nirium; todo el crédito es de su equipo.",
   },
 
+  rampAbout: {
+    eyebrow: "Integración",
+    title: "On/off-ramp con métodos de pago locales",
+    tagline:
+      "Compra y vende cripto vía anchors regionales — un modal, un flujo.",
+    body: [
+      "Ramp conecta a tus usuarios con el fiat: compran cripto con un método de pago local (SPEI, PIX, PSE, ACH) o hacen el cash-out al revés. Pollar cotiza el anchor, crea el on/off-ramp y muestra las instrucciones de pago dentro de un solo modal.",
+      "Qué anchors y rieles están disponibles se decide en tu dashboard — el SDK lee esa selección en tiempo de ejecución desde la config de la app, así que habilitar un nuevo anchor es un toggle del dashboard, no un redeploy. Si no hay nada habilitado, la UI de ramp queda oculta.",
+      "Por dentro el flujo es cotizar → crear ramp → hacer polling hasta que liquida, todo con @pollar/core. Mirá la pestaña Implementación para el demo en vivo y las llamadas exactas.",
+    ],
+    featuresTitle: "Anchors y estado",
+    features: [
+      {
+        title: "Anclap — activo",
+        desc: "On/off-ramp de moneda local sobre rieles regionales (SPEI, PIX, PSE…), liquidado en Stellar.",
+      },
+      {
+        title: "Más anchors — en proceso",
+        desc: "Se están integrando más anchors y rieles de pago regionales; habilitalos desde el dashboard a medida que salen.",
+      },
+      {
+        title: "Configurado desde tu dashboard",
+        desc: "Activá anchors en Treasury — el SDK lee tu selección en tiempo de ejecución, sin cambiar código.",
+      },
+      {
+        title: "Un modal, core o React",
+        desc: "openRampModal() renderiza todo el flujo cotización → pago → liquidación; o controlalo vos con @pollar/core.",
+      },
+    ],
+    resourcesTitle: "Recursos",
+    anclapLabel: "Anclap",
+    docsLabel: "Anchors y SEPs de Stellar",
+    disclaimer:
+      "La disponibilidad de anchors depende de tu configuración del dashboard y de la cobertura de cada anchor. Anclap es un tercero; todo el crédito es de su equipo.",
+  },
+
+  swapAbout: {
+    eyebrow: "Integración",
+    title: "Swap entre venues on-chain",
+    tagline: "Un modal, el mejor precio entre cada venue que habilites.",
+    body: [
+      "Swap permite a tus usuarios intercambiar un activo por otro on-chain. Pollar cotiza cada venue habilitado, ordena las rutas de mejor a peor y renderiza todo el flujo cotización → swap — trustline incluida — dentro de un solo modal.",
+      "Los venues disponibles se deciden en tu dashboard (Treasury → Swap). El SDK lee esa selección en tiempo de ejecución vía getSwapConfig() (la respuesta SDK_SWAP_CONFIG), así que prender o apagar un venue es un toggle del dashboard. Una lista vacía oculta por completo la UI de swap.",
+      "Por dentro el flujo es getSwapQuote → swap, todo con @pollar/core. Mirá la pestaña Implementación para el demo en vivo y las llamadas exactas.",
+    ],
+    featuresTitle: "Venues y estado",
+    features: [
+      {
+        title: "Aquarius — activo",
+        desc: "AMM de Soroban (pools de liquidez). Funciona para wallets clásicas y smart.",
+      },
+      {
+        title: "Stellar DEX — activo",
+        desc: "El order book nativo de Stellar vía path payments. Solo wallets clásicas.",
+      },
+      {
+        title: "Soroswap — en proceso",
+        desc: "Agregador de DEX sobre protocolos de Soroban. Necesita una API key de Soroswap de la plataforma; se omite hasta configurarla.",
+      },
+      {
+        title: "Configurado desde tu dashboard",
+        desc: "Habilitá venues en Treasury → Swap; el SDK lee getSwapConfig() en tiempo de ejecución, sin cambiar código.",
+      },
+    ],
+    resourcesTitle: "Recursos",
+    aquariusLabel: "Aquarius",
+    soroswapLabel: "Soroswap",
+    disclaimer:
+      "La disponibilidad de venues depende de tu configuración del dashboard y de la capacidad de la plataforma. Aquarius y Soroswap son terceros; todo el crédito es de sus equipos.",
+  },
+
   niriumX402: {
     title: "Pagos x402",
     desc: "Envía un pago x402 programático. Nirium planifica y arma la transacción; el SDK de Pollar firma y envía el XDR sin firmar con tu wallet conectada — sin secret key, sin API key.",
@@ -2823,16 +3003,17 @@ export const pt: Dictionary = {
     privy: "Privy",
     stellarWalletsKit: "Stellar Wallets Kit",
     acceslyAdapter: "Accesly",
-    anclap: "Anclap",
     swap: "Swap",
-    soroswap: "Soroswap",
     setup: "Setup",
+    implementation: "Implementação",
     groups: {
       pollarWallet: "Carteira",
       transactions: "Transações",
       sessions: "Sessões",
       distribution: "Distribuição",
-      integrations: "Integrações",
+      kyc: "KYC",
+      ramp: "Ramp",
+      swap: "Swap",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
       lumenwipe: "LumenWipe",
@@ -2851,7 +3032,8 @@ export const pt: Dictionary = {
     changeLanguage: "Alterar idioma",
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
-    products: "Produtos e integrações",
+    products: "Produtos",
+    integrations: "Integrações",
     walletAdapters: walletAdaptersNavLabel,
     builtWith: "Feito com Pollar",
   },
@@ -2885,9 +3067,7 @@ export const pt: Dictionary = {
         "Login com e-mail / Google com uma carteira Stellar embutida da Privy.",
       acceslyAdapter:
         "Assine transações da Pollar com uma smart account da Accesly (passkey + Shamir-MPC).",
-      anclap: "Compra/venda de moeda local através do anchor Anclap.",
       swap: "Troque um ativo por outro pelo melhor preço on-chain.",
-      soroswap: "Troque tokens na Soroban através da DEX Soroswap.",
       setup: "Conecte com @pollar/core ou @pollar/react.",
     },
   },
@@ -3268,7 +3448,7 @@ export const pt: Dictionary = {
 
   ramp: {
     title: "Ramp",
-    desc: "Compre e venda cripto com métodos de pagamento locais (SPEI, PIX, PSE, ACH). A Pollar renderiza todo o fluxo de cotação e pagamento dentro de um modal.",
+    desc: "Compre e venda cripto com métodos de pagamento locais (SPEI, PIX, PSE, ACH) através de anchors como a Anclap. A Pollar renderiza todo o fluxo de cotação e pagamento dentro de um modal.",
     open: "Abrir modal de ramp",
     note: "não recebe argumentos — o país, a moeda e o tipo de operação são escolhidos dentro do modal.",
     reactDesc:
@@ -3337,6 +3517,9 @@ export const pt: Dictionary = {
     desc: "Troque um ativo por outro em venues on-chain (AMM da Aquarius, Soroswap, SDEX). A Pollar cota cada rota, ordena da melhor para a pior e renderiza todo o fluxo de cotação e troca dentro de um modal.",
     open: "Abrir modal de swap",
     note: "não recebe argumentos: os ativos, o valor e o venue são escolhidos dentro do modal.",
+    venuesTitle: "Os venues são configurados no seu dashboard",
+    venuesBody:
+      "O modal de swap só oferece os venues que você habilitar em Treasury → Swap no dashboard da Pollar. O SDK lê essa seleção em tempo de execução via getSwapConfig() (a resposta SDK_SWAP_CONFIG), sem alterar código. Uma lista vazia oculta totalmente a UI de swap.",
     reactDesc:
       "Botão pronto que abre um modal pré-montado: todo o fluxo cotação → troca (trustline incluída) já vem renderizado.",
     coreDesc:
@@ -3345,6 +3528,14 @@ export const pt: Dictionary = {
     coreFnsIntro:
       "Todas são métodos do cliente retornado por getClient(): a instância subjacente de PollarClient.",
     coreFns: [
+      {
+        fn: "getSwapConfig()",
+        tag: "async",
+        params:
+          "Sem argumentos: lê a seleção do dashboard da app (Treasury → Swap), intersectada com a capacidade do servidor.",
+        returns:
+          "Promise<SwapVenue[]>: os venues habilitados (ex.: ['aquarius', 'sdex']); vazio significa que o swap está desabilitado, então oculte a UI.",
+      },
       {
         fn: "getSwapQuote(params)",
         tag: "async",
@@ -3373,6 +3564,14 @@ export const pt: Dictionary = {
           "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
         returns:
           "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "getSwapConfig()",
+        tag: "async",
+        params:
+          "Sem argumentos: resolve os venues que esta app expõe, a partir da sua seleção no dashboard (Treasury → Swap).",
+        returns:
+          "Promise<SwapVenue[]>: venues habilitados; vazio significa que o swap está desabilitado para esta app, então oculte a UI de swap.",
       },
       {
         fn: "openSwapModal()",
@@ -4111,6 +4310,77 @@ export const pt: Dictionary = {
     repoLabel: "SDK (GitHub)",
     disclaimer:
       "Resumo baseado nos materiais compartilhados pela equipe da Nirium. A Pollar não é afiliada à Nirium — todo o crédito é da equipe deles.",
+  },
+
+  rampAbout: {
+    eyebrow: "Integração",
+    title: "On/off-ramp com métodos de pagamento locais",
+    tagline:
+      "Compre e venda cripto via anchors regionais — um modal, um fluxo.",
+    body: [
+      "O Ramp conecta seus usuários ao fiat: eles compram cripto com um método de pagamento local (SPEI, PIX, PSE, ACH) ou fazem o cash-out no sentido inverso. A Pollar cota o anchor, cria o on/off-ramp e mostra as instruções de pagamento dentro de um único modal.",
+      "Quais anchors e trilhos estão disponíveis é decidido no seu dashboard — o SDK lê essa seleção em tempo de execução a partir da config da app, então habilitar um novo anchor é um toggle no dashboard, não um redeploy. Se nada estiver habilitado, a UI de ramp fica oculta.",
+      "Por baixo, o fluxo é cotar → criar ramp → fazer polling até liquidar, tudo com @pollar/core. Veja a aba Implementação para o demo ao vivo e as chamadas exatas.",
+    ],
+    featuresTitle: "Anchors e status",
+    features: [
+      {
+        title: "Anclap — ativo",
+        desc: "On/off-ramp de moeda local sobre trilhos regionais (SPEI, PIX, PSE…), liquidado na Stellar.",
+      },
+      {
+        title: "Mais anchors — em andamento",
+        desc: "Mais anchors e trilhos de pagamento regionais estão sendo integrados; habilite-os pelo dashboard conforme forem lançados.",
+      },
+      {
+        title: "Configurado no seu dashboard",
+        desc: "Ative anchors em Treasury — o SDK lê sua seleção em tempo de execução, sem alterar código.",
+      },
+      {
+        title: "Um modal, core ou React",
+        desc: "openRampModal() renderiza todo o fluxo cotação → pagamento → liquidação; ou controle você mesmo com @pollar/core.",
+      },
+    ],
+    resourcesTitle: "Recursos",
+    anclapLabel: "Anclap",
+    docsLabel: "Anchors e SEPs da Stellar",
+    disclaimer:
+      "A disponibilidade de anchors depende da sua configuração no dashboard e da cobertura de cada anchor. A Anclap é um terceiro — todo o crédito é da equipe deles.",
+  },
+
+  swapAbout: {
+    eyebrow: "Integração",
+    title: "Swap entre venues on-chain",
+    tagline: "Um modal, o melhor preço entre cada venue que você habilitar.",
+    body: [
+      "O Swap permite que seus usuários troquem um ativo por outro on-chain. A Pollar cota cada venue habilitado, ordena as rotas da melhor para a pior e renderiza todo o fluxo cotação → troca — trustline incluída — dentro de um único modal.",
+      "Os venues disponíveis são decididos no seu dashboard (Treasury → Swap). O SDK lê essa seleção em tempo de execução via getSwapConfig() (a resposta SDK_SWAP_CONFIG), então ligar ou desligar um venue é um toggle no dashboard. Uma lista vazia oculta totalmente a UI de swap.",
+      "Por baixo, o fluxo é getSwapQuote → swap, tudo com @pollar/core. Veja a aba Implementação para o demo ao vivo e as chamadas exatas.",
+    ],
+    featuresTitle: "Venues e status",
+    features: [
+      {
+        title: "Aquarius — ativo",
+        desc: "AMM da Soroban (pools de liquidez). Funciona para carteiras clássicas e smart.",
+      },
+      {
+        title: "Stellar DEX — ativo",
+        desc: "O order book nativo da Stellar via path payments. Somente carteiras clássicas.",
+      },
+      {
+        title: "Soroswap — em andamento",
+        desc: "Agregador de DEX sobre protocolos da Soroban. Precisa de uma API key de Soroswap da plataforma; é ignorado até configurá-la.",
+      },
+      {
+        title: "Configurado no seu dashboard",
+        desc: "Habilite venues em Treasury → Swap; o SDK lê getSwapConfig() em tempo de execução, sem alterar código.",
+      },
+    ],
+    resourcesTitle: "Recursos",
+    aquariusLabel: "Aquarius",
+    soroswapLabel: "Soroswap",
+    disclaimer:
+      "A disponibilidade de venues depende da sua configuração no dashboard e da capacidade da plataforma. Aquarius e Soroswap são terceiros — todo o crédito é das equipes deles.",
   },
 
   niriumX402: {

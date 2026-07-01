@@ -177,9 +177,10 @@ export default function NekoVaultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [view, setView] = useState<"vaults" | "positions">("vaults");
   const [action, setAction] = useState<{
-    mode: "deposit" | "withdraw";
+    mode: "deposit" | "withdraw" | "claim";
     vault: VaultCatalogEntry;
     position?: VaultPositionLite;
+    presetAmount?: string;
   } | null>(null);
 
   const load = useCallback(async () => {
@@ -447,59 +448,78 @@ export default function NekoVaultsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r) => (
-                    <tr
-                      key={r.vaultId}
-                      className="border-b border-border/50 last:border-0"
-                    >
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          {r.icon && (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={r.icon}
-                              alt={r.asset}
-                              className="h-6 w-6 rounded-full bg-surface object-contain"
-                            />
+                  {rows.map((r) => {
+                    // Claim withdraws only the accrued yield (value − deposited),
+                    // leaving the principal invested — mirrors Neko's "Claim".
+                    const cat = vaults.find((v) => v.id === r.vaultId);
+                    const pos = posByVault.get(r.vaultId);
+                    const canClaim =
+                      !!cat && !!pos && r.earnings > 0 && isMainnet;
+                    return (
+                      <tr
+                        key={r.vaultId}
+                        className="border-b border-border/50 last:border-0"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            {r.icon && (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={r.icon}
+                                alt={r.asset}
+                                className="h-6 w-6 rounded-full bg-surface object-contain"
+                              />
+                            )}
+                            <span className="font-medium text-foreground">
+                              {r.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted">{r.asset}</td>
+                        <td className="px-4 py-3 text-right font-mono text-foreground">
+                          {r.deposited.toFixed(2)} {r.asset}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-success">
+                          {r.price != null
+                            ? `+${fmtUsd(r.earnings * r.price)}`
+                            : `${r.earnings.toFixed(4)} ${r.asset}`}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono">
+                          <span className="text-success">
+                            {r.value.toFixed(2)} {r.asset}
+                          </span>
+                          {r.price != null && (
+                            <span className="block text-[10px] text-muted-light">
+                              {fmtUsd(r.value * r.price)}
+                            </span>
                           )}
-                          <span className="font-medium text-foreground">
-                            {r.name}
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-muted">{r.asset}</td>
-                      <td className="px-4 py-3 text-right font-mono text-foreground">
-                        {r.deposited.toFixed(2)} {r.asset}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-success">
-                        {r.price != null
-                          ? `+${fmtUsd(r.earnings * r.price)}`
-                          : `${r.earnings.toFixed(4)} ${r.asset}`}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono">
-                        <span className="text-success">
-                          {r.value.toFixed(2)} {r.asset}
-                        </span>
-                        {r.price != null && (
-                          <span className="block text-[10px] text-muted-light">
-                            {fmtUsd(r.value * r.price)}
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-right font-mono text-success">
-                        {r.apy != null ? `${r.apy.toFixed(2)}%` : "—"}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <button
-                          disabled
-                          title={t.nekoVaults.actionsSoon}
-                          className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-white opacity-50 cursor-not-allowed"
-                        >
-                          {t.nekoVaults.claim}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-success">
+                          {r.apy != null ? `${r.apy.toFixed(2)}%` : "—"}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <button
+                            onClick={() =>
+                              cat &&
+                              setAction({
+                                mode: "claim",
+                                vault: cat,
+                                position: pos,
+                                presetAmount: r.earnings.toFixed(ASSET_DP),
+                              })
+                            }
+                            disabled={!canClaim}
+                            title={
+                              canClaim ? undefined : t.nekoVaults.claimNone
+                            }
+                            className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {t.nekoVaults.claim}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -512,6 +532,7 @@ export default function NekoVaultsPage() {
           mode={action.mode}
           vault={action.vault}
           position={action.position}
+          presetAmount={action.presetAmount}
           onClose={() => setAction(null)}
           onDone={load}
         />

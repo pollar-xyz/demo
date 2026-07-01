@@ -20,6 +20,17 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
       ? t.home.descs.setup
       : t.home.descs[group.key as keyof Dictionary["home"]["descs"]];
   }
+  // Integrations: overview cards borrow the about-page tagline; the
+  // implementation card reuses the feature's short blurb. KYC is single-tab.
+  if (group.section === "integrations") {
+    if (label === "overview") {
+      return group.key === "swap" ? t.swapAbout.tagline : t.rampAbout.tagline;
+    }
+    if (label === "implementation") {
+      return group.key === "swap" ? t.home.descs.swap : t.home.descs.ramp;
+    }
+    return t.home.descs[label as keyof Dictionary["home"]["descs"]];
+  }
   if (label === "overview") {
     if (group.key === "trustlessWork") return t.twAbout.tagline;
     if (group.key === "nirium") return t.niriumAbout.tagline;

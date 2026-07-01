@@ -9,11 +9,16 @@ export type TabLabel = Exclude<keyof Dictionary["nav"], "groups">;
 //                     with @pollar/core + the default modals).
 //   • walletAdapters — plugging external wallets/auth in as Pollar adapters.
 //   • builtWith     — demos of using Pollar alongside another technology.
-export type SidebarSection = "products" | "walletAdapters" | "builtWith";
+export type SidebarSection =
+  | "products"
+  | "integrations"
+  | "walletAdapters"
+  | "builtWith";
 
 // Render order of the sidebar section headers.
 export const SIDEBAR_SECTIONS: SidebarSection[] = [
   "products",
+  "integrations",
   "walletAdapters",
   "builtWith",
 ];
@@ -58,15 +63,27 @@ export const ALL_GROUPS: NavGroup[] = [
     section: "products",
     tabs: [{ href: "/pollar/distribution", label: "distribution" }],
   },
+  // ── Integrations (its own sidebar section) ──
   {
-    key: "integrations",
-    section: "products",
+    key: "kyc",
+    section: "integrations",
+    soon: true,
+    tabs: [{ href: "/pollar/kyc", label: "kyc" }],
+  },
+  {
+    key: "ramp",
+    section: "integrations",
     tabs: [
-      { href: "/pollar/kyc", label: "kyc" },
-      { href: "/pollar/ramp", label: "ramp" },
-      { href: "/pollar/anclap", label: "anclap" },
-      { href: "/pollar/swap", label: "swap" },
-      { href: "/pollar/soroswap", label: "soroswap" },
+      { href: "/pollar/ramp", label: "overview" },
+      { href: "/pollar/ramp/implementation", label: "implementation" },
+    ],
+  },
+  {
+    key: "swap",
+    section: "integrations",
+    tabs: [
+      { href: "/pollar/swap", label: "overview" },
+      { href: "/pollar/swap/implementation", label: "implementation" },
     ],
   },
 
