@@ -2,12 +2,12 @@
   "version": "v1",
   "packages": {
     "@pollar/react": {
-      "signature": "0188d18cedf7ec6e3d0fec1c1e5213f8",
+      "signature": "803ffe083ba55292f4f48f1a82ef1016",
       "file": true,
       "replaced": "0.10.0-rc.8"
     },
     "@pollar/core": {
-      "signature": "797d968de417634dd66e29af12fba39a",
+      "signature": "3f28d45644ce49f49660d80f30879cba",
       "file": true,
       "replaced": "0.10.0-rc.8"
     },

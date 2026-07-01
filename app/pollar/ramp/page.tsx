@@ -1,7 +1,6 @@
 "use client";
 
 import { usePollar } from "@pollar/react";
-import { ComingSoon } from "@/app/_components/ComingSoon";
 import { SdkModalTab } from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 
@@ -52,7 +51,6 @@ export default function RampPage() {
 
   return (
     <div className="w-full max-w-5xl space-y-5">
-      {/* header stays readable above the coming-soon blur */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           {t.ramp.title}
@@ -60,30 +58,28 @@ export default function RampPage() {
         <p className="text-sm text-muted mt-1.5">{t.ramp.desc}</p>
       </div>
 
-      <ComingSoon>
-        <SdkModalTab
-          isAuthenticated={isAuthenticated}
-          onOpen={openRampModal}
-          openLabel={t.ramp.open}
-          connectLabel={t.common.connectWalletFirst}
-          modalCall="openRampModal()"
-          modalNote={t.ramp.note}
-          reactDesc={t.ramp.reactDesc}
-          coreDesc={t.ramp.coreDesc}
-          coreCode={CORE_CODE}
-          reactCode={REACT_CODE}
-          core={{
-            title: t.ramp.coreFnsTitle,
-            intro: t.ramp.coreFnsIntro,
-            fns: t.ramp.coreFns,
-          }}
-          react={{
-            title: t.ramp.reactFnsTitle,
-            intro: t.ramp.reactFnsIntro,
-            fns: t.ramp.reactFns,
-          }}
-        />
-      </ComingSoon>
+      <SdkModalTab
+        isAuthenticated={isAuthenticated}
+        onOpen={openRampModal}
+        openLabel={t.ramp.open}
+        connectLabel={t.common.connectWalletFirst}
+        modalCall="openRampModal()"
+        modalNote={t.ramp.note}
+        reactDesc={t.ramp.reactDesc}
+        coreDesc={t.ramp.coreDesc}
+        coreCode={CORE_CODE}
+        reactCode={REACT_CODE}
+        core={{
+          title: t.ramp.coreFnsTitle,
+          intro: t.ramp.coreFnsIntro,
+          fns: t.ramp.coreFns,
+        }}
+        react={{
+          title: t.ramp.reactFnsTitle,
+          intro: t.ramp.reactFnsIntro,
+          fns: t.ramp.reactFns,
+        }}
+      />
     </div>
   );
 }

@@ -12,7 +12,8 @@ allowBuilds:
   usb: true
   utf-8-validate: true
 minimumReleaseAgeExclude:
-  - '@pollar/core@0.10.0-rc.8'
-  - '@pollar/react@0.10.0-rc.8'
-  - '@pollar/privy-adapter@0.10.0-rc.8'
-  - '@pollar/stellar-wallets-kit-adapter@0.10.0-rc.8'
+  - '@pollar/core@0.10.0'
+  - '@pollar/react@0.10.0'
+  - '@pollar/privy-adapter@0.10.0'
+  - '@pollar/stellar-wallets-kit-adapter@0.10.0'
+  - '@pollar/accesly-adapter@0.10.0-rc.10'
