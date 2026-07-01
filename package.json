@@ -21,7 +21,7 @@
     "@pollar/core": "0.10.1-rc.0",
     "@pollar/privy-adapter": "0.10.0-rc.10",
     "@pollar/react": "0.10.1-rc.0",
-    "@pollar/stellar-wallets-kit-adapter": "file:.yalc/@pollar/stellar-wallets-kit-adapter",
+    "@pollar/stellar-wallets-kit-adapter": "^0.10.0",
     "@privy-io/react-auth": "3.32.0",
     "@stellar/stellar-sdk": "^15.0.0",
     "next": "16.2.9",
