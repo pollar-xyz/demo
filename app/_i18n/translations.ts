@@ -449,7 +449,8 @@ export const en = {
         tag: "async",
         params:
           "unsignedXdr: string. External-wallet only — returns the signed XDR without broadcasting.",
-        returns: "Promise<SignOutcome> — { status: 'signed', signedXdr } or error.",
+        returns:
+          "Promise<SignOutcome> — { status: 'signed', signedXdr } or error.",
       },
       {
         fn: "submitTx(signedXdr)",
@@ -1900,6 +1901,72 @@ export const en = {
       "Summary based on the official Vaquita site. Pollar is not affiliated with Vaquita — all credit to their team.",
   },
 
+  humanWebAbout: {
+    eyebrow: "Human Web",
+    title: "Share your opinion, anonymously",
+    tagline: "Your opinion — without revealing who you are.",
+    body: [
+      "Human Web is a platform for voicing opinions and voting anonymously: weigh in on the topics you care about and take part in polls without ever exposing your identity.",
+      "This tab is a preview of the Human Web integration with Pollar — coming soon.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Anonymous by design",
+        desc: "Share opinions and vote without revealing who you are.",
+      },
+      {
+        title: "Community polls",
+        desc: "Create and answer polls the community cares about.",
+      },
+      {
+        title: "Have your say",
+        desc: "Weigh in on the topics and causes that matter to you.",
+      },
+      {
+        title: "Built on Stellar",
+        desc: "Runs on Stellar for transparent, tamper-proof results.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    disclaimer:
+      "Summary based on the official Human Web site. Pollar is not affiliated with Human Web — all credit to their team.",
+  },
+
+  e4cAbout: {
+    eyebrow: "E4C",
+    title: "Education on the blockchain",
+    tagline: "Learning, powered by Stellar.",
+    body: [
+      "E4C is an education platform built on Stellar — access learning content and earn verifiable, on-chain credentials for what you complete.",
+      "This tab is a preview of the E4C integration with Pollar — coming soon.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Learn anywhere",
+        desc: "Access educational content from any device.",
+      },
+      {
+        title: "On-chain credentials",
+        desc: "Earn verifiable proof of what you've completed.",
+      },
+      {
+        title: "Open to everyone",
+        desc: "Lower the barriers to quality education.",
+      },
+      {
+        title: "Built on Stellar",
+        desc: "Runs on Stellar for transparent, tamper-proof records.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    disclaimer:
+      "Summary based on the official E4C site. Pollar is not affiliated with E4C — all credit to their team.",
+  },
+
   ...nekoEn,
 };
 
@@ -2358,7 +2425,8 @@ export const es: Dictionary = {
       {
         fn: "submitTx(signedXdr)",
         tag: "async",
-        params: "signedXdr: string — transmite un envelope firmado en el cliente.",
+        params:
+          "signedXdr: string — transmite un envelope firmado en el cliente.",
         returns: "Promise<SubmitOutcome> — status + hash, o un error.",
       },
     ],
@@ -3811,6 +3879,72 @@ export const es: Dictionary = {
       "Resumen basado en el sitio oficial de Vaquita. Pollar no está afiliado a Vaquita — todo el crédito para su equipo.",
   },
 
+  humanWebAbout: {
+    eyebrow: "Human Web",
+    title: "Comparte tu opinión, de forma anónima",
+    tagline: "Tu opinión, sin exponer quién sos.",
+    body: [
+      "Human Web es una plataforma para opinar y votar de forma anónima: participa en los temas que te importan y responde encuestas sin exponer nunca tu identidad.",
+      "Esta pestaña es un adelanto de la integración de Human Web con Pollar — próximamente.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Anónimo por diseño",
+        desc: "Opina y vota sin revelar quién eres.",
+      },
+      {
+        title: "Encuestas de la comunidad",
+        desc: "Crea y responde encuestas que le importan a la comunidad.",
+      },
+      {
+        title: "Haz oír tu voz",
+        desc: "Participa en los temas y causas que te importan.",
+      },
+      {
+        title: "Construido sobre Stellar",
+        desc: "Funciona sobre Stellar para resultados transparentes e inalterables.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    disclaimer:
+      "Resumen basado en el sitio oficial de Human Web. Pollar no está afiliado a Human Web — todo el crédito para su equipo.",
+  },
+
+  e4cAbout: {
+    eyebrow: "E4C",
+    title: "Educación en la blockchain",
+    tagline: "Aprendizaje, impulsado por Stellar.",
+    body: [
+      "E4C es una plataforma educativa construida sobre Stellar: accede a contenido de aprendizaje y obtén credenciales verificables en cadena por lo que completas.",
+      "Esta pestaña es un adelanto de la integración de E4C con Pollar — próximamente.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Aprende donde sea",
+        desc: "Accede al contenido educativo desde cualquier dispositivo.",
+      },
+      {
+        title: "Credenciales en cadena",
+        desc: "Obtén una prueba verificable de lo que completaste.",
+      },
+      {
+        title: "Abierto para todos",
+        desc: "Reduce las barreras a la educación de calidad.",
+      },
+      {
+        title: "Construido sobre Stellar",
+        desc: "Funciona sobre Stellar para registros transparentes e inalterables.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    disclaimer:
+      "Resumen basado en el sitio oficial de E4C. Pollar no está afiliado a E4C — todo el crédito para su equipo.",
+  },
+
   ...nekoEs,
 };
 
@@ -3928,7 +4062,8 @@ export const pt: Dictionary = {
       login: "Autentique usuários com redes sociais, email ou carteira.",
       logout: "Revogue a sessão e limpe o estado local.",
       sessions: "Revise as sessões ativas e revogue dispositivos.",
-      signXdr: "Assine um XDR construído em outro lugar com a carteira conectada.",
+      signXdr:
+        "Assine um XDR construído em outro lugar com a carteira conectada.",
       distribution: "Liste as regras de distribuição e resgate sua parte.",
       lumenwipe: "Encerre uma conta Stellar e transfira o saldo restante.",
       stellarWalletsKit:
@@ -4267,7 +4402,8 @@ export const pt: Dictionary = {
       {
         fn: "submitTx(signedXdr)",
         tag: "async",
-        params: "signedXdr: string — transmite um envelope assinado no cliente.",
+        params:
+          "signedXdr: string — transmite um envelope assinado no cliente.",
         returns: "Promise<SubmitOutcome> — status + hash, ou um erro.",
       },
     ],
@@ -5716,6 +5852,72 @@ export const pt: Dictionary = {
     websiteLabel: "Site",
     disclaimer:
       "Resumo baseado no site oficial da Vaquita. O Pollar não é afiliado à Vaquita — todo o crédito para a equipe deles.",
+  },
+
+  humanWebAbout: {
+    eyebrow: "Human Web",
+    title: "Compartilhe sua opinião, de forma anônima",
+    tagline: "Sua opinião, sem revelar quem você é.",
+    body: [
+      "A Human Web é uma plataforma para opinar e votar de forma anônima: participe dos temas que importam para você e responda enquetes sem nunca expor sua identidade.",
+      "Esta aba é uma prévia da integração da Human Web com o Pollar — em breve.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Anônimo por design",
+        desc: "Opine e vote sem revelar quem você é.",
+      },
+      {
+        title: "Enquetes da comunidade",
+        desc: "Crie e responda enquetes que importam para a comunidade.",
+      },
+      {
+        title: "Faça sua voz ser ouvida",
+        desc: "Participe dos temas e causas que importam para você.",
+      },
+      {
+        title: "Construído sobre a Stellar",
+        desc: "Funciona sobre a Stellar para resultados transparentes e imutáveis.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    disclaimer:
+      "Resumo baseado no site oficial da Human Web. O Pollar não é afiliado à Human Web — todo o crédito para a equipe deles.",
+  },
+
+  e4cAbout: {
+    eyebrow: "E4C",
+    title: "Educação na blockchain",
+    tagline: "Aprendizado, impulsionado pela Stellar.",
+    body: [
+      "A E4C é uma plataforma de educação construída sobre a Stellar: acesse conteúdo de aprendizado e receba credenciais verificáveis on-chain pelo que concluir.",
+      "Esta aba é uma prévia da integração da E4C com o Pollar — em breve.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Aprenda em qualquer lugar",
+        desc: "Acesse o conteúdo educacional de qualquer dispositivo.",
+      },
+      {
+        title: "Credenciais on-chain",
+        desc: "Receba uma prova verificável do que você concluiu.",
+      },
+      {
+        title: "Aberto para todos",
+        desc: "Reduza as barreiras à educação de qualidade.",
+      },
+      {
+        title: "Construído sobre a Stellar",
+        desc: "Funciona sobre a Stellar para registros transparentes e imutáveis.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    disclaimer:
+      "Resumo baseado no site oficial da E4C. O Pollar não é afiliado à E4C — todo o crédito para a equipe deles.",
   },
 
   ...nekoPt,
