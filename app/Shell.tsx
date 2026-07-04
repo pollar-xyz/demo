@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import '@pollar/react/styles.css';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppWalletProvider } from './_AppWalletProvider';
 import { ApiKeyModal } from './_components/ApiKeyModal';
 import { ComingSoon } from './_components/ComingSoon';
@@ -43,16 +43,22 @@ type StellarNetwork = 'mainnet' | 'testnet';
 function NetworkToggle({
                          network,
                          onSelect,
+                         block = false,
                        }: {
   network: StellarNetwork;
   onSelect: (network: StellarNetwork) => void;
+  // When true, the toggle fills its container and its two options split the
+  // width evenly — used inside the mobile menu so it doesn't look sparse.
+  block?: boolean;
 }) {
   const options: StellarNetwork[] = [ 'testnet', 'mainnet' ];
   return (
     <div
       role="group"
       aria-label="Stellar network"
-      className="inline-flex items-center rounded-lg border border-border p-0.5"
+      className={`items-center rounded-lg border border-border p-0.5 ${
+        block ? 'flex w-full' : 'inline-flex'
+      }`}
     >
       {options.map((opt) => {
         const active = network === opt;
@@ -64,7 +70,9 @@ function NetworkToggle({
             onClick={() => onSelect(opt)}
             aria-pressed={active}
             title={`Stellar ${opt}`}
-            className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
+            className={`inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
+              block ? 'flex-1' : ''
+            } ${
               active
                 ? isMainnet
                   ? 'bg-success-light text-success'
@@ -146,6 +154,69 @@ function ThemeToggle() {
         </svg>
       )}
     </button>
+  );
+}
+
+// A horizontally-scrollable row that fades an edge only while there's more
+// content to reach on that side — the standard affordance for scrollable
+// tab/pill bars on mobile. Backs the group pills and the sub-tab bar so a
+// clipped item (e.g. "KYC") reads as "there's more, scroll".
+function ScrollFadeRow({
+  wrapperClassName,
+  className,
+  children,
+}: {
+  wrapperClassName?: string;
+  className?: string;
+  children: React.ReactNode;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [ edges, setEdges ] = useState({ left: false, right: false });
+
+  const update = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    const left = el.scrollLeft > 1;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 1;
+    setEdges((prev) =>
+      prev.left === left && prev.right === right ? prev : { left, right },
+    );
+  }, []);
+
+  useEffect(() => {
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, [ update ]);
+  // Re-measure on every render too, since the tab set can change (e.g. the
+  // active group switches out its sub-tabs). `update` no-ops when unchanged.
+  useEffect(() => {
+    update();
+  });
+
+  return (
+    <div className={`relative ${wrapperClassName ?? ''}`}>
+      <div
+        ref={ref}
+        onScroll={update}
+        className={`overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden ${
+          className ?? ''
+        }`}
+      >
+        {children}
+      </div>
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent transition-opacity ${
+          edges.left ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+      <div
+        aria-hidden="true"
+        className={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent transition-opacity ${
+          edges.right ? 'opacity-100' : 'opacity-0'
+        }`}
+      />
+    </div>
   );
 }
 
@@ -277,7 +348,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const groupBody = (
     <>
       {activeGroup && activeGroup.tabs.length > 1 && !activeGroup.soon && (
-        <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden border-b border-border mt-4 lg:mt-8">
+        <ScrollFadeRow
+          wrapperClassName="mt-4 lg:mt-8"
+          className="flex items-center gap-5 sm:gap-6 border-b border-border"
+        >
           {activeGroup.tabs.map(({ href, label }) => (
             <Link
               key={href}
@@ -291,7 +365,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {t.nav[label]}
             </Link>
           ))}
-        </nav>
+        </ScrollFadeRow>
       )}
 
       <main className="py-6 sm:py-10">{children}</main>
@@ -398,8 +472,14 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {/* mobile menu panel */}
           {menuOpen && (
             <div className="sm:hidden flex flex-col gap-3 border-t border-border py-3">
-              <WalletButton />
+              {/* Force the SDK wallet button to fill the row — its connected
+                  state renders an inline-block pill that would otherwise sit
+                  left with dead space beside it. */}
+              <div className="[&_.wallet-wrapper]:block [&_.wallet-wrapper]:w-full [&_.wallet-btn]:w-full [&_.wallet-btn]:justify-center [&_.wallet-login-btn]:w-full [&_.wallet-login-btn]:justify-center">
+                <WalletButton />
+              </div>
               <NetworkToggle
+                block
                 network={stellarNetwork}
                 onSelect={selectNetwork}
               />
@@ -429,7 +509,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 lg:flex lg:gap-8">
         {/* sidebar: grouped under section headers (desktop) */}
-        <aside className="hidden lg:block w-56 shrink-0 self-start lg:sticky lg:top-20 py-8 space-y-6">
+        <aside className="hidden lg:block w-56 shrink-0 self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto py-8 space-y-6">
           {SIDEBAR_SECTIONS.map((section) => {
             const sectionGroups = GROUPS.filter((g) => g.section === section);
             if (sectionGroups.length === 0) return null;
@@ -473,7 +553,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
         <div className="min-w-0 flex-1">
           {/* group selector (mobile): the sidebar collapses to a pill row */}
-          <div className="lg:hidden flex items-center gap-2 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden pt-4">
+          <ScrollFadeRow
+            wrapperClassName="lg:hidden pt-4"
+            className="flex items-center gap-2"
+          >
             {GROUPS.map((g) => {
               const active = activeGroup?.key === g.key;
               return (
@@ -512,7 +595,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 </Link>
               );
             })}
-          </div>
+          </ScrollFadeRow>
 
           {/* A "soon" group blurs its whole body — tabs included — behind the
               ComingSoon overlay; otherwise the tabs + content render normally. */}
