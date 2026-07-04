@@ -1,20 +1,15 @@
-import { cookies } from "next/headers";
-import { notFound } from "next/navigation";
-import { NEKO_COOKIE, NEKO_COOKIE_VALUE } from "./_gate";
 import { NekoMainnetGate } from "./_MainnetGate";
 
-// The whole Neko Protocol section is gated. It unlocks when a request arrives
-// with `?neko=<passcode>` — middleware.ts validates the passcode server-side
-// and sets the unlock cookie. Without the cookie every /neko route 404s, which
-// blocks direct URL access even though the nav group and landing cards are
-// already hidden in `app/_nav.ts`.
-export default async function NekoLayout({
+// The Neko Protocol section is now ALWAYS reachable, but — like the lab groups —
+// it stays behind the ComingSoon overlay (only its overview showing, sub-tabs
+// hidden) until it's unlocked with `?neko=<passcode>`. middleware.ts validates
+// the passcode server-side and sets the unlock cookie the nav reads; the
+// blur/overlay + sub-tab hiding are applied by the Shell. Here we only keep the
+// mainnet banner gate that every Neko tab shares.
+export default function NekoLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const unlocked =
-    (await cookies()).get(NEKO_COOKIE)?.value === NEKO_COOKIE_VALUE;
-  if (!unlocked) notFound();
   return <NekoMainnetGate>{children}</NekoMainnetGate>;
 }

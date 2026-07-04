@@ -128,6 +128,8 @@ export function SdkModalTab({
   onOpen,
   openLabel,
   connectLabel,
+  disabledLabel,
+  guestAction = false,
   modalCall,
   modalNote,
   reactDesc,
@@ -143,6 +145,13 @@ export function SdkModalTab({
   onOpen: () => void;
   openLabel: string;
   connectLabel: string;
+  // Overrides the label shown while the action button is disabled. Defaults to
+  // connectLabel (the "connect wallet first" copy used by the auth-gated tabs).
+  disabledLabel?: string;
+  // When true the action is for signed-OUT users (the login tab): the button is
+  // enabled while unauthenticated and disabled once a session exists. Defaults
+  // to false — the button requires an authenticated session (logout, sessions…).
+  guestAction?: boolean;
   modalCall: string;
   modalNote: string;
   reactDesc: string;
@@ -176,13 +185,20 @@ export function SdkModalTab({
 
         {sdk === "react" ? (
           <div className="space-y-1">
-            <button
-              onClick={onOpen}
-              disabled={!isAuthenticated}
-              className={`${actionBtn} w-full sm:w-auto`}
-            >
-              {isAuthenticated ? openLabel : connectLabel}
-            </button>
+            {(() => {
+              // Auth-gated tabs enable the button once signed in; the login tab
+              // (guestAction) inverts that — enabled only while signed out.
+              const enabled = guestAction ? !isAuthenticated : isAuthenticated;
+              return (
+                <button
+                  onClick={onOpen}
+                  disabled={!enabled}
+                  className={`${actionBtn} w-full sm:w-auto`}
+                >
+                  {enabled ? openLabel : (disabledLabel ?? connectLabel)}
+                </button>
+              );
+            })()}
             <p className="text-xs font-mono text-muted-light">
               <code className="text-foreground">{modalCall}</code> {modalNote}
             </p>

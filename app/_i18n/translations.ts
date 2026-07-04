@@ -35,7 +35,10 @@ export const en = {
     kyc: "KYC",
     escrow: "Escrow",
     payments: "Payments",
+    login: "Login",
+    logout: "Logout",
     sessions: "Sessions",
+    signXdr: "Sign XDR",
     distribution: "Distribution",
     lumenwipe: "LumenWipe",
     overview: "Overview",
@@ -50,15 +53,16 @@ export const en = {
     setup: "Setup",
     implementation: "Implementation",
     groups: {
+      auth: "Authentication",
       pollarWallet: "Wallet",
       transactions: "Transactions",
-      sessions: "Sessions",
       distribution: "Distribution",
       kyc: "KYC",
       ramp: "Ramp",
       swap: "Swap",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
+      cosmosPay: "Cosmos Pay",
       lumenwipe: "LumenWipe",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
@@ -99,7 +103,10 @@ export const en = {
       kyc: "Verify your identity to unlock higher limits.",
       escrow: "Trustless Work escrows with automatic XDR signing.",
       payments: "x402 programmatic payments — Nirium plans, Pollar signs.",
+      login: "Sign users in with social, email or a wallet.",
+      logout: "Revoke the session and clear local state.",
       sessions: "Review active sessions and revoke devices.",
+      signXdr: "Sign an XDR built elsewhere with the logged-in wallet.",
       distribution: "List distribution rules and claim your share.",
       lumenwipe: "Close a Stellar account and merge its balance out.",
       stellarWalletsKit:
@@ -360,6 +367,251 @@ export const en = {
           "Not a function — a value of type TxHistoryState read from usePollar().",
         returns:
           "Re-renders your component whenever it changes. Mirrors getClient().getTxHistoryState(): step plus data when loaded.",
+      },
+    ],
+  },
+
+  signXdr: {
+    title: "Sign XDR",
+    desc: "Sign a transaction that was built somewhere else — a backend, a CLI, another app — with the currently logged-in wallet. Paste the unsigned XDR and either sign + submit in one call, or split signing from submission.",
+    xdrLabel: "Unsigned XDR",
+    xdrPlaceholder: "AAAAAgAAAAA… (base64 transaction envelope)",
+    xdrNote:
+      "The base64 transaction envelope produced wherever the transaction was built.",
+    oneShotTitle: "One-shot — sign + submit",
+    splitTitle: "Split flow — external wallets sign client-side",
+    working: "Working…",
+    signedXdrLabel: "Signed XDR",
+    stateLabel: "tx state",
+    stateIdle: "Paste an XDR and sign to drive the transaction state machine.",
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr: string — the envelope built elsewhere. Signs it with the logged-in wallet and submits in one call (custodial or external).",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending', hash } or { status: 'error', … }. Also drives the reactive tx state.",
+      },
+      {
+        fn: "signTx(unsignedXdr)",
+        tag: "async",
+        params:
+          "unsignedXdr: string. External-wallet only — the wallet signs client-side. Custodial flows should use signAndSubmitTx.",
+        returns:
+          "Promise<SignOutcome> — { status: 'signed', signedXdr } or { status: 'error', … }.",
+      },
+      {
+        fn: "submitTx(signedXdr)",
+        tag: "async",
+        params:
+          "signedXdr: string — the signed envelope from signTx. Broadcasts it to the network.",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending', hash } or { status: 'error', … }.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Not a function — a TransactionState read from usePollar(). Re-renders through 'signing' → 'submitting' → 'success' / 'error'.",
+        returns:
+          "Mirrors getClient().getTransactionState(): step plus hash / buildData when present.",
+      },
+    ],
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "The same methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr: string — the envelope built elsewhere. One-shot sign + submit with the logged-in wallet.",
+        returns: "Promise<SubmitOutcome> — status + hash, or an error.",
+      },
+      {
+        fn: "signTx(unsignedXdr)",
+        tag: "async",
+        params:
+          "unsignedXdr: string. External-wallet only — returns the signed XDR without broadcasting.",
+        returns: "Promise<SignOutcome> — { status: 'signed', signedXdr } or error.",
+      },
+      {
+        fn: "submitTx(signedXdr)",
+        tag: "async",
+        params: "signedXdr: string — broadcast a client-signed envelope.",
+        returns: "Promise<SubmitOutcome> — status + hash, or an error.",
+      },
+    ],
+  },
+
+  login: {
+    title: "Login",
+    desc: "Sign a user in. With @pollar/react a single prebuilt modal renders every provider you configured — social, email OTP and any wallet adapters. With @pollar/core you drive each provider yourself and read the auth state machine.",
+    open: "Open login modal",
+    alreadyIn: "You're already signed in",
+    note: "takes no arguments — it renders every configured provider and resolves the session for you.",
+    reactDesc:
+      "openLoginModal() opens the prebuilt modal with every provider; login({ provider }) enters one provider directly, skipping the modal.",
+    coreDesc:
+      "Start a login for any provider with login({ provider }), run the email OTP steps, and subscribe to onAuthStateChange to render your own flow.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "login(options)",
+        tag: "sync",
+        params:
+          "options: { provider: 'google' | 'github' | 'email' | <wallet adapter type> } (email also takes { email }). Fire-and-forget — it drives the auth state machine.",
+        returns:
+          "void — progress and result surface through onAuthStateChange / getAuthState().",
+      },
+      {
+        fn: "beginEmailLogin()",
+        tag: "sync",
+        params:
+          "No arguments. Step 1 of the email OTP flow — opens the email step so the user can type their address.",
+        returns:
+          "void — advances the auth state machine to 'entering_email'.",
+      },
+      {
+        fn: "sendEmailCode(email)",
+        tag: "sync",
+        params:
+          "email: string — the address to send the one-time code to. Step 2 of the email OTP flow.",
+        returns:
+          "void — dispatches the code and advances the auth state machine to 'entering_code'.",
+      },
+      {
+        fn: "verifyEmailCode(code)",
+        tag: "sync",
+        params:
+          "code: string — the one-time code the user received by email. Step 3 of the email OTP flow.",
+        returns:
+          "void — on a valid code the auth state machine reaches 'authenticated'.",
+      },
+      {
+        fn: "loginSmartWallet()",
+        tag: "sync",
+        params:
+          "No arguments. Runs the passkey (WebAuthn) ceremony for a returning smart-wallet user; use createSmartWallet() for a new one.",
+        returns: "void — drives the auth state machine.",
+      },
+      {
+        fn: "onAuthStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: AuthState) => void — called on every transition ('idle', 'creating_session', 'opening_oauth', 'authenticated', 'error', …).",
+        returns:
+          "() => void — an unsubscribe function. Pair with getAuthState() to read the current step.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "openLoginModal()",
+        tag: "sync",
+        params:
+          "No arguments — it renders every configured provider in Pollar's prebuilt modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+      {
+        fn: "login(options)",
+        tag: "sync",
+        params:
+          "Same options as core — enter one provider directly (e.g. login({ provider: 'google' })) without opening the modal.",
+        returns:
+          "void — progress surfaces through the reactive isAuthenticated / wallet values.",
+      },
+      {
+        fn: "isAuthenticated",
+        tag: "reactive value",
+        params:
+          "Not a function — a boolean read from usePollar(). false until the server confirms the session.",
+        returns:
+          "Re-renders your component when the session is created or torn down. Pair with verified before gating signing.",
+      },
+    ],
+  },
+
+  logout: {
+    title: "Logout",
+    desc: "Sign the current user out. logout() revokes this device's session server-side and clears local storage; pass { everywhere: true } to revoke every device. The same call backs both @pollar/core and @pollar/react.",
+    open: "Sign out",
+    alreadyOut: "You're already signed out",
+    note: "revokes the current session and clears local state — isAuthenticated flips to false.",
+    reactDesc:
+      "logout() from usePollar() revokes the session and clears local state; the reactive isAuthenticated flips to false and your UI re-renders.",
+    coreDesc:
+      "client.logout() revokes this device server-side and wipes storage; logout({ everywhere: true }) or logoutEverywhere() signs out all devices.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "logout(options?)",
+        tag: "async",
+        params:
+          "options?: { everywhere?: boolean }. Default revokes only this device's refresh-token family; everywhere: true revokes them all.",
+        returns:
+          "Promise<void> — server revocation is best-effort; local state is cleared regardless.",
+      },
+      {
+        fn: "logoutEverywhere()",
+        tag: "async",
+        params: "No arguments. Convenience for logout({ everywhere: true }).",
+        returns:
+          "Promise<void> — revokes every active session for this user across all devices.",
+      },
+      {
+        fn: "onAuthStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: AuthState) => void — fires as the machine returns to 'idle' after the session is cleared.",
+        returns: "() => void — an unsubscribe function.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "logout()",
+        tag: "sync",
+        params:
+          "No arguments — wraps client.logout(). Revokes the current session and clears local state.",
+        returns:
+          "void — nothing to await; isAuthenticated flips to false and dependent UI re-renders.",
+      },
+      {
+        fn: "isAuthenticated",
+        tag: "reactive value",
+        params:
+          "Not a function — a boolean read from usePollar(). Gate the sign-out button on it (nothing to revoke when already false).",
+        returns:
+          "Re-renders your component when it flips to false after logout.",
       },
     ],
   },
@@ -1477,6 +1729,100 @@ export const en = {
     ],
   },
 
+  cosmosPayAbout: {
+    eyebrow: "Cosmos Pay",
+    title: "SEP-7 payment intents for Stellar",
+    tagline: "Cosmos Pay assembles the payment; you sign with your own wallet.",
+    body: [
+      "Cosmos Pay is an object-oriented SDK for the Cosmos Pay Payments API. Its server half creates Stellar SEP-7 payment intents — plus webhooks, products, customers and analytics — with your secret key; its browser half completes them.",
+      "Browser wallets don't ingest SEP-7 `web+stellar:` URIs from a dapp, so Cosmos Pay's web client adapts each intent into a concrete Stellar transaction (XDR) instead — building the payment for a `pay` intent, or reusing the XDR for a `tx` intent.",
+      "In this demo Cosmos Pay plugs into Pollar exactly like the Trustless Work and Nirium adapters: the web client's buildTransaction turns the SEP-7 `pay` intent into an unsigned XDR — built from your connected account as source — and the Pollar SDK signs and submits it with your wallet. No secret key and no API key ever touch the frontend.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "SEP-7 payment intents",
+        desc: "Create `pay` and `tx` intents server-side; each returns a SEP-7 URI + QR any wallet can consume.",
+      },
+      {
+        title: "Provider-agnostic web client",
+        desc: "Auto-detects Freighter, xBull, Rabet, LOBSTR & Albedo — or, here, hands the unsigned XDR to Pollar.",
+      },
+      {
+        title: "Webhooks & catalogs",
+        desc: "Signed webhook delivery plus products, customers and analytics — all behind your secret key.",
+      },
+      {
+        title: "Signed by Pollar",
+        desc: "Cosmos Pay builds the payment; the connected Pollar wallet signs. No secret keys in the frontend.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    npmLabel: "npm package",
+    repoLabel: "SDK (GitHub)",
+    disclaimer:
+      "Summary based on the published @cosmosapp/pay_sdk package. Pollar is not affiliated with Cosmos Pay — all credit to their team.",
+  },
+
+  cosmosPay: {
+    title: "SEP-7 payment",
+    desc: "Send a Stellar payment through a Cosmos Pay SEP-7 intent. Cosmos Pay assembles the payment and returns an unsigned XDR; the Pollar SDK signs and submits it with your connected wallet — no secret key, no API key.",
+    destination: "Destination",
+    destinationNote: "Recipient Stellar address (G…) on testnet.",
+    asset: "Asset",
+    assetNote: "'XLM' for native, or 'CODE:ISSUER' for an issued asset.",
+    amount: "Amount",
+    memo: "Memo",
+    memoNote: "Optional note stored as a MEMO_TEXT (max 28 chars).",
+    message: "Message",
+    messageNote: "Optional human-readable message carried by the SEP-7 intent.",
+    pay: "Pay with Pollar",
+    signing: "Signing…",
+    setupSummary: "Setup — register the Cosmos Pay adapter once",
+    txIdle: "Fill in destination, amount and asset, then pay.",
+    coreFnsTitle: "@pollar/core — functions used",
+    coreFnsIntro:
+      "The adapter returns an unsigned XDR; the core client signs and submits it.",
+    coreFns: [
+      {
+        fn: "cosmosPayAdapter.pay(params)",
+        tag: "async",
+        params:
+          "params: { destination, amount, asset, memo?, msg?, signer }. Cosmos Pay builds the SEP-7 payment.",
+        returns:
+          "Promise<{ unsignedTransaction: string }> — the unsigned XDR, ready to sign.",
+      },
+      {
+        fn: "client.signAndSubmitTx(xdr)",
+        tag: "async",
+        params:
+          "xdr: string — the unsigned transaction returned by the adapter.",
+        returns:
+          "Promise<SubmitOutcome> — { status, hash, … }. Signs with the connected wallet, then submits.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook & values used",
+    reactFnsIntro:
+      "createPollarAdapterHook wires the adapter so Pollar auto-signs; usePollar exposes the live tx state.",
+    reactFns: [
+      {
+        fn: "useCosmosPay()",
+        tag: "hook",
+        params:
+          "No arguments. Returns the wrapped adapter — calling pay() builds, signs and submits in one step.",
+        returns:
+          "WrappedAdapter — { pay }. The unsigned XDR is signed + submitted automatically.",
+      },
+      {
+        fn: "usePollar().tx",
+        tag: "reactive value",
+        params: "No arguments — read it during render.",
+        returns:
+          "TransactionState — the live build → sign → submit progress (tx.step, tx.hash).",
+      },
+    ],
+  },
+
   ...nekoEn,
 };
 
@@ -1511,7 +1857,10 @@ export const es: Dictionary = {
     kyc: "KYC",
     escrow: "Escrow",
     payments: "Pagos",
+    login: "Iniciar sesión",
+    logout: "Cerrar sesión",
     sessions: "Sesiones",
+    signXdr: "Firmar XDR",
     distribution: "Distribución",
     lumenwipe: "LumenWipe",
     overview: "Resumen",
@@ -1526,15 +1875,16 @@ export const es: Dictionary = {
     setup: "Setup",
     implementation: "Implementación",
     groups: {
+      auth: "Autenticación",
       pollarWallet: "Billetera",
       transactions: "Transacciones",
-      sessions: "Sesiones",
       distribution: "Distribución",
       kyc: "KYC",
       ramp: "Ramp",
       swap: "Swap",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
+      cosmosPay: "Cosmos Pay",
       lumenwipe: "LumenWipe",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
@@ -1576,7 +1926,10 @@ export const es: Dictionary = {
       kyc: "Verifica tu identidad para desbloquear límites más altos.",
       escrow: "Escrows de Trustless Work con firma automática de XDR.",
       payments: "Pagos x402 programáticos — Nirium planifica, Pollar firma.",
+      login: "Autentica usuarios con redes sociales, email o wallet.",
+      logout: "Revoca la sesión y limpia el estado local.",
       sessions: "Revisa las sesiones activas y revoca dispositivos.",
+      signXdr: "Firma un XDR generado en otro lado con la wallet logueada.",
       distribution: "Lista las reglas de distribución y reclama tu parte.",
       lumenwipe: "Cierra una cuenta Stellar y transfiere su saldo restante.",
       stellarWalletsKit:
@@ -1839,6 +2192,253 @@ export const es: Dictionary = {
           "No es una función: es un valor de tipo TxHistoryState que se lee de usePollar().",
         returns:
           "Vuelve a renderizar tu componente cada vez que cambia. Refleja getClient().getTxHistoryState(): step y data cuando ya cargó.",
+      },
+    ],
+  },
+
+  signXdr: {
+    title: "Firmar XDR",
+    desc: "Firma una transacción que se construyó en otro lado — un backend, una CLI, otra app — con la wallet que tiene la sesión iniciada. Pega el XDR sin firmar y, o bien firma y envía en una sola llamada, o separa la firma del envío.",
+    xdrLabel: "XDR sin firmar",
+    xdrPlaceholder: "AAAAAgAAAAA… (envelope de transacción en base64)",
+    xdrNote:
+      "El envelope de transacción en base64 producido allí donde se construyó la transacción.",
+    oneShotTitle: "Una sola llamada — firmar + enviar",
+    splitTitle: "Flujo separado — las wallets externas firman en el cliente",
+    working: "Procesando…",
+    signedXdrLabel: "XDR firmado",
+    stateLabel: "estado de la tx",
+    stateIdle:
+      "Pega un XDR y firma para alimentar la máquina de estados de la transacción.",
+    reactFnsTitle: "Hook y valores usados",
+    reactFnsIntro:
+      "Todo esto viene del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr: string — el envelope construido en otro lado. Lo firma con la wallet logueada y lo envía en una sola llamada (custodial o externa).",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending', hash } o { status: 'error', … }. También alimenta el valor reactivo tx.",
+      },
+      {
+        fn: "signTx(unsignedXdr)",
+        tag: "async",
+        params:
+          "unsignedXdr: string. Solo wallets externas — la wallet firma en el cliente. Los flujos custodiales deben usar signAndSubmitTx.",
+        returns:
+          "Promise<SignOutcome> — { status: 'signed', signedXdr } o { status: 'error', … }.",
+      },
+      {
+        fn: "submitTx(signedXdr)",
+        tag: "async",
+        params:
+          "signedXdr: string — el envelope firmado que devuelve signTx. Lo transmite a la red.",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending', hash } o { status: 'error', … }.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "No es una función: un TransactionState leído de usePollar(). Re-renderiza a través de 'signing' → 'submitting' → 'success' / 'error'.",
+        returns:
+          "Refleja getClient().getTransactionState(): step más hash / buildData cuando existen.",
+      },
+    ],
+    coreFnsTitle: "Funciones usadas",
+    coreFnsIntro:
+      "Los mismos métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr: string — el envelope construido en otro lado. Firma + envío en una llamada con la wallet logueada.",
+        returns: "Promise<SubmitOutcome> — status + hash, o un error.",
+      },
+      {
+        fn: "signTx(unsignedXdr)",
+        tag: "async",
+        params:
+          "unsignedXdr: string. Solo wallets externas — devuelve el XDR firmado sin transmitirlo.",
+        returns:
+          "Promise<SignOutcome> — { status: 'signed', signedXdr } o un error.",
+      },
+      {
+        fn: "submitTx(signedXdr)",
+        tag: "async",
+        params: "signedXdr: string — transmite un envelope firmado en el cliente.",
+        returns: "Promise<SubmitOutcome> — status + hash, o un error.",
+      },
+    ],
+  },
+
+  login: {
+    title: "Iniciar sesión",
+    desc: "Autentica a un usuario. Con @pollar/react un único modal prearmado renderiza cada proveedor que configuraste: redes sociales, código por email y cualquier adaptador de wallet. Con @pollar/core controlas cada proveedor tú mismo y lees la máquina de estados de autenticación.",
+    open: "Abrir modal de login",
+    alreadyIn: "Ya tienes la sesión iniciada",
+    note: "no recibe argumentos: renderiza cada proveedor configurado y resuelve la sesión por ti.",
+    reactDesc:
+      "openLoginModal() abre el modal prearmado con todos los proveedores; login({ provider }) entra directo a un proveedor, saltándose el modal.",
+    coreDesc:
+      "Inicia un login para cualquier proveedor con login({ provider }), ejecuta los pasos del código por email y suscríbete a onAuthStateChange para renderizar tu propio flujo.",
+    coreFnsTitle: "Funciones usadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "login(options)",
+        tag: "sync",
+        params:
+          "options: { provider: 'google' | 'github' | 'email' | <tipo de adaptador de wallet> } (email además recibe { email }). Dispara y olvida: alimenta la máquina de estados de autenticación.",
+        returns:
+          "void — el progreso y el resultado se ven a través de onAuthStateChange / getAuthState().",
+      },
+      {
+        fn: "beginEmailLogin()",
+        tag: "sync",
+        params:
+          "Sin argumentos. Paso 1 del flujo de código por email: abre el paso de email para que el usuario escriba su dirección.",
+        returns:
+          "void — avanza la máquina de estados a 'entering_email'.",
+      },
+      {
+        fn: "sendEmailCode(email)",
+        tag: "sync",
+        params:
+          "email: string — la dirección a la que enviar el código de un solo uso. Paso 2 del flujo de código por email.",
+        returns:
+          "void — envía el código y avanza la máquina de estados a 'entering_code'.",
+      },
+      {
+        fn: "verifyEmailCode(code)",
+        tag: "sync",
+        params:
+          "code: string — el código de un solo uso que el usuario recibió por email. Paso 3 del flujo de código por email.",
+        returns:
+          "void — con un código válido la máquina de estados llega a 'authenticated'.",
+      },
+      {
+        fn: "loginSmartWallet()",
+        tag: "sync",
+        params:
+          "Sin argumentos. Ejecuta la ceremonia passkey (WebAuthn) para un usuario de smart wallet que regresa; usa createSmartWallet() para uno nuevo.",
+        returns: "void — alimenta la máquina de estados de autenticación.",
+      },
+      {
+        fn: "onAuthStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: AuthState) => void — se llama en cada transición ('idle', 'creating_session', 'opening_oauth', 'authenticated', 'error', …).",
+        returns:
+          "() => void — una función para desuscribirte. Combínala con getAuthState() para leer el paso actual.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores usados",
+    reactFnsIntro:
+      "Todo esto viene del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue — toda la superficie del SDK: valores de estado reactivos, aperturas de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "openLoginModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: renderiza cada proveedor configurado en el modal prearmado de Pollar.",
+        returns: "void — abre el modal prearmado; no hay nada que esperar.",
+      },
+      {
+        fn: "login(options)",
+        tag: "sync",
+        params:
+          "Las mismas opciones que en core: entra directo a un proveedor (p. ej. login({ provider: 'google' })) sin abrir el modal.",
+        returns:
+          "void — el progreso se refleja en los valores reactivos isAuthenticated / wallet.",
+      },
+      {
+        fn: "isAuthenticated",
+        tag: "reactive value",
+        params:
+          "No es una función: un booleano leído de usePollar(). false hasta que el servidor confirma la sesión.",
+        returns:
+          "Re-renderiza tu componente cuando la sesión se crea o se destruye. Combínalo con verified antes de habilitar la firma.",
+      },
+    ],
+  },
+
+  logout: {
+    title: "Cerrar sesión",
+    desc: "Cierra la sesión del usuario actual. logout() revoca la sesión de este dispositivo en el servidor y limpia el almacenamiento local; pasa { everywhere: true } para revocar todos los dispositivos. La misma llamada respalda tanto @pollar/core como @pollar/react.",
+    open: "Cerrar sesión",
+    alreadyOut: "Ya cerraste la sesión",
+    note: "revoca la sesión actual y limpia el estado local: isAuthenticated pasa a false.",
+    reactDesc:
+      "logout() de usePollar() revoca la sesión y limpia el estado local; el valor reactivo isAuthenticated pasa a false y tu UI se re-renderiza.",
+    coreDesc:
+      "client.logout() revoca este dispositivo en el servidor y borra el almacenamiento; logout({ everywhere: true }) o logoutEverywhere() cierran sesión en todos los dispositivos.",
+    coreFnsTitle: "Funciones usadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "logout(options?)",
+        tag: "async",
+        params:
+          "options?: { everywhere?: boolean }. Por defecto revoca solo la familia de refresh-token de este dispositivo; everywhere: true las revoca todas.",
+        returns:
+          "Promise<void> — la revocación en el servidor es best-effort; el estado local se limpia de todas formas.",
+      },
+      {
+        fn: "logoutEverywhere()",
+        tag: "async",
+        params: "Sin argumentos. Atajo para logout({ everywhere: true }).",
+        returns:
+          "Promise<void> — revoca todas las sesiones activas de este usuario en todos los dispositivos.",
+      },
+      {
+        fn: "onAuthStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: AuthState) => void — se dispara cuando la máquina vuelve a 'idle' tras limpiar la sesión.",
+        returns: "() => void — una función para desuscribirte.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores usados",
+    reactFnsIntro:
+      "Todo esto viene del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue — toda la superficie del SDK: valores de estado reactivos, aperturas de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "logout()",
+        tag: "sync",
+        params:
+          "Sin argumentos: envuelve client.logout(). Revoca la sesión actual y limpia el estado local.",
+        returns:
+          "void — no hay nada que esperar; isAuthenticated pasa a false y la UI dependiente se re-renderiza.",
+      },
+      {
+        fn: "isAuthenticated",
+        tag: "reactive value",
+        params:
+          "No es una función: un booleano leído de usePollar(). Habilita el botón de cerrar sesión según su valor (no hay nada que revocar cuando ya es false).",
+        returns:
+          "Re-renderiza tu componente cuando pasa a false tras el logout.",
       },
     ],
   },
@@ -2963,6 +3563,100 @@ export const es: Dictionary = {
     ],
   },
 
+  cosmosPayAbout: {
+    eyebrow: "Cosmos Pay",
+    title: "Intenciones de pago SEP-7 para Stellar",
+    tagline: "Cosmos Pay arma el pago; tú firmas con tu propia wallet.",
+    body: [
+      "Cosmos Pay es un SDK orientado a objetos para la API de pagos de Cosmos Pay. Su mitad de servidor crea intenciones de pago SEP-7 de Stellar —además de webhooks, productos, clientes y analíticas— con tu clave secreta; su mitad de navegador las completa.",
+      "Las wallets de navegador no consumen las URIs SEP-7 `web+stellar:` desde una dapp, así que el cliente web de Cosmos Pay adapta cada intención a una transacción Stellar concreta (XDR): construye el pago para una intención `pay`, o reutiliza el XDR para una intención `tx`.",
+      "En esta demo Cosmos Pay se integra con Pollar igual que los adapters de Trustless Work y Nirium: buildTransaction del cliente web convierte la intención SEP-7 `pay` en un XDR sin firmar —construido desde tu cuenta conectada como origen— y el SDK de Pollar lo firma y lo envía con tu wallet. Ninguna clave secreta ni API key toca el frontend.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Intenciones de pago SEP-7",
+        desc: "Crea intenciones `pay` y `tx` en el servidor; cada una devuelve una URI SEP-7 + QR que cualquier wallet puede consumir.",
+      },
+      {
+        title: "Cliente web agnóstico",
+        desc: "Detecta Freighter, xBull, Rabet, LOBSTR y Albedo — o, aquí, entrega el XDR sin firmar a Pollar.",
+      },
+      {
+        title: "Webhooks y catálogos",
+        desc: "Entrega de webhooks firmados más productos, clientes y analíticas — todo detrás de tu clave secreta.",
+      },
+      {
+        title: "Firmado por Pollar",
+        desc: "Cosmos Pay arma el pago; la wallet de Pollar conectada firma. Sin claves secretas en el frontend.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    npmLabel: "Paquete npm",
+    repoLabel: "SDK (GitHub)",
+    disclaimer:
+      "Resumen basado en el paquete publicado @cosmosapp/pay_sdk. Pollar no está afiliado a Cosmos Pay — todo el crédito para su equipo.",
+  },
+
+  cosmosPay: {
+    title: "Pago SEP-7",
+    desc: "Envía un pago Stellar a través de una intención SEP-7 de Cosmos Pay. Cosmos Pay arma el pago y devuelve un XDR sin firmar; el SDK de Pollar lo firma y lo envía con tu wallet conectada — sin clave secreta ni API key.",
+    destination: "Destino",
+    destinationNote: "Dirección Stellar del receptor (G…) en testnet.",
+    asset: "Activo",
+    assetNote: "'XLM' para el nativo, o 'CODE:ISSUER' para un activo emitido.",
+    amount: "Monto",
+    memo: "Memo",
+    memoNote: "Nota opcional guardada como MEMO_TEXT (máx. 28 caracteres).",
+    message: "Mensaje",
+    messageNote: "Mensaje opcional legible que lleva la intención SEP-7.",
+    pay: "Pagar con Pollar",
+    signing: "Firmando…",
+    setupSummary: "Configuración — registra el adapter de Cosmos Pay una vez",
+    txIdle: "Completa destino, monto y activo, luego paga.",
+    coreFnsTitle: "@pollar/core — funciones usadas",
+    coreFnsIntro:
+      "El adapter devuelve un XDR sin firmar; el cliente core lo firma y lo envía.",
+    coreFns: [
+      {
+        fn: "cosmosPayAdapter.pay(params)",
+        tag: "async",
+        params:
+          "params: { destination, amount, asset, memo?, msg?, signer }. Cosmos Pay arma el pago SEP-7.",
+        returns:
+          "Promise<{ unsignedTransaction: string }> — el XDR sin firmar, listo para firmar.",
+      },
+      {
+        fn: "client.signAndSubmitTx(xdr)",
+        tag: "async",
+        params:
+          "xdr: string — la transacción sin firmar que devuelve el adapter.",
+        returns:
+          "Promise<SubmitOutcome> — { status, hash, … }. Firma con la wallet conectada y luego envía.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook y valores usados",
+    reactFnsIntro:
+      "createPollarAdapterHook conecta el adapter para que Pollar firme automáticamente; usePollar expone el estado de la tx en vivo.",
+    reactFns: [
+      {
+        fn: "useCosmosPay()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Devuelve el adapter envuelto — llamar a pay() construye, firma y envía en un paso.",
+        returns:
+          "WrappedAdapter — { pay }. El XDR sin firmar se firma y envía automáticamente.",
+      },
+      {
+        fn: "usePollar().tx",
+        tag: "valor reactivo",
+        params: "Sin argumentos — léelo durante el render.",
+        returns:
+          "TransactionState — el progreso en vivo construir → firmar → enviar (tx.step, tx.hash).",
+      },
+    ],
+  },
+
   ...nekoEs,
 };
 
@@ -2995,7 +3689,10 @@ export const pt: Dictionary = {
     kyc: "KYC",
     escrow: "Escrow",
     payments: "Pagamentos",
+    login: "Entrar",
+    logout: "Sair",
     sessions: "Sessões",
+    signXdr: "Assinar XDR",
     distribution: "Distribuição",
     lumenwipe: "LumenWipe",
     overview: "Visão geral",
@@ -3010,15 +3707,16 @@ export const pt: Dictionary = {
     setup: "Setup",
     implementation: "Implementação",
     groups: {
+      auth: "Autenticação",
       pollarWallet: "Carteira",
       transactions: "Transações",
-      sessions: "Sessões",
       distribution: "Distribuição",
       kyc: "KYC",
       ramp: "Ramp",
       swap: "Swap",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
+      cosmosPay: "Cosmos Pay",
       lumenwipe: "LumenWipe",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
@@ -3061,7 +3759,10 @@ export const pt: Dictionary = {
       escrow: "Escrows da Trustless Work com assinatura automática de XDR.",
       payments:
         "Pagamentos x402 programáticos — Nirium planeja, Pollar assina.",
+      login: "Autentique usuários com redes sociais, email ou carteira.",
+      logout: "Revogue a sessão e limpe o estado local.",
       sessions: "Revise as sessões ativas e revogue dispositivos.",
+      signXdr: "Assine um XDR construído em outro lugar com a carteira conectada.",
       distribution: "Liste as regras de distribuição e resgate sua parte.",
       lumenwipe: "Encerre uma conta Stellar e transfira o saldo restante.",
       stellarWalletsKit:
@@ -3323,6 +4024,253 @@ export const pt: Dictionary = {
           "Não é uma função: é um valor do tipo TxHistoryState lido de usePollar().",
         returns:
           "Re-renderiza seu componente sempre que muda. Reflete getClient().getTxHistoryState(): step e data quando carregado.",
+      },
+    ],
+  },
+
+  signXdr: {
+    title: "Assinar XDR",
+    desc: "Assine uma transação que foi construída em outro lugar — um backend, uma CLI, outro app — com a carteira que está conectada. Cole o XDR não assinado e assine + envie em uma única chamada, ou separe a assinatura do envio.",
+    xdrLabel: "XDR não assinado",
+    xdrPlaceholder: "AAAAAgAAAAA… (envelope de transação em base64)",
+    xdrNote:
+      "O envelope de transação em base64 produzido onde a transação foi construída.",
+    oneShotTitle: "Uma chamada — assinar + enviar",
+    splitTitle: "Fluxo separado — carteiras externas assinam no cliente",
+    working: "Processando…",
+    signedXdrLabel: "XDR assinado",
+    stateLabel: "estado da tx",
+    stateIdle:
+      "Cole um XDR e assine para alimentar a máquina de estados da transação.",
+    reactFnsTitle: "Hook e valores usados",
+    reactFnsIntro:
+      "Tudo isso vem do hook usePollar(): a camada de react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr: string — o envelope construído em outro lugar. Assina com a carteira conectada e envia em uma única chamada (custodial ou externa).",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending', hash } ou { status: 'error', … }. Também alimenta o valor reativo tx.",
+      },
+      {
+        fn: "signTx(unsignedXdr)",
+        tag: "async",
+        params:
+          "unsignedXdr: string. Apenas carteiras externas — a carteira assina no cliente. Fluxos custodiais devem usar signAndSubmitTx.",
+        returns:
+          "Promise<SignOutcome> — { status: 'signed', signedXdr } ou { status: 'error', … }.",
+      },
+      {
+        fn: "submitTx(signedXdr)",
+        tag: "async",
+        params:
+          "signedXdr: string — o envelope assinado que signTx retorna. Transmite-o para a rede.",
+        returns:
+          "Promise<SubmitOutcome> — { status: 'success' | 'pending', hash } ou { status: 'error', … }.",
+      },
+      {
+        fn: "tx",
+        tag: "reactive value",
+        params:
+          "Não é uma função: um TransactionState lido de usePollar(). Re-renderiza através de 'signing' → 'submitting' → 'success' / 'error'.",
+        returns:
+          "Espelha getClient().getTransactionState(): step mais hash / buildData quando presentes.",
+      },
+    ],
+    coreFnsTitle: "Funções usadas",
+    coreFnsIntro:
+      "Os mesmos métodos do cliente retornado por getClient(): a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "signAndSubmitTx(unsignedXdr?)",
+        tag: "async",
+        params:
+          "unsignedXdr: string — o envelope construído em outro lugar. Assinatura + envio em uma chamada com a carteira conectada.",
+        returns: "Promise<SubmitOutcome> — status + hash, ou um erro.",
+      },
+      {
+        fn: "signTx(unsignedXdr)",
+        tag: "async",
+        params:
+          "unsignedXdr: string. Apenas carteiras externas — retorna o XDR assinado sem transmiti-lo.",
+        returns:
+          "Promise<SignOutcome> — { status: 'signed', signedXdr } ou um erro.",
+      },
+      {
+        fn: "submitTx(signedXdr)",
+        tag: "async",
+        params: "signedXdr: string — transmite um envelope assinado no cliente.",
+        returns: "Promise<SubmitOutcome> — status + hash, ou um erro.",
+      },
+    ],
+  },
+
+  login: {
+    title: "Entrar",
+    desc: "Autentique um usuário. Com @pollar/react um único modal pronto renderiza cada provedor que você configurou: redes sociais, código por email e quaisquer adaptadores de carteira. Com @pollar/core você controla cada provedor por conta própria e lê a máquina de estados de autenticação.",
+    open: "Abrir modal de login",
+    alreadyIn: "Você já está conectado",
+    note: "não recebe argumentos: renderiza cada provedor configurado e resolve a sessão para você.",
+    reactDesc:
+      "openLoginModal() abre o modal pronto com todos os provedores; login({ provider }) entra direto em um provedor, pulando o modal.",
+    coreDesc:
+      "Inicie um login para qualquer provedor com login({ provider }), execute os passos do código por email e inscreva-se em onAuthStateChange para renderizar seu próprio fluxo.",
+    coreFnsTitle: "Funções usadas",
+    coreFnsIntro:
+      "Todos são métodos do cliente retornado por getClient(): a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "login(options)",
+        tag: "sync",
+        params:
+          "options: { provider: 'google' | 'github' | 'email' | <tipo de adaptador de carteira> } (email também recebe { email }). Dispare e esqueça: alimenta a máquina de estados de autenticação.",
+        returns:
+          "void — o progresso e o resultado aparecem via onAuthStateChange / getAuthState().",
+      },
+      {
+        fn: "beginEmailLogin()",
+        tag: "sync",
+        params:
+          "Sem argumentos. Passo 1 do fluxo de código por email: abre o passo de email para o usuário digitar seu endereço.",
+        returns:
+          "void — avança a máquina de estados para 'entering_email'.",
+      },
+      {
+        fn: "sendEmailCode(email)",
+        tag: "sync",
+        params:
+          "email: string — o endereço para o qual enviar o código de uso único. Passo 2 do fluxo de código por email.",
+        returns:
+          "void — envia o código e avança a máquina de estados para 'entering_code'.",
+      },
+      {
+        fn: "verifyEmailCode(code)",
+        tag: "sync",
+        params:
+          "code: string — o código de uso único que o usuário recebeu por email. Passo 3 do fluxo de código por email.",
+        returns:
+          "void — com um código válido a máquina de estados chega a 'authenticated'.",
+      },
+      {
+        fn: "loginSmartWallet()",
+        tag: "sync",
+        params:
+          "Sem argumentos. Executa a cerimônia passkey (WebAuthn) para um usuário de smart wallet que retorna; use createSmartWallet() para um novo.",
+        returns: "void — alimenta a máquina de estados de autenticação.",
+      },
+      {
+        fn: "onAuthStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: AuthState) => void — chamado a cada transição ('idle', 'creating_session', 'opening_oauth', 'authenticated', 'error', …).",
+        returns:
+          "() => void — uma função para cancelar a inscrição. Combine com getAuthState() para ler o passo atual.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores usados",
+    reactFnsIntro:
+      "Tudo isso vem do hook usePollar(): a camada de react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então deve rodar durante o render.",
+        returns:
+          "PollarContextValue — toda a superfície do SDK: valores de estado reativos, aberturas de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "openLoginModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: renderiza cada provedor configurado no modal pronto da Pollar.",
+        returns: "void — abre o modal pronto; não há nada a aguardar.",
+      },
+      {
+        fn: "login(options)",
+        tag: "sync",
+        params:
+          "As mesmas opções do core: entre direto em um provedor (ex.: login({ provider: 'google' })) sem abrir o modal.",
+        returns:
+          "void — o progresso aparece nos valores reativos isAuthenticated / wallet.",
+      },
+      {
+        fn: "isAuthenticated",
+        tag: "reactive value",
+        params:
+          "Não é uma função: um booleano lido de usePollar(). false até o servidor confirmar a sessão.",
+        returns:
+          "Re-renderiza seu componente quando a sessão é criada ou destruída. Combine com verified antes de liberar a assinatura.",
+      },
+    ],
+  },
+
+  logout: {
+    title: "Sair",
+    desc: "Encerre a sessão do usuário atual. logout() revoga a sessão deste dispositivo no servidor e limpa o armazenamento local; passe { everywhere: true } para revogar todos os dispositivos. A mesma chamada sustenta tanto @pollar/core quanto @pollar/react.",
+    open: "Sair",
+    alreadyOut: "Você já saiu",
+    note: "revoga a sessão atual e limpa o estado local: isAuthenticated passa a false.",
+    reactDesc:
+      "logout() do usePollar() revoga a sessão e limpa o estado local; o valor reativo isAuthenticated passa a false e sua UI é re-renderizada.",
+    coreDesc:
+      "client.logout() revoga este dispositivo no servidor e apaga o armazenamento; logout({ everywhere: true }) ou logoutEverywhere() encerram a sessão em todos os dispositivos.",
+    coreFnsTitle: "Funções usadas",
+    coreFnsIntro:
+      "Todos são métodos do cliente retornado por getClient(): a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "logout(options?)",
+        tag: "async",
+        params:
+          "options?: { everywhere?: boolean }. Por padrão revoga apenas a família de refresh-token deste dispositivo; everywhere: true revoga todas.",
+        returns:
+          "Promise<void> — a revogação no servidor é best-effort; o estado local é limpo de qualquer forma.",
+      },
+      {
+        fn: "logoutEverywhere()",
+        tag: "async",
+        params: "Sem argumentos. Atalho para logout({ everywhere: true }).",
+        returns:
+          "Promise<void> — revoga todas as sessões ativas deste usuário em todos os dispositivos.",
+      },
+      {
+        fn: "onAuthStateChange(cb)",
+        tag: "sync",
+        params:
+          "cb: (state: AuthState) => void — dispara quando a máquina volta para 'idle' após limpar a sessão.",
+        returns: "() => void — uma função para cancelar a inscrição.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores usados",
+    reactFnsIntro:
+      "Tudo isso vem do hook usePollar(): a camada de react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então deve rodar durante o render.",
+        returns:
+          "PollarContextValue — toda a superfície do SDK: valores de estado reativos, aberturas de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "logout()",
+        tag: "sync",
+        params:
+          "Sem argumentos: envolve client.logout(). Revoga a sessão atual e limpa o estado local.",
+        returns:
+          "void — não há nada a aguardar; isAuthenticated passa a false e a UI dependente é re-renderizada.",
+      },
+      {
+        fn: "isAuthenticated",
+        tag: "reactive value",
+        params:
+          "Não é uma função: um booleano lido de usePollar(). Habilite o botão de sair conforme seu valor (não há nada a revogar quando já é false).",
+        returns:
+          "Re-renderiza seu componente quando passa a false após o logout.",
       },
     ],
   },
@@ -4440,6 +5388,101 @@ export const pt: Dictionary = {
         params: "Sem argumentos — leia durante o render.",
         returns:
           "TransactionState — o progresso ao vivo build → sign → submit (tx.step, tx.hash).",
+      },
+    ],
+  },
+
+  cosmosPayAbout: {
+    eyebrow: "Cosmos Pay",
+    title: "Intenções de pagamento SEP-7 para Stellar",
+    tagline:
+      "A Cosmos Pay monta o pagamento; você assina com sua própria carteira.",
+    body: [
+      "A Cosmos Pay é um SDK orientado a objetos para a API de pagamentos da Cosmos Pay. Sua metade de servidor cria intenções de pagamento SEP-7 da Stellar — além de webhooks, produtos, clientes e analytics — com sua chave secreta; sua metade de navegador as completa.",
+      "As carteiras de navegador não consomem as URIs SEP-7 `web+stellar:` de uma dapp, então o cliente web da Cosmos Pay adapta cada intenção em uma transação Stellar concreta (XDR): constrói o pagamento para uma intenção `pay`, ou reutiliza o XDR para uma intenção `tx`.",
+      "Nesta demo a Cosmos Pay se integra ao Pollar exatamente como os adapters da Trustless Work e da Nirium: o buildTransaction do cliente web transforma a intenção SEP-7 `pay` em um XDR não assinado — construído a partir da sua conta conectada como origem — e o SDK do Pollar o assina e o envia com sua carteira. Nenhuma chave secreta ou API key toca o frontend.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Intenções de pagamento SEP-7",
+        desc: "Crie intenções `pay` e `tx` no servidor; cada uma devolve uma URI SEP-7 + QR que qualquer carteira consome.",
+      },
+      {
+        title: "Cliente web agnóstico",
+        desc: "Detecta Freighter, xBull, Rabet, LOBSTR e Albedo — ou, aqui, entrega o XDR não assinado ao Pollar.",
+      },
+      {
+        title: "Webhooks e catálogos",
+        desc: "Entrega de webhooks assinados mais produtos, clientes e analytics — tudo atrás da sua chave secreta.",
+      },
+      {
+        title: "Assinado pelo Pollar",
+        desc: "A Cosmos Pay monta o pagamento; a carteira Pollar conectada assina. Sem chaves secretas no frontend.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    npmLabel: "Pacote npm",
+    repoLabel: "SDK (GitHub)",
+    disclaimer:
+      "Resumo baseado no pacote publicado @cosmosapp/pay_sdk. O Pollar não é afiliado à Cosmos Pay — todo o crédito para a equipe deles.",
+  },
+
+  cosmosPay: {
+    title: "Pagamento SEP-7",
+    desc: "Envie um pagamento Stellar através de uma intenção SEP-7 da Cosmos Pay. A Cosmos Pay monta o pagamento e devolve um XDR não assinado; o SDK do Pollar o assina e o envia com sua carteira conectada — sem chave secreta, sem API key.",
+    destination: "Destino",
+    destinationNote: "Endereço Stellar do destinatário (G…) na testnet.",
+    asset: "Ativo",
+    assetNote: "'XLM' para o nativo, ou 'CODE:ISSUER' para um ativo emitido.",
+    amount: "Valor",
+    memo: "Memo",
+    memoNote: "Nota opcional armazenada como MEMO_TEXT (máx. 28 caracteres).",
+    message: "Mensagem",
+    messageNote: "Mensagem opcional legível que a intenção SEP-7 carrega.",
+    pay: "Pagar com Pollar",
+    signing: "Assinando…",
+    setupSummary: "Configuração — registre o adapter da Cosmos Pay uma vez",
+    txIdle: "Preencha destino, valor e ativo, depois pague.",
+    coreFnsTitle: "@pollar/core — funções usadas",
+    coreFnsIntro:
+      "O adapter devolve um XDR não assinado; o cliente core o assina e o envia.",
+    coreFns: [
+      {
+        fn: "cosmosPayAdapter.pay(params)",
+        tag: "async",
+        params:
+          "params: { destination, amount, asset, memo?, msg?, signer }. A Cosmos Pay monta o pagamento SEP-7.",
+        returns:
+          "Promise<{ unsignedTransaction: string }> — o XDR não assinado, pronto para assinar.",
+      },
+      {
+        fn: "client.signAndSubmitTx(xdr)",
+        tag: "async",
+        params:
+          "xdr: string — a transação não assinada devolvida pelo adapter.",
+        returns:
+          "Promise<SubmitOutcome> — { status, hash, … }. Assina com a carteira conectada e então envia.",
+      },
+    ],
+    reactFnsTitle: "@pollar/react — hook e valores usados",
+    reactFnsIntro:
+      "createPollarAdapterHook conecta o adapter para o Pollar assinar automaticamente; usePollar expõe o estado da tx ao vivo.",
+    reactFns: [
+      {
+        fn: "useCosmosPay()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Devolve o adapter encapsulado — chamar pay() constrói, assina e envia em um passo.",
+        returns:
+          "WrappedAdapter — { pay }. O XDR não assinado é assinado e enviado automaticamente.",
+      },
+      {
+        fn: "usePollar().tx",
+        tag: "valor reativo",
+        params: "Sem argumentos — leia durante o render.",
+        returns:
+          "TransactionState — o progresso ao vivo construir → assinar → enviar (tx.step, tx.hash).",
       },
     ],
   },

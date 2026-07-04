@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { visibleGroups, type NavGroup, type TabLabel } from "./_nav";
 import { useNekoUnlocked } from "./neko/_GateProvider";
+import { useLabUnlocked } from "./_LabGateProvider";
 import { nekoTabDesc } from "./neko/_cards";
 import { useApiKeyHref } from "./_useApiKeyHref";
 import { useI18n } from "./_i18n/LanguageProvider";
@@ -34,16 +35,20 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
   if (label === "overview") {
     if (group.key === "trustlessWork") return t.twAbout.tagline;
     if (group.key === "nirium") return t.niriumAbout.tagline;
+    if (group.key === "cosmosPay") return t.cosmosPayAbout.tagline;
     if (group.key === "lumenwipe") return t.lwAbout.tagline;
     return "";
   }
+  // Cosmos Pay reuses the `payments` tab label; give its card its own tagline
+  // rather than borrowing Nirium's x402 blurb.
+  if (group.key === "cosmosPay") return t.cosmosPayAbout.tagline;
   return t.home.descs[label as keyof Dictionary["home"]["descs"]];
 }
 
 export default function Home() {
   const { t } = useI18n();
   const withApiKey = useApiKeyHref();
-  const GROUPS = visibleGroups(useNekoUnlocked());
+  const GROUPS = visibleGroups(useNekoUnlocked(), useLabUnlocked());
 
   return (
     <div className="w-full">

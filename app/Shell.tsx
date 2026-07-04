@@ -16,13 +16,24 @@ import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
 import { SIDEBAR_SECTIONS, visibleGroups } from './_nav';
 import { useApiKeyHref } from './_useApiKeyHref';
+import { cosmosPayAdapter } from './built-with-pollar/cosmos-pay/pay/adapter';
 import { niriumAdapter } from './built-with-pollar/nirium/x402/adapter';
 import { trustlessWorkAdapter } from './built-with-pollar/trustless-work/escrow/adapter';
 import { useNekoUnlocked } from './neko/_GateProvider';
+import { useLabUnlocked } from './_LabGateProvider';
 
 const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
 const DEFAULT_API_KEY_MAINNET = 'pub_mainnet_921399523168e5775276241dc1c786b2';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
+
+// The logo that drifts across a locked group's ComingSoon overlay (hover it to
+// peek — see ComingSoon). Keyed by nav group; only groups with an asset show it.
+// TODO: add an accesly logo to /public and map it here.
+const GROUP_LOGOS: Record<string, string> = {
+  neko: '/neko.png',
+  cosmosPay: '/cosmos.png',
+  nirium: '/nirium.png',
+};
 
 type StellarNetwork = 'mainnet' | 'testnet';
 
@@ -169,7 +180,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const stellarNetwork: StellarNetwork =
     apiKey.split('_')[1] === 'testnet' ? 'testnet' : 'mainnet';
 
-  const GROUPS = visibleGroups(useNekoUnlocked());
+  const GROUPS = visibleGroups(useNekoUnlocked(), useLabUnlocked());
 
   // The group that owns the current path — matched by its tabs (null on `/`).
   // Groups no longer share a single route prefix (several live under /pollar),
@@ -261,10 +272,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   // The active group's body: its tab bar (hidden for single-tab groups, where
   // the sidebar entry already names it) plus the routed page. Extracted so a
-  // "soon" group can wrap the whole thing — tabs included — in ComingSoon.
+  // "soon" group can wrap the whole thing in ComingSoon. While locked we also
+  // drop the sub-tab bar — only the root (overview) shows behind the overlay.
   const groupBody = (
     <>
-      {activeGroup && activeGroup.tabs.length > 1 && (
+      {activeGroup && activeGroup.tabs.length > 1 && !activeGroup.soon && (
         <nav className="flex items-center gap-5 sm:gap-6 overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden border-b border-border mt-4 lg:mt-8">
           {activeGroup.tabs.map(({ href, label }) => (
             <Link
@@ -294,7 +306,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
       apiKey={apiKey}
       baseUrl={BASE_URL}
       network={stellarNetwork}
-      adapters={{ escrow: trustlessWorkAdapter, niriumX402: niriumAdapter }}
+      adapters={{
+        escrow: trustlessWorkAdapter,
+        niriumX402: niriumAdapter,
+        cosmosPay: cosmosPayAdapter,
+      }}
     >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
@@ -500,7 +516,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
           {/* A "soon" group blurs its whole body — tabs included — behind the
               ComingSoon overlay; otherwise the tabs + content render normally. */}
-          {activeGroup?.soon ? <ComingSoon>{groupBody}</ComingSoon> : groupBody}
+          {activeGroup?.soon ? (
+            <ComingSoon logo={GROUP_LOGOS[activeGroup.key]}>
+              {groupBody}
+            </ComingSoon>
+          ) : (
+            groupBody
+          )}
         </div>
       </div>
 

@@ -16,6 +16,7 @@
   "dependencies": {
     "@accesly/core": "1.8.0",
     "@accesly/react": "1.8.0",
+    "@cosmosapp/pay_sdk": "^1.1.0",
     "@creit.tech/stellar-wallets-kit": "^2.3.0",
     "@pollar/accesly-adapter": "0.10.0-rc.10",
     "@pollar/core": "0.10.1-rc.2",

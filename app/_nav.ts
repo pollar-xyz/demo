@@ -1,4 +1,5 @@
 import type { Dictionary } from "./_i18n/translations";
+import type { LabGroupKey, LabUnlockState } from "./_labGate";
 
 // Tab labels resolve against t.nav[...]; exclude the nested `groups` object.
 export type TabLabel = Exclude<keyof Dictionary["nav"], "groups">;
@@ -32,6 +33,13 @@ export type NavGroup = {
   soon?: boolean;
   // Marks the group as recently added: the sidebar shows a "New" badge.
   isNew?: boolean;
+  // Gates the group behind its OWN lab passcode (still-in-testing integrations,
+  // keyed by group key in app/_labGate.ts). While locked it behaves like
+  // `soon: true`; once that group's passcode is entered (see middleware.ts) it
+  // flips to `isNew: true` and its content renders normally. `visibleGroups`
+  // resolves soon/isNew from the unlock state, so leave those unset on a lab
+  // group.
+  lab?: boolean;
 };
 
 // The sidebar groups. Each group is its own entry; its tabs are the routes
@@ -39,26 +47,35 @@ export type NavGroup = {
 // the current path matches one of its tabs (see Shell).
 export const ALL_GROUPS: NavGroup[] = [
   // ── Products & integrations ──
+  // Authentication comes first: logging in is the entry point every other tab
+  // depends on. Login / logout / active-sessions all live here.
+  {
+    key: "auth",
+    section: "products",
+    tabs: [
+      { href: "/pollar/auth/login", label: "login" },
+      { href: "/pollar/auth/logout", label: "logout" },
+      { href: "/pollar/auth/sessions", label: "sessions" },
+    ],
+  },
   {
     key: "pollarWallet",
     section: "products",
     tabs: [
-      { href: "/pollar/send", label: "send" },
-      { href: "/pollar/receive", label: "receive" },
-      { href: "/pollar/balance", label: "balance" },
-      { href: "/pollar/assets", label: "assets" },
-      { href: "/pollar/history", label: "history" },
+      { href: "/pollar/wallet/send", label: "send" },
+      { href: "/pollar/wallet/receive", label: "receive" },
+      { href: "/pollar/wallet/balance", label: "balance" },
+      { href: "/pollar/wallet/assets", label: "assets" },
+      { href: "/pollar/wallet/history", label: "history" },
     ],
   },
   {
     key: "transactions",
     section: "products",
-    tabs: [{ href: "/pollar/transactions", label: "transactions" }],
-  },
-  {
-    key: "sessions",
-    section: "products",
-    tabs: [{ href: "/pollar/sessions", label: "sessions" }],
+    tabs: [
+      { href: "/pollar/transactions", label: "transactions" },
+      { href: "/pollar/transactions/sign", label: "signXdr" },
+    ],
   },
   {
     key: "distribution",
@@ -112,7 +129,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "acceslyAdapter",
     section: "walletAdapters",
-    soon: true,
+    lab: true,
     tabs: [
       { href: "/wallet-adapters/accesly", label: "overview" },
       { href: "/wallet-adapters/accesly/setup", label: "setup" },
@@ -131,16 +148,24 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "nirium",
     section: "builtWith",
-    isNew: true,
+    lab: true,
     tabs: [
       { href: "/built-with-pollar/nirium", label: "overview" },
       { href: "/built-with-pollar/nirium/x402", label: "payments" },
     ],
   },
   {
+    key: "cosmosPay",
+    section: "builtWith",
+    lab: true,
+    tabs: [
+      { href: "/built-with-pollar/cosmos-pay", label: "overview" },
+      { href: "/built-with-pollar/cosmos-pay/pay", label: "payments" },
+    ],
+  },
+  {
     key: "neko",
     section: "builtWith",
-    isNew: true,
     tabs: [
       { href: "/neko/overview", label: "overview" },
       { href: "/neko/dashboard", label: "dashboard" },
@@ -159,12 +184,22 @@ export const ALL_GROUPS: NavGroup[] = [
   },
 ];
 
-// The Neko Protocol group is hidden until the section is unlocked at runtime
-// (see app/neko/_gate.ts + middleware.ts); the unlocked state comes from a
-// cookie.
-export function visibleGroups(nekoUnlocked: boolean): NavGroup[] {
-  return ALL_GROUPS.filter((g) => {
-    if (g.key === "neko") return nekoUnlocked;
-    return true;
+// Every gated group is ALWAYS shown; each stays behind a "Soon" badge +
+// ComingSoon overlay (only its overview visible) until ITS OWN passcode is
+// entered, then flips to a "New" badge. The "lab" groups (Cosmos Pay, Accesly,
+// Nirium) each read their own cookie via `labUnlocked`; Neko keeps its own
+// passcode/cookie (`nekoUnlocked`) but now behaves the same way instead of
+// hiding entirely. See app/_labGate.ts + app/neko/_gate.ts + middleware.ts.
+export function visibleGroups(
+  nekoUnlocked: boolean,
+  labUnlocked: LabUnlockState,
+): NavGroup[] {
+  return ALL_GROUPS.map((g) => {
+    if (g.key === "neko") {
+      return { ...g, soon: !nekoUnlocked, isNew: nekoUnlocked };
+    }
+    if (!g.lab) return g;
+    const unlocked = labUnlocked[g.key as LabGroupKey] ?? false;
+    return { ...g, soon: !unlocked, isNew: unlocked };
   });
 }
