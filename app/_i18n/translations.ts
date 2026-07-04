@@ -73,6 +73,8 @@ export const en = {
       lumenwipe: "LumenWipe",
       hedgepay: "Hedgepay",
       vaquita: "Vaquita",
+      humanWeb: "Human Web",
+      e4c: "E4C",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
@@ -485,8 +487,7 @@ export const en = {
         tag: "sync",
         params:
           "No arguments. Step 1 of the email OTP flow — opens the email step so the user can type their address.",
-        returns:
-          "void — advances the auth state machine to 'entering_email'.",
+        returns: "void — advances the auth state machine to 'entering_email'.",
       },
       {
         fn: "sendEmailCode(email)",
@@ -1971,6 +1972,8 @@ export const es: Dictionary = {
       lumenwipe: "LumenWipe",
       hedgepay: "Hedgepay",
       vaquita: "Vaquita",
+      humanWeb: "Human Web",
+      e4c: "E4C",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
@@ -2388,8 +2391,7 @@ export const es: Dictionary = {
         tag: "sync",
         params:
           "Sin argumentos. Paso 1 del flujo de código por email: abre el paso de email para que el usuario escriba su dirección.",
-        returns:
-          "void — avanza la máquina de estados a 'entering_email'.",
+        returns: "void — avanza la máquina de estados a 'entering_email'.",
       },
       {
         fn: "sendEmailCode(email)",
@@ -3879,6 +3881,8 @@ export const pt: Dictionary = {
       lumenwipe: "LumenWipe",
       hedgepay: "Hedgepay",
       vaquita: "Vaquita",
+      humanWeb: "Human Web",
+      e4c: "E4C",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
@@ -4296,8 +4300,7 @@ export const pt: Dictionary = {
         tag: "sync",
         params:
           "Sem argumentos. Passo 1 do fluxo de código por email: abre o passo de email para o usuário digitar seu endereço.",
-        returns:
-          "void — avança a máquina de estados para 'entering_email'.",
+        returns: "void — avança a máquina de estados para 'entering_email'.",
       },
       {
         fn: "sendEmailCode(email)",
