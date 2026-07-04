@@ -200,24 +200,38 @@ export const ALL_GROUPS: NavGroup[] = [
     soon: true,
     tabs: [{ href: "/built-with-pollar/vaquita", label: "overview" }],
   },
+  {
+    key: "humanWeb",
+    section: "builtWith",
+    soon: true,
+    tabs: [{ href: "/built-with-pollar/human-web", label: "overview" }],
+  },
+  {
+    key: "e4c",
+    section: "builtWith",
+    soon: true,
+    tabs: [{ href: "/built-with-pollar/e4c", label: "overview" }],
+  },
 ];
 
-// Every gated group is ALWAYS shown; each stays behind a "Soon" badge +
-// ComingSoon overlay (only its overview visible) until ITS OWN passcode is
-// entered, then flips to a "New" badge. The "lab" groups (Cosmos Pay, Accesly,
-// Nirium) each read their own cookie via `labUnlocked`; Neko keeps its own
-// passcode/cookie (`nekoUnlocked`) but now behaves the same way instead of
-// hiding entirely. See app/_labGate.ts + app/neko/_gate.ts + middleware.ts.
+// The "lab" groups (Cosmos Pay, Accesly, Nirium) are ALWAYS shown; each stays
+// behind a "Soon" badge + ComingSoon overlay (only its overview visible) until
+// ITS OWN passcode is entered, then flips to a "New" badge. They read their own
+// cookie via `labUnlocked`. Neko is the ONE exception: it keeps its own
+// passcode/cookie (`nekoUnlocked`) and is hidden from the sidebar entirely
+// while locked, only appearing (as a "New" group) once unlocked.
+// See app/_labGate.ts + app/neko/_gate.ts + middleware.ts.
 export function visibleGroups(
   nekoUnlocked: boolean,
   labUnlocked: LabUnlockState,
 ): NavGroup[] {
-  return ALL_GROUPS.map((g) => {
+  return ALL_GROUPS.flatMap((g) => {
     if (g.key === "neko") {
-      return { ...g, soon: !nekoUnlocked, isNew: nekoUnlocked };
+      // Hidden completely until its passcode is entered.
+      return nekoUnlocked ? [{ ...g, soon: false, isNew: true }] : [];
     }
-    if (!g.lab) return g;
+    if (!g.lab) return [g];
     const unlocked = labUnlocked[g.key as LabGroupKey] ?? false;
-    return { ...g, soon: !unlocked, isNew: unlocked };
+    return [{ ...g, soon: !unlocked, isNew: unlocked }];
   });
 }
