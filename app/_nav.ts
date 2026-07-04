@@ -142,7 +142,8 @@ export const ALL_GROUPS: NavGroup[] = [
     section: "adapters",
     tabs: [
       { href: "/adapters/trustless-work", label: "overview" },
-      { href: "/adapters/trustless-work/escrow", label: "escrow" },
+      { href: "/adapters/trustless-work/escrow", label: "implementation" },
+      { href: "/adapters/trustless-work/adapter", label: "adapter" },
     ],
   },
   {
@@ -151,7 +152,8 @@ export const ALL_GROUPS: NavGroup[] = [
     lab: true,
     tabs: [
       { href: "/adapters/nirium", label: "overview" },
-      { href: "/adapters/nirium/x402", label: "payments" },
+      { href: "/adapters/nirium/x402", label: "implementation" },
+      { href: "/adapters/nirium/adapter", label: "adapter" },
     ],
   },
   {
@@ -160,7 +162,8 @@ export const ALL_GROUPS: NavGroup[] = [
     lab: true,
     tabs: [
       { href: "/adapters/cosmos-pay", label: "overview" },
-      { href: "/adapters/cosmos-pay/pay", label: "payments" },
+      { href: "/adapters/cosmos-pay/pay", label: "implementation" },
+      { href: "/adapters/cosmos-pay/adapter", label: "adapter" },
     ],
   },
 

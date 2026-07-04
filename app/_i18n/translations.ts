@@ -59,6 +59,7 @@ export const en = {
     swap: "Swap",
     setup: "Setup",
     implementation: "Implementation",
+    adapter: "Adapter",
     groups: {
       auth: "Authentication",
       pollarWallet: "Wallet",
@@ -95,6 +96,21 @@ export const en = {
     walletAdapters: walletAdaptersNavLabel,
     adapters: "Adapters",
     builtWith: "Built with Pollar",
+  },
+
+  adapterDoc: {
+    title: "The {name} adapter",
+    intro:
+      "How {name} plugs into Pollar. The adapter is plain client-side code: it calls the protocol, gets back an unsigned transaction, and hands it to Pollar to sign and submit.",
+    contractTitle: "The adapter contract",
+    contractDesc:
+      "Every adapter function returns { unsignedTransaction: string }. Pollar signs and submits it with the user's connected wallet — no secret key or API key ever touches the frontend.",
+    sourceTitle: "adapter.ts",
+    sourceDesc:
+      "The full adapter definition. Each method calls the protocol and returns the unsigned XDR.",
+    registerTitle: "Register it once",
+    registerDesc:
+      "Register the adapter on the Pollar provider and derive a typed hook with createPollarAdapterHook. From then on any component can call it, and Pollar owns the signing.",
   },
 
   home: {
@@ -2025,6 +2041,7 @@ export const es: Dictionary = {
     swap: "Swap",
     setup: "Setup",
     implementation: "Implementación",
+    adapter: "Adapter",
     groups: {
       auth: "Autenticación",
       pollarWallet: "Billetera",
@@ -2061,6 +2078,21 @@ export const es: Dictionary = {
     walletAdapters: walletAdaptersNavLabel,
     adapters: "Adapters",
     builtWith: "Hecho con Pollar",
+  },
+
+  adapterDoc: {
+    title: "El adapter de {name}",
+    intro:
+      "Cómo se conecta {name} con Pollar. El adapter es código de cliente puro: llama al protocolo, recibe una transacción sin firmar y se la entrega a Pollar para firmarla y enviarla.",
+    contractTitle: "El contrato del adapter",
+    contractDesc:
+      "Cada función del adapter devuelve { unsignedTransaction: string }. Pollar la firma y la envía con la wallet conectada del usuario — ninguna clave secreta ni API key toca el frontend.",
+    sourceTitle: "adapter.ts",
+    sourceDesc:
+      "La definición completa del adapter. Cada método llama al protocolo y devuelve el XDR sin firmar.",
+    registerTitle: "Regístralo una vez",
+    registerDesc:
+      "Registra el adapter en el provider de Pollar y deriva un hook tipado con createPollarAdapterHook. A partir de ahí cualquier componente puede llamarlo, y Pollar se encarga de la firma.",
   },
 
   home: {
@@ -4001,6 +4033,7 @@ export const pt: Dictionary = {
     swap: "Swap",
     setup: "Setup",
     implementation: "Implementação",
+    adapter: "Adapter",
     groups: {
       auth: "Autenticação",
       pollarWallet: "Carteira",
@@ -4037,6 +4070,21 @@ export const pt: Dictionary = {
     walletAdapters: walletAdaptersNavLabel,
     adapters: "Adapters",
     builtWith: "Feito com Pollar",
+  },
+
+  adapterDoc: {
+    title: "O adapter do {name}",
+    intro:
+      "Como o {name} se conecta ao Pollar. O adapter é código de cliente puro: chama o protocolo, recebe uma transação não assinada e a entrega ao Pollar para assinar e enviar.",
+    contractTitle: "O contrato do adapter",
+    contractDesc:
+      "Cada função do adapter retorna { unsignedTransaction: string }. O Pollar assina e envia com a carteira conectada do usuário — nenhuma chave secreta ou API key toca o frontend.",
+    sourceTitle: "adapter.ts",
+    sourceDesc:
+      "A definição completa do adapter. Cada método chama o protocolo e retorna o XDR não assinado.",
+    registerTitle: "Registre uma vez",
+    registerDesc:
+      "Registre o adapter no provider do Pollar e derive um hook tipado com createPollarAdapterHook. A partir daí qualquer componente pode chamá-lo, e o Pollar cuida da assinatura.",
   },
 
   home: {
