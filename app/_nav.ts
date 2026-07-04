@@ -71,6 +71,7 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/pollar/wallet/balance", label: "balance" },
       { href: "/pollar/wallet/assets", label: "assets" },
       { href: "/pollar/wallet/history", label: "history" },
+      { href: "/pollar/wallet/distribution", label: "distribution" },
     ],
   },
   {
@@ -80,11 +81,6 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/pollar/transactions", label: "transactions" },
       { href: "/pollar/transactions/sign", label: "signXdr" },
     ],
-  },
-  {
-    key: "distribution",
-    section: "products",
-    tabs: [{ href: "/pollar/distribution", label: "distribution" }],
   },
   // ── Integrations (its own sidebar section) ──
   {
