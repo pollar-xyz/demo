@@ -3,7 +3,12 @@
 import { usePollar } from "@pollar/react";
 import { useState } from "react";
 import { CodePanel, DualCode } from "@/app/_components/CodePanels";
-import { FnReference, SdkToggle, type Sdk } from "@/app/_components/SdkDocs";
+import {
+  CoreClientNote,
+  FnReference,
+  SdkToggle,
+  type Sdk,
+} from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
@@ -267,6 +272,7 @@ export default function AssetsPage() {
                 intro={t.assets.coreFnsIntro}
                 fns={t.assets.coreFns}
               />
+              <CoreClientNote />
             </div>
           )}
         </div>

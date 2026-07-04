@@ -4,7 +4,12 @@ import { usePollar } from "@pollar/react";
 import type { WalletBalanceContent } from "@pollar/core";
 import { useState } from "react";
 import { CodePanel } from "@/app/_components/CodePanels";
-import { FnReference, SdkToggle, type Sdk } from "@/app/_components/SdkDocs";
+import {
+  CoreClientNote,
+  FnReference,
+  SdkToggle,
+  type Sdk,
+} from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── shared styles ────────────────────────────────────────────────────────────
@@ -258,6 +263,7 @@ export default function BalancePage() {
                 intro={t.balance.coreFnsIntro}
                 fns={t.balance.coreFns}
               />
+              <CoreClientNote />
             </div>
           )}
         </div>

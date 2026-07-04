@@ -5,7 +5,8 @@
 // (params / returns / tag), and a ready-made layout for modal-action tabs.
 
 import { useState } from "react";
-import { CodePanel } from "./CodePanels";
+import { CodePanel, highlight } from "./CodePanels";
+import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 const actionBtn =
   "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors";
@@ -105,6 +106,36 @@ export function FnReference({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// ─── "use core from react" note ───────────────────────────────────────────────
+// Rendered at the bottom of every core-side panel. Reassures readers that
+// picking @pollar/react doesn't cost them core: the same PollarClient is one
+// getClient() away, reachable two equivalent ways (own the instance / read it
+// from the hook). Code stays English on purpose — prose comes from i18n.
+
+const CORE_CLIENT_NOTE_CODE = `// A — build the client, pass the instance to the provider
+const client = new PollarClient({ apiKey, baseUrl });
+<PollarProvider client={client}>…</PollarProvider>
+const c = usePollar().getClient(); // ← same instance
+
+// B — let the provider build it from config
+<PollarProvider client={{ apiKey, baseUrl }}>…</PollarProvider>
+const c = usePollar().getClient(); // ← same instance`;
+
+export function CoreClientNote() {
+  const { t } = useI18n();
+  const n = t.common.coreClientNote;
+  return (
+    <div className="mt-4 space-y-2 rounded-lg border border-border bg-surface/50 p-3">
+      <p className="text-xs font-medium text-foreground">{n.title}</p>
+      <p className="text-xs text-muted-light">{n.intro}</p>
+      <pre className="overflow-x-auto whitespace-pre rounded-md bg-background/60 p-3 text-[11px] font-mono leading-relaxed text-slate-700 dark:bg-[#1a1a1a] dark:text-slate-300">
+        {highlight(CORE_CLIENT_NOTE_CODE)}
+      </pre>
+      <p className="text-xs text-muted-light">{n.outro}</p>
     </div>
   );
 }
@@ -209,7 +240,10 @@ export function SdkModalTab({
             />
           </div>
         ) : (
-          <FnReference title={core.title} intro={core.intro} fns={core.fns} />
+          <>
+            <FnReference title={core.title} intro={core.intro} fns={core.fns} />
+            <CoreClientNote />
+          </>
         )}
       </div>
 

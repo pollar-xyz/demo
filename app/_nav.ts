@@ -9,11 +9,14 @@ export type TabLabel = Exclude<keyof Dictionary["nav"], "groups">;
 //   • products      — Pollar's own features + first-party integrations (done
 //                     with @pollar/core + the default modals).
 //   • walletAdapters — plugging external wallets/auth in as Pollar adapters.
+//   • adapters      — third-party protocols wired in as Pollar adapters via
+//                     createPollarAdapterHook (Trustless Work, Nirium, Cosmos Pay).
 //   • builtWith     — demos of using Pollar alongside another technology.
 export type SidebarSection =
   | "products"
   | "integrations"
   | "walletAdapters"
+  | "adapters"
   | "builtWith";
 
 // Render order of the sidebar section headers.
@@ -21,6 +24,7 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   "products",
   "integrations",
   "walletAdapters",
+  "adapters",
   "builtWith",
 ];
 
@@ -136,33 +140,35 @@ export const ALL_GROUPS: NavGroup[] = [
     ],
   },
 
-  // ── Built with Pollar ──
+  // ── Adapters (third-party protocols wired in via createPollarAdapterHook) ──
   {
     key: "trustlessWork",
-    section: "builtWith",
+    section: "adapters",
     tabs: [
-      { href: "/built-with-pollar/trustless-work", label: "overview" },
-      { href: "/built-with-pollar/trustless-work/escrow", label: "escrow" },
+      { href: "/adapters/trustless-work", label: "overview" },
+      { href: "/adapters/trustless-work/escrow", label: "escrow" },
     ],
   },
   {
     key: "nirium",
-    section: "builtWith",
+    section: "adapters",
     lab: true,
     tabs: [
-      { href: "/built-with-pollar/nirium", label: "overview" },
-      { href: "/built-with-pollar/nirium/x402", label: "payments" },
+      { href: "/adapters/nirium", label: "overview" },
+      { href: "/adapters/nirium/x402", label: "payments" },
     ],
   },
   {
     key: "cosmosPay",
-    section: "builtWith",
+    section: "adapters",
     lab: true,
     tabs: [
-      { href: "/built-with-pollar/cosmos-pay", label: "overview" },
-      { href: "/built-with-pollar/cosmos-pay/pay", label: "payments" },
+      { href: "/adapters/cosmos-pay", label: "overview" },
+      { href: "/adapters/cosmos-pay/pay", label: "payments" },
     ],
   },
+
+  // ── Built with Pollar ──
   {
     key: "neko",
     section: "builtWith",
@@ -181,6 +187,18 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/built-with-pollar/lumenwipe", label: "overview" },
       { href: "/built-with-pollar/lumenwipe/wipe", label: "lumenwipe" },
     ],
+  },
+  {
+    key: "hedgepay",
+    section: "builtWith",
+    soon: true,
+    tabs: [{ href: "/built-with-pollar/hedgepay", label: "overview" }],
+  },
+  {
+    key: "vaquita",
+    section: "builtWith",
+    soon: true,
+    tabs: [{ href: "/built-with-pollar/vaquita", label: "overview" }],
   },
 ];
 

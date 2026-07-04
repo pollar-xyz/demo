@@ -16,9 +16,9 @@ import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
 import { SIDEBAR_SECTIONS, visibleGroups } from './_nav';
 import { useApiKeyHref } from './_useApiKeyHref';
-import { cosmosPayAdapter } from './built-with-pollar/cosmos-pay/pay/adapter';
-import { niriumAdapter } from './built-with-pollar/nirium/x402/adapter';
-import { trustlessWorkAdapter } from './built-with-pollar/trustless-work/escrow/adapter';
+import { cosmosPayAdapter } from './adapters/cosmos-pay/pay/adapter';
+import { niriumAdapter } from './adapters/nirium/x402/adapter';
+import { trustlessWorkAdapter } from './adapters/trustless-work/escrow/adapter';
 import { useNekoUnlocked } from './neko/_GateProvider';
 import { useLabUnlocked } from './_LabGateProvider';
 
@@ -28,11 +28,11 @@ const BASE_URL = 'https://sdk.api.pollar.xyz';
 
 // The logo that drifts across a locked group's ComingSoon overlay (hover it to
 // peek — see ComingSoon). Keyed by nav group; only groups with an asset show it.
-// TODO: add an accesly logo to /public and map it here.
 const GROUP_LOGOS: Record<string, string> = {
   neko: '/neko.png',
   cosmosPay: '/cosmos.png',
   nirium: '/nirium.png',
+  acceslyAdapter: '/accesly.jpg',
 };
 
 type StellarNetwork = 'mainnet' | 'testnet';

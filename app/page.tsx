@@ -37,6 +37,8 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
     if (group.key === "nirium") return t.niriumAbout.tagline;
     if (group.key === "cosmosPay") return t.cosmosPayAbout.tagline;
     if (group.key === "lumenwipe") return t.lwAbout.tagline;
+    if (group.key === "hedgepay") return t.hedgepayAbout.tagline;
+    if (group.key === "vaquita") return t.vaquitaAbout.tagline;
     return "";
   }
   // Cosmos Pay reuses the `payments` tab label; give its card its own tagline

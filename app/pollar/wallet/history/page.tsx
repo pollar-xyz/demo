@@ -3,7 +3,12 @@
 import { usePollar } from "@pollar/react";
 import { useState } from "react";
 import { CodePanel } from "@/app/_components/CodePanels";
-import { FnReference, SdkToggle, type Sdk } from "@/app/_components/SdkDocs";
+import {
+  CoreClientNote,
+  FnReference,
+  SdkToggle,
+  type Sdk,
+} from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── styles (shared with other demo pages) ────────────────────────────────────
@@ -126,6 +131,7 @@ export default function HistoryPage() {
                 intro={t.history.coreFnsIntro}
                 fns={t.history.coreFns}
               />
+              <CoreClientNote />
             </div>
           )}
         </div>

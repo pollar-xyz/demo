@@ -22,6 +22,13 @@ export const en = {
     comingSoonDesc: "This feature will be available shortly.",
     soon: "Soon",
     new: "New",
+    coreClientNote: {
+      title: "Using core from @pollar/react",
+      intro:
+        "Prefer @pollar/react? You keep all of core — the same PollarClient sits underneath. Reach it two equivalent ways:",
+      outro:
+        "Both hand you the identical client, so every @pollar/core method on this page works verbatim. You can even run @pollar/react fully headless (just getClient(), ignore the prebuilt modals) — but its edge is the reactive hooks that re-render your UI for you.",
+    },
   },
 
   nav: {
@@ -64,6 +71,8 @@ export const en = {
       nirium: "Nirium",
       cosmosPay: "Cosmos Pay",
       lumenwipe: "LumenWipe",
+      hedgepay: "Hedgepay",
+      vaquita: "Vaquita",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
@@ -82,6 +91,7 @@ export const en = {
     products: "Products",
     integrations: "Integrations",
     walletAdapters: walletAdaptersNavLabel,
+    adapters: "Adapters",
     builtWith: "Built with Pollar",
   },
 
@@ -1823,6 +1833,72 @@ export const en = {
     ],
   },
 
+  hedgepayAbout: {
+    eyebrow: "HedgePay",
+    title: "Self-custodial banking on stablecoins",
+    tagline: "Your self-custodial app. Your rules.",
+    body: [
+      "HedgePay is a self-custodial banking app: hold and manage stablecoins, convert to and from fiat, send cross-border transfers with minimal fees, and spend worldwide with virtual debit cards — all without giving up custody of your funds.",
+      "This tab is a preview of the HedgePay integration with Pollar — coming soon.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Virtual debit cards",
+        desc: "Spend stablecoins worldwide, anywhere cards are accepted.",
+      },
+      {
+        title: "Fiat on/off & transfers",
+        desc: "Convert fiat ↔ stablecoins and send low-fee cross-border payments.",
+      },
+      {
+        title: "Self-custodial",
+        desc: "You keep custody of your funds — your keys, your rules.",
+      },
+      {
+        title: "Save in strong currencies",
+        desc: "Hold balances in USD / EUR-backed stablecoins.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    disclaimer:
+      "Summary based on the official HedgePay site. Pollar is not affiliated with HedgePay — all credit to their team.",
+  },
+
+  vaquitaAbout: {
+    eyebrow: "Vaquita",
+    title: "Community savings on Stellar",
+    tagline: "The power of saving in community.",
+    body: [
+      "Vaquita is a community savings platform on Stellar: members contribute regularly and earn interest through a fair, decentralized system, with flexible withdrawals — the longer you wait, the higher your return.",
+      "This tab is a preview of the Vaquita integration with Pollar — coming soon.",
+    ],
+    featuresTitle: "What it offers",
+    features: [
+      {
+        title: "Save in community",
+        desc: "Pool regular contributions with others and grow together.",
+      },
+      {
+        title: "Fair, decentralized yield",
+        desc: "Interest is distributed fairly through smart contracts.",
+      },
+      {
+        title: "Flexible withdrawals",
+        desc: "Withdraw when you need to; longer waits earn more.",
+      },
+      {
+        title: "Secured on Stellar",
+        desc: "Runs on Stellar smart contracts.",
+      },
+    ],
+    resourcesTitle: "Official resources",
+    websiteLabel: "Website",
+    disclaimer:
+      "Summary based on the official Vaquita site. Pollar is not affiliated with Vaquita — all credit to their team.",
+  },
+
   ...nekoEn,
 };
 
@@ -1844,6 +1920,13 @@ export const es: Dictionary = {
     comingSoonDesc: "Esta funcionalidad estará disponible pronto.",
     soon: "Pronto",
     new: "Nuevo",
+    coreClientNote: {
+      title: "Usar core desde @pollar/react",
+      intro:
+        "¿Prefieres @pollar/react? Conservas todo core: el mismo PollarClient está por debajo. Accede a él de dos formas equivalentes:",
+      outro:
+        "Ambas te dan el mismo cliente idéntico, así que cada método de @pollar/core de esta página funciona tal cual. Incluso puedes usar @pollar/react totalmente headless (solo getClient(), ignorando los modales prearmados), pero su ventaja son los hooks reactivos que re-renderizan tu UI por ti.",
+    },
   },
 
   nav: {
@@ -1886,6 +1969,8 @@ export const es: Dictionary = {
       nirium: "Nirium",
       cosmosPay: "Cosmos Pay",
       lumenwipe: "LumenWipe",
+      hedgepay: "Hedgepay",
+      vaquita: "Vaquita",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
@@ -1904,6 +1989,7 @@ export const es: Dictionary = {
     products: "Productos",
     integrations: "Integraciones",
     walletAdapters: walletAdaptersNavLabel,
+    adapters: "Adapters",
     builtWith: "Hecho con Pollar",
   },
 
@@ -3657,6 +3743,72 @@ export const es: Dictionary = {
     ],
   },
 
+  hedgepayAbout: {
+    eyebrow: "HedgePay",
+    title: "Banca self-custodial sobre stablecoins",
+    tagline: "Tu app self-custodial. Tus reglas.",
+    body: [
+      "HedgePay es una app de banca self-custodial: guarda y administra stablecoins, convierte desde y hacia fiat, envía transferencias internacionales con comisiones mínimas y gasta en todo el mundo con tarjetas de débito virtuales — sin ceder la custodia de tus fondos.",
+      "Esta pestaña es un adelanto de la integración de HedgePay con Pollar — próximamente.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Tarjetas de débito virtuales",
+        desc: "Gasta stablecoins en todo el mundo, donde acepten tarjetas.",
+      },
+      {
+        title: "Fiat on/off y transferencias",
+        desc: "Convierte fiat ↔ stablecoins y envía pagos internacionales de baja comisión.",
+      },
+      {
+        title: "Self-custodial",
+        desc: "Tú conservas la custodia de tus fondos — tus llaves, tus reglas.",
+      },
+      {
+        title: "Ahorra en monedas fuertes",
+        desc: "Mantén saldos en stablecoins respaldadas en USD / EUR.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    disclaimer:
+      "Resumen basado en el sitio oficial de HedgePay. Pollar no está afiliado a HedgePay — todo el crédito para su equipo.",
+  },
+
+  vaquitaAbout: {
+    eyebrow: "Vaquita",
+    title: "Ahorro comunitario en Stellar",
+    tagline: "El poder de ahorrar en comunidad.",
+    body: [
+      "Vaquita es una plataforma de ahorro comunitario en Stellar: los miembros aportan de forma periódica y ganan interés mediante un sistema justo y descentralizado, con retiros flexibles — mientras más esperas, mayor es tu rendimiento.",
+      "Esta pestaña es un adelanto de la integración de Vaquita con Pollar — próximamente.",
+    ],
+    featuresTitle: "Qué ofrece",
+    features: [
+      {
+        title: "Ahorra en comunidad",
+        desc: "Junta aportes periódicos con otros y crezcan juntos.",
+      },
+      {
+        title: "Rendimiento justo y descentralizado",
+        desc: "El interés se distribuye de forma justa mediante smart contracts.",
+      },
+      {
+        title: "Retiros flexibles",
+        desc: "Retira cuando lo necesites; esperar más rinde más.",
+      },
+      {
+        title: "Asegurado en Stellar",
+        desc: "Funciona con smart contracts de Stellar.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiales",
+    websiteLabel: "Sitio web",
+    disclaimer:
+      "Resumen basado en el sitio oficial de Vaquita. Pollar no está afiliado a Vaquita — todo el crédito para su equipo.",
+  },
+
   ...nekoEs,
 };
 
@@ -3676,6 +3828,13 @@ export const pt: Dictionary = {
     comingSoonDesc: "Esta funcionalidade estará disponível em breve.",
     soon: "Em breve",
     new: "Novo",
+    coreClientNote: {
+      title: "Usar o core a partir do @pollar/react",
+      intro:
+        "Prefere o @pollar/react? Você mantém todo o core — o mesmo PollarClient está por baixo. Acesse-o de duas formas equivalentes:",
+      outro:
+        "Ambas entregam o mesmo cliente idêntico, então cada método do @pollar/core desta página funciona tal como está. Você pode até usar o @pollar/react totalmente headless (só getClient(), ignorando os modais prontos), mas sua vantagem são os hooks reativos que re-renderizam sua UI para você.",
+    },
   },
 
   nav: {
@@ -3718,6 +3877,8 @@ export const pt: Dictionary = {
       nirium: "Nirium",
       cosmosPay: "Cosmos Pay",
       lumenwipe: "LumenWipe",
+      hedgepay: "Hedgepay",
+      vaquita: "Vaquita",
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
@@ -3736,6 +3897,7 @@ export const pt: Dictionary = {
     products: "Produtos",
     integrations: "Integrações",
     walletAdapters: walletAdaptersNavLabel,
+    adapters: "Adapters",
     builtWith: "Feito com Pollar",
   },
 
@@ -5485,6 +5647,72 @@ export const pt: Dictionary = {
           "TransactionState — o progresso ao vivo construir → assinar → enviar (tx.step, tx.hash).",
       },
     ],
+  },
+
+  hedgepayAbout: {
+    eyebrow: "HedgePay",
+    title: "Banco self-custodial sobre stablecoins",
+    tagline: "Seu app self-custodial. Suas regras.",
+    body: [
+      "A HedgePay é um app de banco self-custodial: guarde e gerencie stablecoins, converta de e para fiat, envie transferências internacionais com taxas mínimas e gaste no mundo todo com cartões de débito virtuais — sem abrir mão da custódia dos seus fundos.",
+      "Esta aba é uma prévia da integração da HedgePay com o Pollar — em breve.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Cartões de débito virtuais",
+        desc: "Gaste stablecoins no mundo todo, onde aceitarem cartões.",
+      },
+      {
+        title: "Fiat on/off e transferências",
+        desc: "Converta fiat ↔ stablecoins e envie pagamentos internacionais de baixa taxa.",
+      },
+      {
+        title: "Self-custodial",
+        desc: "Você mantém a custódia dos seus fundos — suas chaves, suas regras.",
+      },
+      {
+        title: "Poupe em moedas fortes",
+        desc: "Mantenha saldos em stablecoins lastreadas em USD / EUR.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    disclaimer:
+      "Resumo baseado no site oficial da HedgePay. O Pollar não é afiliado à HedgePay — todo o crédito para a equipe deles.",
+  },
+
+  vaquitaAbout: {
+    eyebrow: "Vaquita",
+    title: "Poupança comunitária na Stellar",
+    tagline: "O poder de poupar em comunidade.",
+    body: [
+      "A Vaquita é uma plataforma de poupança comunitária na Stellar: os membros contribuem regularmente e ganham juros por um sistema justo e descentralizado, com saques flexíveis — quanto mais você espera, maior o rendimento.",
+      "Esta aba é uma prévia da integração da Vaquita com o Pollar — em breve.",
+    ],
+    featuresTitle: "O que oferece",
+    features: [
+      {
+        title: "Poupe em comunidade",
+        desc: "Junte contribuições regulares com outros e cresçam juntos.",
+      },
+      {
+        title: "Rendimento justo e descentralizado",
+        desc: "Os juros são distribuídos de forma justa via smart contracts.",
+      },
+      {
+        title: "Saques flexíveis",
+        desc: "Saque quando precisar; esperar mais rende mais.",
+      },
+      {
+        title: "Protegido na Stellar",
+        desc: "Roda em smart contracts da Stellar.",
+      },
+    ],
+    resourcesTitle: "Recursos oficiais",
+    websiteLabel: "Site",
+    disclaimer:
+      "Resumo baseado no site oficial da Vaquita. O Pollar não é afiliado à Vaquita — todo o crédito para a equipe deles.",
   },
 
   ...nekoPt,
