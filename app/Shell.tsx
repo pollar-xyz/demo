@@ -14,15 +14,15 @@ import { LanguageSwitcher } from './_components/LanguageSwitcher';
 import { NetworkLockedModal } from './_components/NetworkLockedModal';
 import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
 import { useI18n } from './_i18n/LanguageProvider';
+import { useLabUnlocked } from './_LabGateProvider';
 import { SIDEBAR_SECTIONS, visibleGroups } from './_nav';
 import { useApiKeyHref } from './_useApiKeyHref';
 import { cosmosPayAdapter } from './adapters/cosmos-pay/pay/adapter';
 import { niriumAdapter } from './adapters/nirium/x402/adapter';
 import { trustlessWorkAdapter } from './adapters/trustless-work/escrow/adapter';
 import { useNekoUnlocked } from './neko/_GateProvider';
-import { useLabUnlocked } from './_LabGateProvider';
 
-const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34';
+const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34'; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
 const DEFAULT_API_KEY_MAINNET = 'pub_mainnet_921399523168e5775276241dc1c786b2';
 const BASE_URL = 'https://sdk.api.pollar.xyz';
 
@@ -162,10 +162,10 @@ function ThemeToggle() {
 // tab/pill bars on mobile. Backs the group pills and the sub-tab bar so a
 // clipped item (e.g. "KYC") reads as "there's more, scroll".
 function ScrollFadeRow({
-  wrapperClassName,
-  className,
-  children,
-}: {
+                         wrapperClassName,
+                         className,
+                         children,
+                       }: {
   wrapperClassName?: string;
   className?: string;
   children: React.ReactNode;
