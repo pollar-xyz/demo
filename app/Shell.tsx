@@ -265,13 +265,16 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const [ keyModalOpen, setKeyModalOpen ] = useState(false);
   const [ menuOpen, setMenuOpen ] = useState(false);
+  // The mobile/tablet page-navigation drawer (the collapsed left sidebar).
+  const [ navOpen, setNavOpen ] = useState(false);
   const [ originBlocked, setOriginBlocked ] = useState(false);
   const [ keyInvalid, setKeyInvalid ] = useState(false);
   const [ networkLocked, setNetworkLocked ] = useState(false);
 
-  // Close the mobile menu when navigating to another tab.
+  // Close the mobile menu + nav drawer when navigating to another tab.
   useEffect(() => {
     setMenuOpen(false);
+    setNavOpen(false);
   }, [ pathname ]);
 
   // Restore the demo-key network saved on a previous toggle. Read after mount
@@ -340,6 +343,52 @@ export function Shell({ children }: { children: React.ReactNode }) {
     } catch {
     }
   }
+
+  // The grouped nav list — section headers with their group links beneath.
+  // Shared by the desktop sidebar and the mobile drawer; `onNavigate` lets the
+  // drawer close itself when a group is tapped (including the already-active
+  // one, where the pathname effect wouldn't fire).
+  const navGroups = (onNavigate?: () => void) =>
+    SIDEBAR_SECTIONS.map((section) => {
+      const sectionGroups = GROUPS.filter((g) => g.section === section);
+      if (sectionGroups.length === 0) return null;
+      return (
+        <div key={section}>
+          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-light">
+            {t.shell[section]}
+          </p>
+          <nav className="space-y-1">
+            {sectionGroups.map((g) => {
+              const active = activeGroup?.key === g.key;
+              return (
+                <Link
+                  key={g.key}
+                  href={withApiKey(g.tabs[0].href)}
+                  onClick={onNavigate}
+                  className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    active
+                      ? 'bg-primary-light text-primary'
+                      : 'text-muted hover:text-foreground hover:bg-surface'
+                  }`}
+                >
+                  <span>{t.nav.groups[g.key]}</span>
+                  {g.soon && (
+                    <span className="shrink-0 rounded-full bg-warning-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-warning">
+                      {t.common.soon}
+                    </span>
+                  )}
+                  {g.isNew && !g.soon && (
+                    <span className="shrink-0 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                      {t.common.new}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+      );
+    });
 
   // The active group's body: its tab bar (hidden for single-tab groups, where
   // the sidebar entry already names it) plus the routed page. Extracted so a
@@ -510,92 +559,51 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 lg:flex lg:gap-8">
         {/* sidebar: grouped under section headers (desktop) */}
         <aside className="hidden lg:block w-56 shrink-0 self-start lg:sticky lg:top-20 lg:max-h-[calc(100vh-5rem)] lg:overflow-y-auto py-8 space-y-6">
-          {SIDEBAR_SECTIONS.map((section) => {
-            const sectionGroups = GROUPS.filter((g) => g.section === section);
-            if (sectionGroups.length === 0) return null;
-            return (
-              <div key={section}>
-                <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-light">
-                  {t.shell[section]}
-                </p>
-                <nav className="space-y-1">
-                  {sectionGroups.map((g) => {
-                    const active = activeGroup?.key === g.key;
-                    return (
-                      <Link
-                        key={g.key}
-                        href={withApiKey(g.tabs[0].href)}
-                        className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                          active
-                            ? 'bg-primary-light text-primary'
-                            : 'text-muted hover:text-foreground hover:bg-surface'
-                        }`}
-                      >
-                        <span>{t.nav.groups[g.key]}</span>
-                        {g.soon && (
-                          <span className="shrink-0 rounded-full bg-warning-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-warning">
-                            {t.common.soon}
-                          </span>
-                        )}
-                        {g.isNew && !g.soon && (
-                          <span className="shrink-0 rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                            {t.common.new}
-                          </span>
-                        )}
-                      </Link>
-                    );
-                  })}
-                </nav>
-              </div>
-            );
-          })}
+          {navGroups()}
         </aside>
 
         <div className="min-w-0 flex-1">
-          {/* group selector (mobile): the sidebar collapses to a pill row */}
-          <ScrollFadeRow
-            wrapperClassName="lg:hidden pt-4"
-            className="flex items-center gap-2"
+          {/* group selector (mobile/tablet): the sidebar collapses behind a
+              burger button that opens the full grouped nav in a left drawer. */}
+          <button
+            type="button"
+            onClick={() => setNavOpen(true)}
+            aria-label={t.shell.openMenu}
+            aria-expanded={navOpen}
+            className="lg:hidden mt-4 flex w-full items-center gap-2.5 rounded-lg border border-border bg-surface px-3 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-background"
           >
-            {GROUPS.map((g) => {
-              const active = activeGroup?.key === g.key;
-              return (
-                <Link
-                  key={g.key}
-                  href={withApiKey(g.tabs[0].href)}
-                  className={`flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-                    active
-                      ? 'bg-primary text-white'
-                      : 'border border-border text-muted hover:text-foreground'
-                  }`}
-                >
-                  {t.nav.groups[g.key]}
-                  {g.soon && (
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                        active
-                          ? 'bg-white/20 text-white'
-                          : 'bg-warning-light text-warning'
-                      }`}
-                    >
-                      {t.common.soon}
-                    </span>
-                  )}
-                  {g.isNew && !g.soon && (
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider ${
-                        active
-                          ? 'bg-white/20 text-white'
-                          : 'bg-primary-light text-primary'
-                      }`}
-                    >
-                      {t.common.new}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </ScrollFadeRow>
+            <svg
+              className="h-4 w-4 shrink-0 text-muted"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M3.75 6.75h16.5m-16.5 5.25h16.5m-16.5 5.25h16.5"
+              />
+            </svg>
+            <span className="min-w-0 flex-1 truncate text-left">
+              {activeGroup ? t.nav.groups[activeGroup.key] : t.shell.browse}
+            </span>
+            <svg
+              className="h-4 w-4 shrink-0 text-muted-light"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth="2"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="m19.5 8.25-7.5 7.5-7.5-7.5"
+              />
+            </svg>
+          </button>
 
           {/* A "soon" group blurs its whole body — tabs included — behind the
               ComingSoon overlay; otherwise the tabs + content render normally. */}
@@ -608,6 +616,50 @@ export function Shell({ children }: { children: React.ReactNode }) {
           )}
         </div>
       </div>
+
+      {navOpen && (
+        <div className="lg:hidden fixed inset-0 z-[60]">
+          {/* backdrop — tap to dismiss */}
+          <button
+            type="button"
+            aria-label={t.shell.closeMenu}
+            onClick={() => setNavOpen(false)}
+            className="animate-backdrop-in absolute inset-0 bg-black/40 backdrop-blur-sm"
+          />
+          {/* panel */}
+          <div className="animate-drawer-in absolute inset-y-0 left-0 flex w-72 max-w-[85%] flex-col bg-background shadow-xl">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="text-sm font-semibold text-foreground">
+                {t.shell.browse}
+              </span>
+              <button
+                type="button"
+                onClick={() => setNavOpen(false)}
+                aria-label={t.shell.closeMenu}
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-surface transition-colors"
+              >
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  aria-hidden="true"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 space-y-6 overflow-y-auto px-2 py-4">
+              {navGroups(() => setNavOpen(false))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {keyModalOpen && (
         <ApiKeyModal

@@ -229,6 +229,13 @@ export const ALL_GROUPS: NavGroup[] = [
 // passcode/cookie (`nekoUnlocked`) and is hidden from the sidebar entirely
 // while locked, only appearing (as a "New" group) once unlocked.
 // See app/_labGate.ts + app/neko/_gate.ts + middleware.ts.
+// Temporary flag: while true, every group that resolves to a "Soon" state is
+// hidden from the sidebar — KYC is the one exception we keep on show. Flip to
+// false to bring the full "Soon" list back. Note this also hides the lab groups
+// (Cosmos Pay, Nirium, Accesly) while they're locked, since those render as
+// "Soon" too; entering their passcode (URL/middleware) still unlocks them.
+const HIDE_SOON_GROUPS = true;
+
 export function visibleGroups(
   nekoUnlocked: boolean,
   labUnlocked: LabUnlockState,
@@ -241,5 +248,5 @@ export function visibleGroups(
     if (!g.lab) return [g];
     const unlocked = labUnlocked[g.key as LabGroupKey] ?? false;
     return [{ ...g, soon: !unlocked, isNew: unlocked }];
-  });
+  }).filter((g) => !HIDE_SOON_GROUPS || !g.soon || g.key === "kyc");
 }
