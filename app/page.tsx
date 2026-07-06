@@ -25,10 +25,14 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
   // implementation card reuses the feature's short blurb. KYC is single-tab.
   if (group.section === "integrations") {
     if (label === "overview") {
-      return group.key === "swap" ? t.swapAbout.tagline : t.rampAbout.tagline;
+      if (group.key === "swap") return t.swapAbout.tagline;
+      if (group.key === "earn") return t.earnAbout.tagline;
+      return t.rampAbout.tagline;
     }
     if (label === "implementation") {
-      return group.key === "swap" ? t.home.descs.swap : t.home.descs.ramp;
+      if (group.key === "swap") return t.home.descs.swap;
+      if (group.key === "earn") return t.home.descs.earn;
+      return t.home.descs.ramp;
     }
     return t.home.descs[label as keyof Dictionary["home"]["descs"]];
   }

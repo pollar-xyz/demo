@@ -68,6 +68,7 @@ export const en = {
       kyc: "KYC",
       ramp: "Ramp",
       swap: "Swap",
+      earn: "Earn",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
       cosmosPay: "Cosmos Pay",
@@ -143,6 +144,7 @@ export const en = {
       acceslyAdapter:
         "Sign Pollar transactions with an Accesly smart account (passkey + Shamir-MPC).",
       swap: "Swap one asset for another at the best on-chain price.",
+      earn: "Deposit into DeFindex vaults and Blend pools to earn yield.",
       setup: "Wire it up with @pollar/core or @pollar/react.",
     },
   },
@@ -897,6 +899,92 @@ export const en = {
         tag: "sync",
         params:
           "No arguments — assets, amount and venue are picked inside the modal.",
+        returns: "void — opens the prebuilt modal; there is nothing to await.",
+      },
+    ],
+  },
+
+  earn: {
+    title: "Earn",
+    desc: "Put idle balances to work: deposit into DeFindex vaults or Blend pools and earn on-chain yield. Pollar lists every enabled provider with its live APY and renders the whole deposit-and-withdraw flow inside a modal.",
+    open: "Open Earn modal",
+    note: "takes no arguments — provider, opportunity and amount are picked inside the modal.",
+    providersTitle: "Providers are configured in your dashboard",
+    providersBody:
+      "The Earn modal only offers the providers you enable under Treasury → Earn in the Pollar dashboard, intersected with server capability — Blend needs a pool address, DeFindex needs an API key. The SDK reads that selection at runtime via getEarnProviders() (the SDK_EARN_PROVIDERS response). An empty list hides the Earn UI entirely.",
+    reactDesc:
+      "Drop-in button that opens a prebuilt modal — the whole provider → opportunity → deposit / withdraw flow is rendered for you.",
+    coreDesc:
+      "Drive Earn yourself: list opportunities, read the position, then deposit or withdraw.",
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "getEarnProviders()",
+        tag: "async",
+        params:
+          "No arguments — reads the app's dashboard selection (Treasury → Earn), intersected with server capability.",
+        returns:
+          "Promise<EarnProviderId[]> — the enabled providers (e.g. ['blend', 'defindex']); empty means Earn is disabled, so hide the UI.",
+      },
+      {
+        fn: "getEarnOpportunities(provider)",
+        tag: "async",
+        params: "provider: EarnProviderId — 'blend' or 'defindex'.",
+        returns:
+          "Promise<EarnOpportunity[]> — the vaults (DeFindex) / pools (Blend) on this network, each with id, kind, asset and live APY.",
+      },
+      {
+        fn: "getEarnPosition(params)",
+        tag: "async",
+        params:
+          "params: EarnPositionParams — { provider, opportunity } (wallet address filled by the client).",
+        returns:
+          "Promise<EarnPosition> — balance, live APY, withdrawUnit ('asset' for Blend, 'shares' for DeFindex) and the max withdrawable.",
+      },
+      {
+        fn: "earnDeposit(params)",
+        tag: "async",
+        params:
+          "params: EarnTxParams — { provider, opportunity, amount } (amount is the underlying asset).",
+        returns:
+          "Promise<SubmitOutcome> — signs + submits the provider-built XDR through the tx pipeline.",
+      },
+      {
+        fn: "earnWithdraw(params)",
+        tag: "async",
+        params:
+          "params: EarnTxParams — { provider, opportunity, amount } (amount in the position's withdrawUnit).",
+        returns:
+          "Promise<SubmitOutcome> — signs + submits the provider-built XDR through the tx pipeline.",
+      },
+    ],
+    reactFnsTitle: "Hook & values used",
+    reactFnsIntro:
+      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
+        returns:
+          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+      },
+      {
+        fn: "getEarnProviders()",
+        tag: "async",
+        params:
+          "No arguments — resolves the providers this app exposes, from your dashboard selection (Treasury → Earn).",
+        returns:
+          "Promise<EarnProviderId[]> — enabled providers; empty means Earn is disabled for this app, so hide the Earn UI.",
+      },
+      {
+        fn: "openEarnModal()",
+        tag: "sync",
+        params:
+          "No arguments — provider, opportunity and amount are picked inside the modal.",
         returns: "void — opens the prebuilt modal; there is nothing to await.",
       },
     ],
@@ -1699,6 +1787,41 @@ export const en = {
       "Venue availability depends on your dashboard configuration and platform capability. Aquarius and Soroswap are third parties — all credit to their teams.",
   },
 
+  earnAbout: {
+    eyebrow: "Integration",
+    title: "Earn yield on-chain",
+    tagline: "One modal, real yield across every provider you enable.",
+    body: [
+      "Earn lets your users put idle balances to work: deposit into a DeFindex vault or a Blend pool and earn on-chain yield. Pollar lists every enabled provider with its live APY and renders the whole deposit → withdraw flow inside a single modal.",
+      "The providers on offer are decided in your dashboard (Treasury → Earn) and intersected with server capability — Blend needs a pool address, DeFindex needs an API key. The SDK reads that selection at runtime via getEarnProviders() (the SDK_EARN_PROVIDERS response), so turning a provider on or off is a dashboard toggle. An empty list hides the Earn UI entirely.",
+      "Under the hood the flow is getEarnOpportunities → getEarnPosition → earnDeposit / earnWithdraw, all through @pollar/core. See the Implementation tab for the live demo and the exact calls.",
+    ],
+    featuresTitle: "Providers & status",
+    features: [
+      {
+        title: "DeFindex — live",
+        desc: "Automated yield vaults. Deposit an asset, receive shares; withdraw amounts are in shares. Built via the DeFindex API.",
+      },
+      {
+        title: "Blend — live",
+        desc: "Lending pools. Deposit and withdraw in the underlying asset; the XDR is built contract-direct.",
+      },
+      {
+        title: "Configured in your dashboard",
+        desc: "Enable providers under Treasury → Earn; the SDK reads getEarnProviders() at runtime, with no code change.",
+      },
+      {
+        title: "One modal, core or React",
+        desc: "openEarnModal() renders the whole opportunity → deposit / withdraw flow; or drive it yourself with @pollar/core.",
+      },
+    ],
+    resourcesTitle: "Resources",
+    defindexLabel: "DeFindex",
+    blendLabel: "Blend",
+    disclaimer:
+      "Provider availability depends on your dashboard configuration and platform capability. DeFindex and Blend are third parties — all credit to their teams.",
+  },
+
   niriumX402: {
     title: "x402 payments",
     desc: "Send a programmatic x402 payment. Nirium plans and assembles the transaction; the Pollar SDK signs and submits the unsigned XDR with your connected wallet — no secret key, no API key.",
@@ -2050,6 +2173,7 @@ export const es: Dictionary = {
       kyc: "KYC",
       ramp: "Ramp",
       swap: "Swap",
+      earn: "Earn",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
       cosmosPay: "Cosmos Pay",
@@ -2127,6 +2251,7 @@ export const es: Dictionary = {
       acceslyAdapter:
         "Firma transacciones de Pollar con una smart account de Accesly (passkey + Shamir-MPC).",
       swap: "Intercambia un activo por otro al mejor precio on-chain.",
+      earn: "Deposita en vaults de DeFindex y pools de Blend para generar rendimiento.",
       setup: "Conectalo con @pollar/core o @pollar/react.",
     },
   },
@@ -2885,6 +3010,92 @@ export const es: Dictionary = {
         tag: "sync",
         params:
           "Sin argumentos: los activos, el monto y el venue se eligen dentro del modal.",
+        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+      },
+    ],
+  },
+
+  earn: {
+    title: "Earn",
+    desc: "Pon a trabajar los balances ociosos: deposita en vaults de DeFindex o pools de Blend y genera rendimiento on-chain. Pollar lista cada provider habilitado con su APY en vivo y renderiza todo el flujo de depósito y retiro dentro de un modal.",
+    open: "Abrir modal de Earn",
+    note: "no recibe argumentos: el provider, la oportunidad y el monto se eligen dentro del modal.",
+    providersTitle: "Los providers se configuran desde tu dashboard",
+    providersBody:
+      "El modal de Earn solo ofrece los providers que habilites en Treasury → Earn del dashboard de Pollar, intersectados con la capacidad del servidor: Blend necesita una dirección de pool y DeFindex una API key. El SDK lee esa selección en tiempo de ejecución vía getEarnProviders() (la respuesta SDK_EARN_PROVIDERS). Una lista vacía oculta por completo la UI de Earn.",
+    reactDesc:
+      "Botón listo que abre un modal prearmado: todo el flujo provider → oportunidad → depósito / retiro ya viene renderizado.",
+    coreDesc:
+      "Controla Earn tú mismo: lista oportunidades, lee la posición y luego deposita o retira.",
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getEarnProviders()",
+        tag: "async",
+        params:
+          "Sin argumentos: lee la selección del dashboard de la app (Treasury → Earn), intersectada con la capacidad del servidor.",
+        returns:
+          "Promise<EarnProviderId[]>: los providers habilitados (p. ej. ['blend', 'defindex']); vacío significa que Earn está deshabilitado, así que oculta la UI.",
+      },
+      {
+        fn: "getEarnOpportunities(provider)",
+        tag: "async",
+        params: "provider: EarnProviderId — 'blend' o 'defindex'.",
+        returns:
+          "Promise<EarnOpportunity[]>: los vaults (DeFindex) / pools (Blend) en esta red, cada uno con id, kind, asset y APY en vivo.",
+      },
+      {
+        fn: "getEarnPosition(params)",
+        tag: "async",
+        params:
+          "params: EarnPositionParams — { provider, opportunity } (la dirección la completa el cliente).",
+        returns:
+          "Promise<EarnPosition>: balance, APY en vivo, withdrawUnit ('asset' para Blend, 'shares' para DeFindex) y el máximo retirable.",
+      },
+      {
+        fn: "earnDeposit(params)",
+        tag: "async",
+        params:
+          "params: EarnTxParams — { provider, opportunity, amount } (el monto es el activo subyacente).",
+        returns:
+          "Promise<SubmitOutcome>: firma y envía el XDR construido por el provider a través del pipeline de tx.",
+      },
+      {
+        fn: "earnWithdraw(params)",
+        tag: "async",
+        params:
+          "params: EarnTxParams — { provider, opportunity, amount } (el monto en el withdrawUnit de la posición).",
+        returns:
+          "Promise<SubmitOutcome>: firma y envía el XDR construido por el provider a través del pipeline de tx.",
+      },
+    ],
+    reactFnsTitle: "Hook y valores utilizados",
+    reactFnsIntro:
+      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
+        returns:
+          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+      },
+      {
+        fn: "getEarnProviders()",
+        tag: "async",
+        params:
+          "Sin argumentos: resuelve los providers que expone esta app, desde tu selección del dashboard (Treasury → Earn).",
+        returns:
+          "Promise<EarnProviderId[]>: providers habilitados; vacío significa que Earn está deshabilitado para esta app, así que oculta la UI de Earn.",
+      },
+      {
+        fn: "openEarnModal()",
+        tag: "sync",
+        params:
+          "Sin argumentos: el provider, la oportunidad y el monto se eligen dentro del modal.",
         returns: "void: abre el modal prearmado; no hay nada que esperar.",
       },
     ],
@@ -3693,6 +3904,41 @@ export const es: Dictionary = {
       "La disponibilidad de venues depende de tu configuración del dashboard y de la capacidad de la plataforma. Aquarius y Soroswap son terceros; todo el crédito es de sus equipos.",
   },
 
+  earnAbout: {
+    eyebrow: "Integración",
+    title: "Genera rendimiento on-chain",
+    tagline: "Un modal, rendimiento real entre cada provider que habilites.",
+    body: [
+      "Earn permite a tus usuarios poner a trabajar los balances ociosos: depositar en un vault de DeFindex o un pool de Blend y generar rendimiento on-chain. Pollar lista cada provider habilitado con su APY en vivo y renderiza todo el flujo depósito → retiro dentro de un solo modal.",
+      "Los providers disponibles se deciden en tu dashboard (Treasury → Earn) e intersectados con la capacidad del servidor: Blend necesita una dirección de pool y DeFindex una API key. El SDK lee esa selección en tiempo de ejecución vía getEarnProviders() (la respuesta SDK_EARN_PROVIDERS), así que prender o apagar un provider es un toggle del dashboard. Una lista vacía oculta por completo la UI de Earn.",
+      "Por dentro el flujo es getEarnOpportunities → getEarnPosition → earnDeposit / earnWithdraw, todo con @pollar/core. Mirá la pestaña Implementación para el demo en vivo y las llamadas exactas.",
+    ],
+    featuresTitle: "Providers y estado",
+    features: [
+      {
+        title: "DeFindex — activo",
+        desc: "Vaults de rendimiento automatizado. Depositás un activo y recibís shares; los retiros van en shares. Se arma vía la API de DeFindex.",
+      },
+      {
+        title: "Blend — activo",
+        desc: "Pools de lending. Depositás y retirás en el activo subyacente; el XDR se arma contract-direct.",
+      },
+      {
+        title: "Configurado desde tu dashboard",
+        desc: "Habilitá providers en Treasury → Earn; el SDK lee getEarnProviders() en tiempo de ejecución, sin cambiar código.",
+      },
+      {
+        title: "Un modal, core o React",
+        desc: "openEarnModal() renderiza todo el flujo oportunidad → depósito / retiro; o controlalo tú mismo con @pollar/core.",
+      },
+    ],
+    resourcesTitle: "Recursos",
+    defindexLabel: "DeFindex",
+    blendLabel: "Blend",
+    disclaimer:
+      "La disponibilidad de providers depende de tu configuración del dashboard y de la capacidad de la plataforma. DeFindex y Blend son terceros; todo el crédito es de sus equipos.",
+  },
+
   niriumX402: {
     title: "Pagos x402",
     desc: "Envía un pago x402 programático. Nirium planifica y arma la transacción; el SDK de Pollar firma y envía el XDR sin firmar con tu wallet conectada — sin secret key, sin API key.",
@@ -4042,6 +4288,7 @@ export const pt: Dictionary = {
       kyc: "KYC",
       ramp: "Ramp",
       swap: "Swap",
+      earn: "Earn",
       trustlessWork: "Trustless Work",
       nirium: "Nirium",
       cosmosPay: "Cosmos Pay",
@@ -4121,6 +4368,7 @@ export const pt: Dictionary = {
       acceslyAdapter:
         "Assine transações da Pollar com uma smart account da Accesly (passkey + Shamir-MPC).",
       swap: "Troque um ativo por outro pelo melhor preço on-chain.",
+      earn: "Deposite em vaults da DeFindex e pools da Blend para gerar rendimento.",
       setup: "Conecte com @pollar/core ou @pollar/react.",
     },
   },
@@ -4878,6 +5126,92 @@ export const pt: Dictionary = {
         tag: "sync",
         params:
           "Sem argumentos: os ativos, o valor e o venue são escolhidos dentro do modal.",
+        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+      },
+    ],
+  },
+
+  earn: {
+    title: "Earn",
+    desc: "Coloque os saldos ociosos para trabalhar: deposite em vaults da DeFindex ou pools da Blend e gere rendimento on-chain. A Pollar lista cada provider habilitado com seu APY ao vivo e renderiza todo o fluxo de depósito e resgate dentro de um modal.",
+    open: "Abrir modal de Earn",
+    note: "não recebe argumentos: o provider, a oportunidade e o valor são escolhidos dentro do modal.",
+    providersTitle: "Os providers são configurados no seu dashboard",
+    providersBody:
+      "O modal de Earn só oferece os providers que você habilitar em Treasury → Earn no dashboard da Pollar, intersectados com a capacidade do servidor: a Blend precisa de um endereço de pool e a DeFindex de uma API key. O SDK lê essa seleção em tempo de execução via getEarnProviders() (a resposta SDK_EARN_PROVIDERS). Uma lista vazia oculta totalmente a UI de Earn.",
+    reactDesc:
+      "Botão pronto que abre um modal pré-montado: todo o fluxo provider → oportunidade → depósito / resgate já vem renderizado.",
+    coreDesc:
+      "Controle o Earn você mesmo: liste oportunidades, leia a posição e depois deposite ou resgate.",
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente retornado por getClient(): a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getEarnProviders()",
+        tag: "async",
+        params:
+          "Sem argumentos: lê a seleção do dashboard da app (Treasury → Earn), intersectada com a capacidade do servidor.",
+        returns:
+          "Promise<EarnProviderId[]>: os providers habilitados (ex.: ['blend', 'defindex']); vazio significa que o Earn está desabilitado, então oculte a UI.",
+      },
+      {
+        fn: "getEarnOpportunities(provider)",
+        tag: "async",
+        params: "provider: EarnProviderId — 'blend' ou 'defindex'.",
+        returns:
+          "Promise<EarnOpportunity[]>: os vaults (DeFindex) / pools (Blend) nesta rede, cada um com id, kind, asset e APY ao vivo.",
+      },
+      {
+        fn: "getEarnPosition(params)",
+        tag: "async",
+        params:
+          "params: EarnPositionParams — { provider, opportunity } (o endereço é preenchido pelo cliente).",
+        returns:
+          "Promise<EarnPosition>: saldo, APY ao vivo, withdrawUnit ('asset' para Blend, 'shares' para DeFindex) e o máximo resgatável.",
+      },
+      {
+        fn: "earnDeposit(params)",
+        tag: "async",
+        params:
+          "params: EarnTxParams — { provider, opportunity, amount } (o valor é o ativo subjacente).",
+        returns:
+          "Promise<SubmitOutcome>: assina e envia o XDR construído pelo provider pelo pipeline de tx.",
+      },
+      {
+        fn: "earnWithdraw(params)",
+        tag: "async",
+        params:
+          "params: EarnTxParams — { provider, opportunity, amount } (o valor no withdrawUnit da posição).",
+        returns:
+          "Promise<SubmitOutcome>: assina e envia o XDR construído pelo provider pelo pipeline de tx.",
+      },
+    ],
+    reactFnsTitle: "Hook e valores utilizados",
+    reactFnsIntro:
+      "Todos vêm do hook usePollar(): a camada de react construída sobre getClient().",
+    reactFns: [
+      {
+        fn: "usePollar()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
+        returns:
+          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+      },
+      {
+        fn: "getEarnProviders()",
+        tag: "async",
+        params:
+          "Sem argumentos: resolve os providers que esta app expõe, a partir da sua seleção no dashboard (Treasury → Earn).",
+        returns:
+          "Promise<EarnProviderId[]>: providers habilitados; vazio significa que o Earn está desabilitado para esta app, então oculte a UI de Earn.",
+      },
+      {
+        fn: "openEarnModal()",
+        tag: "sync",
+        params:
+          "Sem argumentos: o provider, a oportunidade e o valor são escolhidos dentro do modal.",
         returns: "void: abre o modal pré-montado; não há nada para aguardar.",
       },
     ],
@@ -5681,6 +6015,42 @@ export const pt: Dictionary = {
     soroswapLabel: "Soroswap",
     disclaimer:
       "A disponibilidade de venues depende da sua configuração no dashboard e da capacidade da plataforma. Aquarius e Soroswap são terceiros — todo o crédito é das equipes deles.",
+  },
+
+  earnAbout: {
+    eyebrow: "Integração",
+    title: "Gere rendimento on-chain",
+    tagline:
+      "Um modal, rendimento real entre cada provider que você habilitar.",
+    body: [
+      "O Earn permite que seus usuários coloquem os saldos ociosos para trabalhar: depositar em um vault da DeFindex ou um pool da Blend e gerar rendimento on-chain. A Pollar lista cada provider habilitado com seu APY ao vivo e renderiza todo o fluxo depósito → resgate dentro de um único modal.",
+      "Os providers disponíveis são decididos no seu dashboard (Treasury → Earn) e intersectados com a capacidade do servidor: a Blend precisa de um endereço de pool e a DeFindex de uma API key. O SDK lê essa seleção em tempo de execução via getEarnProviders() (a resposta SDK_EARN_PROVIDERS), então ligar ou desligar um provider é um toggle no dashboard. Uma lista vazia oculta totalmente a UI de Earn.",
+      "Por baixo, o fluxo é getEarnOpportunities → getEarnPosition → earnDeposit / earnWithdraw, tudo com @pollar/core. Veja a aba Implementação para o demo ao vivo e as chamadas exatas.",
+    ],
+    featuresTitle: "Providers e status",
+    features: [
+      {
+        title: "DeFindex — ativo",
+        desc: "Vaults de rendimento automatizado. Deposite um ativo e receba shares; os resgates são em shares. Montado via a API da DeFindex.",
+      },
+      {
+        title: "Blend — ativo",
+        desc: "Pools de lending. Deposite e resgate no ativo subjacente; o XDR é montado contract-direct.",
+      },
+      {
+        title: "Configurado no seu dashboard",
+        desc: "Habilite providers em Treasury → Earn; o SDK lê getEarnProviders() em tempo de execução, sem alterar código.",
+      },
+      {
+        title: "Um modal, core ou React",
+        desc: "openEarnModal() renderiza todo o fluxo oportunidade → depósito / resgate; ou controle você mesmo com @pollar/core.",
+      },
+    ],
+    resourcesTitle: "Recursos",
+    defindexLabel: "DeFindex",
+    blendLabel: "Blend",
+    disclaimer:
+      "A disponibilidade de providers depende da sua configuração no dashboard e da capacidade da plataforma. DeFindex e Blend são terceiros — todo o crédito é das equipes deles.",
   },
 
   niriumX402: {

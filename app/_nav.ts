@@ -107,6 +107,15 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/pollar/swap/implementation", label: "implementation" },
     ],
   },
+  {
+    key: "earn",
+    section: "integrations",
+    isNew: true,
+    tabs: [
+      { href: "/pollar/earn", label: "overview" },
+      { href: "/pollar/earn/implementation", label: "implementation" },
+    ],
+  },
 
   // ── Wallet adapters ──
   {
