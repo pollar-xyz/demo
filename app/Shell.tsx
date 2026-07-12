@@ -429,6 +429,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       apiKey={apiKey}
       baseUrl={BASE_URL}
       network={stellarNetwork}
+      privyDisabled={apiKey === DEFAULT_API_KEY_MAINNET}
       adapters={{
         escrow: trustlessWorkAdapter,
         niriumX402: niriumAdapter,

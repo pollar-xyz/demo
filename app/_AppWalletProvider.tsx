@@ -12,8 +12,9 @@
 // shared adapter); the SAME adapter instance is registered in `walletAdapters`,
 // so the login modal renders the Privy sub-modal.
 //
-// When NEXT_PUBLIC_PRIVY_APP_ID is unset (or before client mount) Privy is
-// simply omitted and the navbar offers the kit wallets only.
+// When NEXT_PUBLIC_PRIVY_APP_ID is unset, `privyDisabled` is passed, or before
+// client mount, Privy is simply omitted and the navbar offers the kit wallets
+// only.
 
 import { Networks } from '@creit.tech/stellar-wallets-kit';
 import type { PollarAdapters, WalletAdapter } from '@pollar/core';
@@ -49,6 +50,10 @@ type StackProps = {
   baseUrl: string;
   network: StellarNetwork;
   adapters: PollarAdapters;
+  // Leaves Privy out of the stack entirely (kit wallets only), even when
+  // NEXT_PUBLIC_PRIVY_APP_ID is set — the demo mainnet key has no Privy app
+  // behind it.
+  privyDisabled?: boolean;
   children: React.ReactNode;
 };
 
@@ -69,6 +74,7 @@ export function AppWalletProvider({
                                     baseUrl,
                                     network,
                                     adapters,
+                                    privyDisabled = false,
                                     children,
                                   }: StackProps) {
   // Privy mounts client-side only; until then the bridge is absent and the
@@ -76,15 +82,16 @@ export function AppWalletProvider({
   const [ mounted, setMounted ] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const privyOn = Boolean(privyAdapter) && mounted;
+  const privyEnabled = Boolean(privyAdapter) && !privyDisabled;
+  const privyOn = privyEnabled && mounted;
 
   const walletAdapters = useMemo<WalletAdapter[]>(() => {
     const kit = stellarWalletsKitAdapters({
       network: kitNetwork(network),
       picker: { groupLabel: 'Stellar Wallets Kit' },
     });
-    return privyAdapter ? [ privyAdapter, ...kit ] : kit;
-  }, [ network ]);
+    return privyEnabled ? [ privyAdapter!, ...kit ] : kit;
+  }, [ network, privyEnabled ]);
 
   return (
     <>
