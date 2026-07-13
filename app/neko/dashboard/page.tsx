@@ -1,567 +1,565 @@
 "use client";
 
 import { usePollar } from "@pollar/react";
-import { useCallback, useEffect, useState } from "react";
-import { CodePanel } from "@/app/_components/CodePanels";
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 import {
   nekoGet,
-  nekoPost,
-  type AuditRecord,
-  type AuditResult,
   type BondYield,
-  type PrepareResult,
-  type TxStatus,
+  type AuditRecord,
+  type DefindexVaultsResponse,
+  type PoolCatalog,
+  type PoolEntry,
+  type Positions,
+  type PriceMap,
+  type VaultCatalogEntry,
 } from "../_lib";
-import { useNekoMainnet } from "../_MainnetGate";
+import { fmtPct, fmtUsd } from "../_format";
+import { NekoBanner, StatCard, TokenBadge, TokenBadges } from "../_ui";
+import { DISCOVER_ASSETS } from "../_assets";
+import {
+  flattenPools,
+  poolBorrowApy,
+  poolSupplyApy,
+  poolTokenCodes,
+  poolUsd,
+  poolUsdLabel,
+  PROTOCOL_LABEL,
+} from "../_poolData";
+import {
+  computeVaultRows,
+  computeVaultSummary,
+  mapDefindexVaults,
+  parseApy,
+} from "../_vaultData";
+import { NekoDevTools } from "./_DevTools";
 
-const lbl = "block text-xs font-mono text-muted mb-1";
-const inp =
-  "w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light";
-const btn = (variant: "primary" | "secondary") =>
-  variant === "primary"
-    ? "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
-    : "rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors";
+// icons (inline, currentColor)
+const IconDollar = (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+  </svg>
+);
+const IconLayers = (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="m12 2 9 5-9 5-9-5 9-5ZM3 12l9 5 9-5M3 17l9 5 9-5" />
+  </svg>
+);
+const IconTrend = (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="m3 17 6-6 4 4 8-8M21 7v6h-6" />
+  </svg>
+);
 
-const FLOW_CODE = `// 1. Prepare on the Neko proxy (via your own same-origin server route,
-//    which holds the secret x-server-code header — never the browser).
-const { hash } = await fetch('/api/neko/v1/tx/prepare', {
-  method: 'POST',
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ unsignedXdr }),
-}).then((r) => r.json());
-
-// 2. Sign locally with the connected Pollar wallet — sign only, no submit.
-const { signedXdr } = await getClient().signTx(unsignedXdr);
-
-// 3. Submit the signed XDR back through Neko, then poll until it settles.
-let tx = await fetch('/api/neko/v1/tx/submit', {
-  method: 'POST',
-  headers: { 'content-type': 'application/json' },
-  body: JSON.stringify({ signedXdr }),
-}).then((r) => r.json());
-
-while (tx.status === 'PENDING') {
-  tx = await fetch('/api/neko/v1/tx/' + tx.hash).then((r) => r.json());
-}`;
-
-type StepKey = "prepare" | "sign" | "submit" | "poll";
-type StepState = "idle" | "running" | "done" | "error";
-type Steps = Record<StepKey, StepState>;
-const IDLE_STEPS: Steps = {
-  prepare: "idle",
-  sign: "idle",
-  submit: "idle",
-  poll: "idle",
-};
-
-function Raw({ data, empty }: { data: unknown; empty: string }) {
-  if (data == null) {
-    return <p className="text-xs font-mono text-muted-light">{empty}</p>;
-  }
-  return (
-    <pre className="rounded-xl bg-surface border border-border dark:bg-[#1a1a1a] dark:border-transparent p-4 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-auto max-h-72 whitespace-pre">
-      {JSON.stringify(data, null, 2)}
-    </pre>
-  );
-}
-
-function Step({ label, state }: { label: string; state: StepState }) {
-  const dot =
-    state === "done"
-      ? "bg-success"
-      : state === "running"
-        ? "bg-warning animate-pulse"
-        : state === "error"
-          ? "bg-error"
-          : "bg-muted-light";
-  return (
-    <div className="flex items-center gap-2 text-xs font-mono">
-      <span className={`inline-block h-1.5 w-1.5 rounded-full ${dot}`} />
-      <span
-        className={state === "idle" ? "text-muted-light" : "text-foreground"}
-      >
-        {label}
-      </span>
-    </div>
-  );
-}
-
-function Section({
-  title,
-  note,
-  children,
-}: {
-  title: string;
-  note?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="text-sm font-semibold text-foreground">{title}</h2>
-        {note && <p className="text-xs text-muted mt-0.5">{note}</p>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
-function AuditTable({ rows }: { rows: AuditRecord[] }) {
-  const { t } = useI18n();
-  return (
-    <div className="overflow-x-auto rounded-xl border border-border">
-      <table className="w-full text-left text-xs">
-        <thead>
-          <tr className="border-b border-border text-[10px] font-mono uppercase tracking-wider text-muted-light">
-            <th className="px-3 py-2 font-medium">{t.neko.auditAction}</th>
-            <th className="px-3 py-2 font-medium">{t.neko.auditFlow}</th>
-            <th className="px-3 py-2 font-medium">{t.neko.auditDate}</th>
-            <th className="px-3 py-2 font-medium">{t.neko.auditTx}</th>
-          </tr>
-        </thead>
-        <tbody className="font-mono">
-          {rows.map((r) => (
-            <tr key={r.id} className="border-b border-border/50 last:border-0">
-              <td className="px-3 py-2 text-foreground">{r.action_type}</td>
-              <td className="px-3 py-2 text-muted">
-                <span className="text-foreground">
-                  {r.token_amount_in} {r.asset_in}
-                </span>
-                {" → "}
-                <span className="text-success">
-                  {r.amount_out} {r.asset_out}
-                </span>
-              </td>
-              <td className="px-3 py-2 text-muted-light whitespace-nowrap">
-                {new Date(r.created_at).toLocaleString()}
-              </td>
-              <td className="px-3 py-2">
-                <span className="text-muted-light" title={r.tx_hash}>
-                  {r.tx_hash.slice(0, 6)}…{r.tx_hash.slice(-6)}
-                </span>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
-}
+const NEKO_SYMBOLS = DISCOVER_ASSETS.map((a) => a.symbol);
 
 export default function NekoDashboardPage() {
   const { t } = useI18n();
-  const { isAuthenticated, wallet, getClient } = usePollar();
+  const { isAuthenticated, wallet } = usePollar();
   const walletAddress = wallet?.address ?? "";
-  const isMainnet = useNekoMainnet();
+  const d = t.neko;
 
-  const [yields, setYields] = useState<BondYield[] | null>(null);
-  const [prices, setPrices] = useState<unknown>(null);
-  const [positions, setPositions] = useState<unknown>(null);
-  const [catalog, setCatalog] = useState<unknown>(null);
-  const [audit, setAudit] = useState<AuditRecord[] | null>(null);
+  const [pools, setPools] = useState<PoolEntry[]>([]);
+  const [vaults, setVaults] = useState<VaultCatalogEntry[]>([]);
+  const [positions, setPositions] = useState<Positions | null>(null);
+  const [audit, setAudit] = useState<AuditRecord[]>([]);
+  const [yields, setYields] = useState<BondYield[]>([]);
+  const [prices, setPrices] = useState<PriceMap | null>(null);
   const [loading, setLoading] = useState(false);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
-  const loadAudit = useCallback(async () => {
-    if (!walletAddress) return;
-    const rows = await nekoGet<AuditRecord[]>(
-      `/v1/audit?limit=50&wallet=${walletAddress}`,
-    );
-    setAudit(rows);
-  }, [walletAddress]);
-
-  const loadAll = useCallback(async () => {
-    if (!walletAddress) return;
+  const load = useCallback(async () => {
     setLoading(true);
-    setLoadError(null);
-    // Register the wallet connect (fire-and-forget upsert).
-    nekoPost("/users", {
-      wallet_address: walletAddress,
-      wallet_provider: null,
-    }).catch(() => {});
-    const [y, p, pos, cat, aud] = await Promise.allSettled([
+    const [cat, vres, by] = await Promise.allSettled([
+      nekoGet<PoolCatalog>("/dashboard/pool-catalog"),
+      nekoGet<DefindexVaultsResponse>("/v1/defindex/vaults"),
       nekoGet<BondYield[]>("/v1/etherfuse/bond-yields"),
-      nekoGet("/dashboard/prices?symbols=XLM,USDC"),
-      nekoGet(`/dashboard/positions/${walletAddress}`),
-      nekoGet("/dashboard/pool-catalog"),
-      nekoGet<AuditRecord[]>(`/v1/audit?limit=50&wallet=${walletAddress}`),
     ]);
-    setYields(y.status === "fulfilled" ? y.value : null);
-    setPrices(p.status === "fulfilled" ? p.value : null);
-    setPositions(pos.status === "fulfilled" ? pos.value : null);
-    setCatalog(cat.status === "fulfilled" ? cat.value : null);
-    setAudit(aud.status === "fulfilled" ? aud.value : null);
-    if ([y, p, pos, cat, aud].every((r) => r.status === "rejected")) {
-      const reason = (y as PromiseRejectedResult).reason;
-      setLoadError(reason instanceof Error ? reason.message : String(reason));
+    const poolEntries =
+      cat.status === "fulfilled" ? flattenPools(cat.value) : [];
+    const vaultCatalog =
+      vres.status === "fulfilled" ? mapDefindexVaults(vres.value) : [];
+    setPools(poolEntries);
+    setVaults(vaultCatalog);
+    setYields(by.status === "fulfilled" ? by.value : []);
+
+    if (walletAddress) {
+      const [pos, aud] = await Promise.allSettled([
+        nekoGet<Positions>(`/dashboard/positions/${walletAddress}`),
+        nekoGet<AuditRecord[]>(`/v1/audit?limit=50&wallet=${walletAddress}`),
+      ]);
+      setPositions(pos.status === "fulfilled" ? pos.value : null);
+      setAudit(aud.status === "fulfilled" ? aud.value : []);
+    }
+
+    // Prices for every symbol we may render (discover assets + pool tokens +
+    // vault assets), keyed by symbol.
+    const codes = Array.from(
+      new Set([
+        ...NEKO_SYMBOLS,
+        ...poolTokenCodes(poolEntries),
+        ...vaultCatalog.map((v) => v.supplyAsset.symbol),
+      ]),
+    ).filter(Boolean);
+    if (codes.length) {
+      await nekoGet<PriceMap>(`/dashboard/prices?symbols=${codes.join(",")}`)
+        .then(setPrices)
+        .catch(() => {});
     }
     setLoading(false);
   }, [walletAddress]);
 
   useEffect(() => {
-    // Load Neko data whenever a wallet connects — syncing UI to an external
-    // system (the API), which is the documented exception to this rule.
+    // Sync to the external API on mount / when the wallet changes.
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (isAuthenticated && walletAddress) loadAll();
-  }, [isAuthenticated, walletAddress, loadAll]);
+    load();
+  }, [load]);
 
-  // ─── transaction flow ───────────────────────────────────────────────────────
-  const [xdr, setXdr] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [steps, setSteps] = useState<Steps>(IDLE_STEPS);
-  const [result, setResult] = useState<TxStatus | null>(null);
-  const [txError, setTxError] = useState<string | null>(null);
+  const vaultRows = useMemo(
+    () => computeVaultRows(positions, vaults, audit, prices),
+    [positions, vaults, audit, prices],
+  );
+  const vaultSummary = useMemo(
+    () => computeVaultSummary(vaultRows),
+    [vaultRows],
+  );
 
-  // ─── audit (POST /api/audit) ────────────────────────────────────────────────
-  const [auditForm, setAuditForm] = useState({
-    action_type: "vaults_deposit",
-    asset_in: "USDC",
-    token_amount_in: "1",
-    asset_out: "DeFindex-Vault-Neko USDC",
-    amount_out: "0.9939207",
-    pool_id: "CCUZC3HC5TH2VCYZFUG57E6IGKPL45YUN2SI3UEYQUBA7RCYHUIZBSFV",
-    tx_hash: "",
-  });
-  const [auditBusy, setAuditBusy] = useState(false);
-  const [auditError, setAuditError] = useState<string | null>(null);
-  const [auditResult, setAuditResult] = useState<AuditResult | null>(null);
-  const setAuditField = (k: keyof typeof auditForm, v: string) =>
-    setAuditForm((f) => ({ ...f, [k]: v }));
+  const poolRows = useMemo(() => {
+    return (positions?.poolPositions ?? []).map((pp) => {
+      const token = pp.pool.tokens[0];
+      const depNum = Number(pp.position.depositedFormatted) || 0;
+      const price = prices?.prices?.[token?.code ?? ""]?.price ?? null;
+      return {
+        id: pp.position.poolId,
+        name: pp.pool.name,
+        code: token?.code ?? "—",
+        apy: poolSupplyApy(pp.pool),
+        depositedFormatted: pp.position.depositedFormatted,
+        valueUsd: price != null ? depNum * price : null,
+      };
+    });
+  }, [positions, prices]);
 
-  async function recordAudit() {
-    if (!walletAddress) return;
-    if (!auditForm.tx_hash.trim()) {
-      setAuditError(t.neko.auditTxRequired);
-      return;
-    }
-    setAuditBusy(true);
-    setAuditError(null);
-    setAuditResult(null);
-    try {
-      const res = await nekoPost<AuditResult>("/v1/audit", {
-        wallet_address: walletAddress,
-        action_type: auditForm.action_type,
-        asset_in: auditForm.asset_in,
-        token_amount_in: Number(auditForm.token_amount_in),
-        asset_out: auditForm.asset_out,
-        amount_out: Number(auditForm.amount_out),
-        pool_id: auditForm.pool_id,
-        tx_hash: auditForm.tx_hash.trim(),
-      });
-      setAuditResult(res);
-      await loadAudit().catch(() => {});
-    } catch (e) {
-      setAuditError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setAuditBusy(false);
-    }
-  }
+  const stats = useMemo(() => {
+    const poolUsdTotal = poolRows.reduce((s, r) => s + (r.valueUsd ?? 0), 0);
+    const portfolio = poolUsdTotal + vaultSummary.val;
+    const assetsHeld =
+      (positions?.poolPositions.length ?? 0) +
+      (positions?.vaultPositions.length ?? 0);
+    const highestApy = vaults.reduce<number | null>((max, v) => {
+      const a = parseApy(v.apy7d);
+      return a != null && (max == null || a > max) ? a : max;
+    }, null);
+    return { portfolio, assetsHeld, highestApy };
+  }, [poolRows, vaultSummary, positions, vaults]);
 
-  async function runFlow() {
-    const unsigned = xdr.trim();
-    if (!unsigned) {
-      setTxError(t.neko.emptyXdr);
-      return;
-    }
-    setBusy(true);
-    setTxError(null);
-    setResult(null);
-    setSteps({ ...IDLE_STEPS, prepare: "running" });
-    try {
-      const prep = await nekoPost<PrepareResult>("/v1/tx/prepare", {
-        unsignedXdr: unsigned,
-      });
-      setSteps((s) => ({ ...s, prepare: "done", sign: "running" }));
+  const topPools = useMemo(() => {
+    return [...pools]
+      .map((p) => ({ p, usd: poolUsd(p.tvl, p.tokens[0], prices) ?? 0 }))
+      .sort((a, b) => b.usd - a.usd)
+      .slice(0, 7)
+      .map((x) => x.p);
+  }, [pools, prices]);
 
-      const signed = await getClient().signTx(unsigned);
-      if (signed.status !== "signed") throw new Error(t.neko.signFailed);
-      setSteps((s) => ({ ...s, sign: "done", submit: "running" }));
+  const apyBySymbol = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const y of yields) m.set(y.symbol, y.apy);
+    return m;
+  }, [yields]);
 
-      let status = await nekoPost<TxStatus>("/v1/tx/submit", {
-        signedXdr: signed.signedXdr,
-      });
-      setSteps((s) => ({ ...s, submit: "done" }));
-
-      if (status.status === "PENDING") {
-        setSteps((s) => ({ ...s, poll: "running" }));
-        const hash = status.hash || prep.hash;
-        for (let i = 0; i < 6 && status.status === "PENDING"; i++) {
-          await new Promise((r) => setTimeout(r, 1500));
-          status = await nekoGet<TxStatus>(`/v1/tx/${hash}`);
-        }
-        setSteps((s) => ({ ...s, poll: "done" }));
-      }
-      setResult(status);
-      // Carry the hash into the audit form so you can record what it did.
-      if (status.hash) setAuditField("tx_hash", status.hash);
-    } catch (e) {
-      setTxError(e instanceof Error ? e.message : String(e));
-      setSteps((s) => {
-        const next = { ...s };
-        (["prepare", "sign", "submit", "poll"] as StepKey[]).forEach((k) => {
-          if (next[k] === "running") next[k] = "error";
-        });
-        return next;
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const statusColor =
-    result?.status === "SUCCESS"
-      ? "text-success"
-      : result?.status === "FAILED"
-        ? "text-error"
-        : "text-warning";
+  const quickActions = [
+    { href: "/pollar/swap", title: d.qaSwapTitle, sub: d.qaSwapSub, icon: "⇄" },
+    {
+      href: "/neko/pools",
+      title: d.qaLiquidityTitle,
+      sub: d.qaLiquiditySub,
+      icon: "💧",
+    },
+    {
+      href: "/neko/vaults",
+      title: d.qaVaultTitle,
+      sub: d.qaVaultSub,
+      icon: "🏦",
+    },
+    {
+      href: "/neko/discover",
+      title: d.qaExploreTitle,
+      sub: d.qaExploreSub,
+      icon: "🔎",
+    },
+  ];
 
   return (
-    <div className="w-full max-w-3xl space-y-8">
-      <header className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t.neko.title}
-          </h1>
-          <p className="text-sm text-muted max-w-2xl">{t.neko.desc}</p>
+    <div className="w-full space-y-6">
+      <NekoBanner
+        eyebrow={d.eyebrow}
+        title={t.nav.dashboard}
+        desc={d.overview}
+      />
+
+      {/* stat cards */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          label={d.statPortfolio}
+          value={isAuthenticated ? fmtUsd(stats.portfolio) : "—"}
+          icon={IconDollar}
+        />
+        <StatCard
+          label={d.statAssets}
+          value={isAuthenticated ? stats.assetsHeld : "—"}
+          icon={IconLayers}
+        />
+        <StatCard
+          label={d.statHighestApy}
+          value={
+            stats.highestApy != null ? `${stats.highestApy.toFixed(2)}%` : "—"
+          }
+          valueClass="text-success"
+          icon={IconTrend}
+        />
+      </div>
+
+      {/* your positions */}
+      {isAuthenticated && (
+        <section className="space-y-3">
+          <h2 className="text-lg font-bold tracking-tight text-foreground">
+            {d.yourPositions}
+          </h2>
+
+          {/* pool positions */}
+          <div className="overflow-hidden rounded-2xl border border-border">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
+                {d.poolsLabel}
+              </span>
+              <Link
+                href="/neko/pools"
+                className="text-[11px] font-medium text-primary hover:underline"
+              >
+                {d.manage} →
+              </Link>
+            </div>
+            {poolRows.length === 0 ? (
+              <p className="px-4 py-6 text-xs font-mono text-muted-light">
+                {loading ? d.loading : d.noPoolPos}
+              </p>
+            ) : (
+              <table className="w-full text-left text-xs sm:text-sm">
+                <thead>
+                  <tr className="border-b border-border text-[10px] font-mono uppercase tracking-wider text-muted-light">
+                    <th className="px-4 py-2 font-medium">{d.colAsset}</th>
+                    <th className="px-4 py-2 font-medium">{d.colPosition}</th>
+                    <th className="px-4 py-2 font-medium text-right">
+                      {d.colDeposited}
+                    </th>
+                    <th className="px-4 py-2 font-medium text-right">
+                      {d.colValue}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {poolRows.map((r) => (
+                    <tr
+                      key={r.id}
+                      className="border-b border-border/50 last:border-0"
+                    >
+                      <td className="px-4 py-3">
+                        <TokenBadge symbol={r.code} size={26} />
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-foreground">{r.name}</p>
+                        <p className="text-[11px] text-muted">
+                          {r.code}{" "}
+                          <span className="text-success">
+                            {fmtPct(r.apy)} APY
+                          </span>
+                        </p>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-foreground">
+                        {r.depositedFormatted} {r.code}
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-foreground">
+                        {r.valueUsd != null ? fmtUsd(r.valueUsd) : "—"}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* vault positions */}
+          <div className="overflow-hidden rounded-2xl border border-border">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
+                {d.vaultPositionsLabel}
+              </span>
+              <Link
+                href="/neko/vaults"
+                className="text-[11px] font-medium text-primary hover:underline"
+              >
+                {d.manage} →
+              </Link>
+            </div>
+            {vaultRows.length === 0 ? (
+              <p className="px-4 py-6 text-xs font-mono text-muted-light">
+                {loading ? d.loading : d.noVaultPos}
+              </p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[680px] text-left text-xs sm:text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-[10px] font-mono uppercase tracking-wider text-muted-light">
+                      <th className="px-4 py-2 font-medium">{d.colVault}</th>
+                      <th className="px-4 py-2 font-medium">{d.colAsset}</th>
+                      <th className="px-4 py-2 font-medium text-right">
+                        {d.colDeposited}
+                      </th>
+                      <th className="px-4 py-2 font-medium text-right">
+                        {d.colEarnings}
+                      </th>
+                      <th className="px-4 py-2 font-medium text-right">
+                        {d.colCurrentValue}
+                      </th>
+                      <th className="px-4 py-2 font-medium text-right">
+                        {d.colApy}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {vaultRows.map((r) => (
+                      <tr
+                        key={r.vaultId}
+                        className="border-b border-border/50 last:border-0"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <TokenBadge symbol={r.asset} size={22} />
+                            <span className="font-medium text-foreground">
+                              {r.name}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-muted">{r.asset}</td>
+                        <td className="px-4 py-3 text-right font-mono text-foreground">
+                          {r.deposited.toFixed(2)} {r.asset}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-success">
+                          {r.price != null
+                            ? `+${fmtUsd(r.earnings * r.price)}`
+                            : `${r.earnings.toFixed(4)} ${r.asset}`}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono">
+                          <span className="text-success">
+                            {r.value.toFixed(2)} {r.asset}
+                          </span>
+                          {r.price != null && (
+                            <span className="block text-[10px] text-muted-light">
+                              {fmtUsd(r.value * r.price)}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-success">
+                          {r.apy != null ? `${r.apy.toFixed(2)}%` : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* quick actions */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-bold tracking-tight text-foreground">
+            {d.quickActions}
+          </h2>
+          <p className="text-xs text-muted">{d.quickActionsSub}</p>
         </div>
-        {isAuthenticated && (
-          <button
-            onClick={loadAll}
-            disabled={loading}
-            className={btn("secondary") + " shrink-0"}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {quickActions.map((a) => (
+            <Link
+              key={a.href}
+              href={a.href}
+              className="rounded-2xl border border-border bg-background p-4 transition-colors hover:border-primary/40"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-surface text-base">
+                {a.icon}
+              </span>
+              <p className="mt-3 text-sm font-semibold text-foreground">
+                {a.title}
+              </p>
+              <p className="text-xs text-muted">{a.sub}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* discover preview */}
+      <section className="space-y-3">
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-foreground">
+              {d.discoverTitle}
+            </h2>
+            <p className="text-xs text-muted">{d.discoverSub}</p>
+          </div>
+          <Link
+            href="/neko/discover"
+            className="text-[11px] font-medium text-primary hover:underline"
           >
-            {loading ? t.neko.loading : t.neko.refresh}
-          </button>
-        )}
-      </header>
-
-      {!isAuthenticated ? (
-        <div className="rounded-2xl border border-border bg-surface px-6 py-10 text-center">
-          <p className="text-sm text-muted">{t.neko.connect}</p>
+            {d.viewAll} →
+          </Link>
         </div>
-      ) : (
-        <>
-          {loadError && (
-            <div className="rounded-lg border border-error/40 bg-error/5 px-4 py-3 text-xs font-mono text-error">
-              {loadError}
-            </div>
-          )}
-
-          <Section title={t.neko.yieldsTitle} note={t.neko.yieldsNote}>
-            {yields && yields.length > 0 ? (
-              <div className="grid gap-3 sm:grid-cols-3">
-                {yields.map((y) => (
-                  <div
-                    key={y.symbol}
-                    className="rounded-2xl border border-border bg-background p-4"
-                  >
+        <div className="grid gap-4 sm:grid-cols-3">
+          {DISCOVER_ASSETS.slice(0, 3).map((a) => {
+            const price = prices?.prices?.[a.symbol]?.price;
+            const apy = apyBySymbol.get(a.symbol);
+            return (
+              <div
+                key={a.symbol}
+                className="rounded-2xl border border-border bg-background p-4"
+              >
+                <div className="flex items-center gap-3">
+                  <TokenBadge symbol={a.symbol} size={32} />
+                  <div className="min-w-0">
                     <p className="text-sm font-bold text-foreground">
-                      {y.symbol}
+                      {a.symbol}
                     </p>
-                    <p className="mt-1 text-2xl font-bold text-primary">
-                      {y.apy}%
-                    </p>
-                    <p className="text-[10px] font-mono text-muted-light uppercase tracking-wider">
-                      {t.neko.apy} · {y.currency}
-                    </p>
+                    <p className="truncate text-[11px] text-muted">{a.name}</p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs font-mono text-muted-light">
-                {t.neko.noYields}
-              </p>
-            )}
-          </Section>
-
-          <Section title={t.neko.pricesTitle} note={t.neko.pricesNote}>
-            <Raw data={prices} empty={t.neko.noData} />
-          </Section>
-
-          <Section title={t.neko.positionsTitle} note={t.neko.positionsNote}>
-            <Raw data={positions} empty={t.neko.noData} />
-          </Section>
-
-          <Section title={t.neko.catalogTitle} note={t.neko.catalogNote}>
-            <Raw data={catalog} empty={t.neko.noData} />
-          </Section>
-
-          <Section title={t.neko.signTitle} note={t.neko.signDesc}>
-            <div className="space-y-3">
-              <div>
-                <label className={lbl}>{t.neko.xdrLabel}</label>
-                <textarea
-                  value={xdr}
-                  onChange={(e) => setXdr(e.target.value)}
-                  placeholder={t.neko.xdrPh}
-                  rows={4}
-                  className={inp + " resize-y"}
-                />
-              </div>
-              <button
-                onClick={runFlow}
-                disabled={busy || !isMainnet}
-                className={btn("primary")}
-              >
-                {busy ? t.neko.running : t.neko.run}
-              </button>
-
-              <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
-                <Step label={t.neko.stepPrepare} state={steps.prepare} />
-                <Step label={t.neko.stepSign} state={steps.sign} />
-                <Step label={t.neko.stepSubmit} state={steps.submit} />
-                <Step label={t.neko.stepPoll} state={steps.poll} />
-              </div>
-
-              {txError && (
-                <p className="text-xs font-mono text-error">{txError}</p>
-              )}
-
-              {result ? (
-                <div className="rounded-xl border border-border bg-surface p-4 space-y-1.5">
-                  <p className="text-xs font-mono">
-                    <span className="text-muted">{t.neko.statusLabel}: </span>
-                    <span className={`font-semibold ${statusColor}`}>
-                      {result.status}
+                </div>
+                <div className="mt-3 flex items-baseline gap-2">
+                  <span className="text-xl font-bold text-foreground">
+                    {price != null && price > 0
+                      ? `$${price.toLocaleString(undefined, { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`
+                      : "—"}
+                  </span>
+                  {apy != null && (
+                    <span className="text-[11px] font-semibold text-success">
+                      ~{apy}% {t.nekoDiscover.apySuffix}
                     </span>
-                  </p>
-                  {result.hash && (
-                    <p className="text-[10px] font-mono text-muted-light break-all">
-                      {t.neko.hashLabel}: {result.hash}
-                    </p>
-                  )}
-                  {result.error && (
-                    <p className="text-[10px] font-mono text-error break-all">
-                      {result.error.code}
-                      {result.error.message ? ` — ${result.error.message}` : ""}
-                    </p>
                   )}
                 </div>
-              ) : (
-                !txError && (
-                  <p className="text-xs font-mono text-muted-light">
-                    {t.neko.resultIdle}
-                  </p>
-                )
-              )}
-            </div>
-          </Section>
-
-          <Section title={t.neko.recordTitle} note={t.neko.recordNote}>
-            <div className="space-y-3">
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div>
-                  <label className={lbl}>{t.neko.fActionType}</label>
-                  <input
-                    value={auditForm.action_type}
-                    onChange={(e) =>
-                      setAuditField("action_type", e.target.value)
-                    }
-                    className={inp}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>{t.neko.fPoolId}</label>
-                  <input
-                    value={auditForm.pool_id}
-                    onChange={(e) => setAuditField("pool_id", e.target.value)}
-                    className={inp}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>{t.neko.fAssetIn}</label>
-                  <input
-                    value={auditForm.asset_in}
-                    onChange={(e) => setAuditField("asset_in", e.target.value)}
-                    className={inp}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>{t.neko.fAmountIn}</label>
-                  <input
-                    value={auditForm.token_amount_in}
-                    onChange={(e) =>
-                      setAuditField("token_amount_in", e.target.value)
-                    }
-                    inputMode="decimal"
-                    className={inp}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>{t.neko.fAssetOut}</label>
-                  <input
-                    value={auditForm.asset_out}
-                    onChange={(e) => setAuditField("asset_out", e.target.value)}
-                    className={inp}
-                  />
-                </div>
-                <div>
-                  <label className={lbl}>{t.neko.fAmountOut}</label>
-                  <input
-                    value={auditForm.amount_out}
-                    onChange={(e) =>
-                      setAuditField("amount_out", e.target.value)
-                    }
-                    inputMode="decimal"
-                    className={inp}
-                  />
-                </div>
               </div>
-              <div>
-                <label className={lbl}>{t.neko.fTxHash}</label>
-                <input
-                  value={auditForm.tx_hash}
-                  onChange={(e) => setAuditField("tx_hash", e.target.value)}
-                  placeholder="ea5e82…"
-                  className={inp}
-                />
-                {result?.hash && result.hash === auditForm.tx_hash && (
-                  <p className="text-[10px] font-mono text-muted-light mt-1">
-                    {t.neko.txHashFromFlow}
-                  </p>
-                )}
-              </div>
-              <button
-                onClick={recordAudit}
-                disabled={auditBusy}
-                className={btn("primary")}
-              >
-                {auditBusy ? t.neko.recording : t.neko.record}
-              </button>
+            );
+          })}
+        </div>
+      </section>
 
-              {auditError && (
-                <p className="text-xs font-mono text-error">{auditError}</p>
-              )}
-              {auditResult?.ok && (
-                <p className="text-xs font-mono text-success">
-                  {t.neko.recordOk}
-                  {auditResult.isFirstVaultDeposit
-                    ? ` ${t.neko.firstDeposit}`
-                    : ""}
-                </p>
-              )}
-            </div>
-          </Section>
+      {/* top pools */}
+      <section className="space-y-3">
+        <div className="flex items-end justify-between">
+          <div>
+            <h2 className="text-lg font-bold tracking-tight text-foreground">
+              {d.topPools}
+            </h2>
+            <p className="text-xs text-muted">{d.topPoolsSub}</p>
+          </div>
+          <Link
+            href="/neko/pools"
+            className="text-[11px] font-medium text-primary hover:underline"
+          >
+            {d.viewAllPools} →
+          </Link>
+        </div>
+        <div className="overflow-x-auto rounded-2xl border border-border">
+          <table className="w-full min-w-[680px] text-left text-xs sm:text-sm">
+            <thead>
+              <tr className="border-b border-border text-[10px] font-mono uppercase tracking-wider text-muted-light">
+                <th className="px-4 py-2.5 font-medium">
+                  {t.nekoPools.protocol}
+                </th>
+                <th className="px-4 py-2.5 font-medium">{t.nekoPools.pool}</th>
+                <th className="px-4 py-2.5 font-medium text-right">
+                  {t.nekoPools.supplyApy}
+                </th>
+                <th className="px-4 py-2.5 font-medium text-right">
+                  {t.nekoPools.liquidity}
+                </th>
+                <th className="px-4 py-2.5 font-medium text-right">
+                  {t.nekoPools.borrowed}
+                </th>
+                <th className="px-4 py-2.5 font-medium text-right">
+                  {t.nekoPools.borrowApy}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {topPools.map((p) => (
+                <tr
+                  key={p.id}
+                  className="border-b border-border/50 last:border-0 hover:bg-surface/50"
+                >
+                  <td className="px-4 py-2.5 text-muted whitespace-nowrap">
+                    {PROTOCOL_LABEL[p.type] ?? p.type}
+                  </td>
+                  <td className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <TokenBadges
+                        symbols={p.tokens.map((tk) => tk.code)}
+                        size={22}
+                      />
+                      <span className="font-medium text-foreground">
+                        {p.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-success">
+                    {fmtPct(poolSupplyApy(p))}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-foreground">
+                    {poolUsdLabel(p.tvl, p.tokens[0], prices)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-muted">
+                    {poolUsdLabel(
+                      p.metadata?.totalLiabilities,
+                      p.tokens[0],
+                      prices,
+                    )}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-mono text-muted">
+                    {fmtPct(poolBorrowApy(p))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-          <Section title={t.neko.auditTitle} note={t.neko.auditNote}>
-            {audit && audit.length > 0 ? (
-              <AuditTable rows={audit} />
-            ) : (
-              <p className="text-xs font-mono text-muted-light">
-                {t.neko.auditEmpty}
-              </p>
-            )}
-          </Section>
-
-          <Section title={t.neko.flowTitle}>
-            <CodePanel
-              sdk="@pollar/react"
-              note="signTx + Neko proxy"
-              code={FLOW_CODE}
-            />
-          </Section>
-        </>
+      {/* developer tools (Pollar SDK flow) */}
+      {isAuthenticated ? (
+        <NekoDevTools walletAddress={walletAddress} />
+      ) : (
+        <div className="rounded-2xl border border-border bg-surface px-6 py-8 text-center">
+          <p className="text-sm text-muted">{d.connect}</p>
+        </div>
       )}
     </div>
   );

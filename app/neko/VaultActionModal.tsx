@@ -3,7 +3,7 @@
 import { usePollar } from "@pollar/react";
 import { useEffect, useState } from "react";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
-import { nekoPost, type VaultCatalogEntry } from "./_lib";
+import { recordAudit, type VaultCatalogEntry } from "./_lib";
 import { useNekoMainnet } from "./_MainnetGate";
 import {
   depositArgs,
@@ -11,6 +11,8 @@ import {
   sharesForWithdraw,
   toRaw,
   withdrawArgs,
+  ASSET_DP,
+  PPS_DP,
   SHARES_DP,
 } from "./_vault";
 
@@ -53,6 +55,8 @@ export function VaultActionModal({
     enabledAssets,
     refreshAssets,
     setTrustline,
+    walletBalance,
+    refreshWalletBalance,
   } = usePollar();
   const walletAddress = wallet?.address ?? "";
   const isMainnet = useNekoMainnet();
@@ -67,6 +71,14 @@ export function VaultActionModal({
   const [error, setError] = useState<string | null>(null);
   const [tlBusy, setTlBusy] = useState(false);
   const [tlError, setTlError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // The modal's own live data: the spendable balance and the trustline state.
+  async function refreshAll() {
+    setRefreshing(true);
+    await Promise.allSettled([refreshWalletBalance(), refreshAssets()]);
+    setRefreshing(false);
+  }
 
   const asset = vault.supplyAsset.symbol;
 
@@ -86,6 +98,39 @@ export function VaultActionModal({
   useEffect(() => {
     if (enabledAssets.step === "idle") refreshAssets().catch(() => {});
   }, [enabledAssets.step, refreshAssets]);
+
+  // Load the wallet's balances so a deposit can show what's actually spendable.
+  useEffect(() => {
+    if (walletBalance.step === "idle") refreshWalletBalance().catch(() => {});
+  }, [walletBalance.step, refreshWalletBalance]);
+
+  // Spendable balance of the vault's underlying asset (deposit ceiling).
+  const balanceRecord =
+    walletBalance.step === "loaded"
+      ? walletBalance.data.balances.find((b) => b.code === asset)
+      : undefined;
+  const balanceLoading =
+    walletBalance.step === "idle" || walletBalance.step === "loading";
+  const available = balanceRecord ? Number(balanceRecord.balance) : null;
+
+  // Everything the position is currently worth in the underlying asset — the
+  // most this wallet could pull out (withdraw ceiling).
+  const maxWithdraw = position
+    ? (Number(position.userShares) * Number(position.pricePerShare)) /
+      10 ** (SHARES_DP + PPS_DP)
+    : 0;
+
+  // The ceiling that applies to the field currently on screen.
+  const maxAmount = isWithdraw ? maxWithdraw : available;
+
+  // Compare at the asset's precision so a "MAX" fill never trips its own check.
+  const overMax =
+    maxAmount != null &&
+    !!amount.trim() &&
+    Number(amount) - maxAmount > 1 / 10 ** ASSET_DP;
+
+  const fmtAmount = (n: number) =>
+    n.toLocaleString(undefined, { maximumFractionDigits: ASSET_DP });
 
   async function activateTrustline() {
     if (!assetRecord?.issuer) return;
@@ -121,6 +166,12 @@ export function VaultActionModal({
     if (!walletAddress) return;
     if (!amount.trim() || Number(amount) <= 0) {
       setError(t.nekoVaults.enterAmount);
+      return;
+    }
+    if (overMax) {
+      setError(
+        isWithdraw ? t.nekoVaults.exceedsPosition : t.nekoVaults.exceedsBalance,
+      );
       return;
     }
     setBusy(true);
@@ -174,17 +225,29 @@ export function VaultActionModal({
           ? Number(amount)
           : (sharesForDeposit(amount, position?.pricePerShare) ??
             Number(amount));
-        await nekoPost("/v1/audit", {
-          wallet_address: walletAddress,
-          action_type: isWithdraw ? "vaults_withdraw" : "vaults_deposit",
-          asset_in: isWithdraw ? vault.name : asset,
-          token_amount_in: tokenIn,
-          asset_out: isWithdraw ? asset : vault.name,
-          amount_out: amountOut,
-          pool_id: vault.id,
-          tx_hash: outcome.hash,
-        }).catch(() => {});
-        mark("audit", "done");
+        try {
+          await recordAudit({
+            wallet_address: walletAddress,
+            action_type: isWithdraw ? "vaults_withdraw" : "vaults_deposit",
+            asset_in: isWithdraw ? vault.name : asset,
+            token_amount_in: tokenIn,
+            asset_out: isWithdraw ? asset : vault.name,
+            amount_out: amountOut,
+            pool_id: vault.id,
+            tx_hash: outcome.hash ?? "",
+          });
+          mark("audit", "done");
+        } catch (e) {
+          // The transaction IS on-chain — only the bookkeeping failed. Say so
+          // loudly and hand over the hash, because a dropped audit silently
+          // corrupts the deposited/earnings figures until someone backfills it.
+          mark("audit", "error");
+          setError(
+            `${t.nekoVaults.auditFailed} ${
+              e instanceof Error ? e.message : String(e)
+            } — tx ${outcome.hash ?? "?"}`,
+          );
+        }
         onDone();
       }
     } catch (e) {
@@ -221,27 +284,86 @@ export function VaultActionModal({
             </h2>
             <p className="text-xs text-muted mt-0.5">{vault.name}</p>
           </div>
-          <button
-            onClick={onClose}
-            className="text-muted hover:text-foreground text-sm"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={refreshAll}
+              disabled={refreshing || busy}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:opacity-40"
+            >
+              {refreshing ? t.nekoVaults.loading : t.nekoVaults.refresh}
+            </button>
+            <button
+              onClick={onClose}
+              className="text-muted hover:text-foreground text-sm"
+            >
+              ✕
+            </button>
+          </div>
         </div>
 
         <div>
-          <label className="block text-xs font-mono text-muted mb-1">
-            {t.nekoVaults.amountLabel} ({asset})
-          </label>
-          <input
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            inputMode="decimal"
-            placeholder="0.0"
-            disabled={busy || isClaim}
-            readOnly={isClaim}
-            className="w-full rounded-lg border border-border bg-transparent px-3 py-2 text-sm font-mono outline-none focus:border-primary placeholder:text-muted-light disabled:opacity-70"
-          />
+          <div className="mb-1 flex items-baseline justify-between gap-2">
+            <label className="block text-xs font-mono text-muted">
+              {t.nekoVaults.amountLabel} ({asset})
+            </label>
+            {/* Deposit shows the spendable wallet balance; withdraw shows the
+                position's full value. Claim's amount is fixed, so neither applies. */}
+            {!isClaim && (
+              <span className="text-[11px] font-mono text-muted-light">
+                {isWithdraw ? (
+                  <>
+                    {t.nekoVaults.maxWithdraw}:{" "}
+                    <span className="text-foreground">
+                      {fmtAmount(maxWithdraw)} {asset}
+                    </span>
+                  </>
+                ) : balanceLoading ? (
+                  t.nekoVaults.loading
+                ) : available == null ? (
+                  t.nekoVaults.noBalance
+                ) : (
+                  <>
+                    {t.nekoVaults.available}:{" "}
+                    <span className="text-foreground">
+                      {fmtAmount(available)} {asset}
+                    </span>
+                  </>
+                )}
+              </span>
+            )}
+          </div>
+          <div className="relative">
+            <input
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              inputMode="decimal"
+              placeholder="0.0"
+              disabled={busy || isClaim}
+              readOnly={isClaim}
+              className={`w-full rounded-lg border bg-transparent px-3 py-2 pr-14 text-sm font-mono outline-none placeholder:text-muted-light disabled:opacity-70 ${
+                overMax
+                  ? "border-error focus:border-error"
+                  : "border-border focus:border-primary"
+              }`}
+            />
+            {!isClaim && maxAmount != null && maxAmount > 0 && (
+              <button
+                type="button"
+                onClick={() => setAmount(String(maxAmount))}
+                disabled={busy}
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md bg-surface px-2 py-1 text-[10px] font-semibold text-primary hover:bg-primary-light disabled:opacity-40 transition-colors"
+              >
+                {t.nekoVaults.maxBtn}
+              </button>
+            )}
+          </div>
+          {overMax && (
+            <p className="mt-1 text-[11px] font-mono text-error">
+              {isWithdraw
+                ? t.nekoVaults.exceedsPosition
+                : t.nekoVaults.exceedsBalance}
+            </p>
+          )}
         </div>
 
         {needsTrustline ? (
@@ -265,7 +387,7 @@ export function VaultActionModal({
         ) : (
           <button
             onClick={run}
-            disabled={busy || !isMainnet}
+            disabled={busy || !isMainnet || overMax}
             className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors"
           >
             {busy

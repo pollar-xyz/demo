@@ -21,7 +21,10 @@ const ALLOW: { method: Method; re: RegExp }[] = [
   { method: "GET", re: /^\/dashboard\/pool-catalog$/ },
   { method: "GET", re: /^\/dashboard\/prices$/ },
   { method: "GET", re: /^\/dashboard\/positions\/G[A-Z2-7]{55}$/ },
-  { method: "GET", re: /^\/v1\/pool-rates\/[A-Za-z0-9._-]+$/ },
+  // Pool ids are protocol-prefixed and colon-separated
+  // ("blend:C<pool>:C<asset>", "aqua:C<pool>"), so ":" must be allowed here.
+  { method: "GET", re: /^\/v1\/pool-rates\/[A-Za-z0-9:._-]+$/ },
+  { method: "GET", re: /^\/v1\/contract-activity\/[A-Za-z0-9:._-]+$/ },
   { method: "GET", re: /^\/users$/ },
   { method: "POST", re: /^\/users$/ },
   { method: "POST", re: /^\/v1\/tx\/prepare$/ },
@@ -56,6 +59,10 @@ async function forward(
     );
   }
 
+  // Next hands us the path already decoded, so re-encode each segment before
+  // forwarding — pool ids contain ":" and must reach the proxy as %3A.
+  const forwardPath = "/" + path.map(encodeURIComponent).join("/");
+
   const headers: Record<string, string> = { "x-server-code": CODE };
   let body: string | undefined;
   if (method === "POST") {
@@ -67,7 +74,7 @@ async function forward(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const upstream = await fetch(`${BASE}${upstreamPath}${req.nextUrl.search}`, {
+    const upstream = await fetch(`${BASE}${forwardPath}${req.nextUrl.search}`, {
       method,
       headers,
       body,

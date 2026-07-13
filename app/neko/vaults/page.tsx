@@ -11,124 +11,99 @@ import {
   type PriceMap,
   type VaultCatalogEntry,
 } from "../_lib";
-import { fmtUsd, scaleAmount } from "../_format";
+import { fmtUsd } from "../_format";
 import { ASSET_DP } from "../_vault";
 import { VaultActionModal, type VaultPositionLite } from "../VaultActionModal";
 import { useNekoMainnet } from "../_MainnetGate";
+import { Chip, NekoBanner, TokenBadge } from "../_ui";
+import {
+  computeVaultRows,
+  computeVaultSummary,
+  iconUrl,
+  mapDefindexVaults,
+  positionsByVault,
+  type VaultPositionRow,
+} from "../_vaultData";
 
-const NEKO_APP = "https://app.nekoprotocol.xyz";
-const SHARES_DP = 7; // DeFindex vault share decimals
-const PPS_DP = 12; // price-per-share fixed-point decimals
-
-// Vault asset icons are served by the Neko app (relative) or a CDN (absolute).
-function iconUrl(src?: string): string | null {
-  if (!src) return null;
-  return src.startsWith("http") ? src : `${NEKO_APP}${src}`;
-}
-
-function parseApy(s?: string): number | null {
-  if (!s || s === "-") return null;
-  const n = Number(s.replace("%", ""));
-  return Number.isFinite(n) ? n : null;
-}
-
-// The backend proxy returns raw on-chain vault data; the UI wants display-ready
-// rows. TVL = total managed funds (underlying units) × USD price — both come
-// from the proxy response, with prices keyed by the asset's contract address.
-// APY arrives as a bare number, so we stringify it to the "6.78%" form the card
-// already renders. Icons/network/category aren't in the raw data (the card
-// falls back to the asset-symbol badge).
-function mapDefindexVaults(res: DefindexVaultsResponse): VaultCatalogEntry[] {
-  const prices = res.prices ?? {};
-  return (res.vaults ?? []).map(({ contractId, info }) => {
-    const fund = info.totalManagedFunds?.[0];
-    const asset = info.assets?.[0];
-    const assetAddr = fund?.asset ?? asset?.address;
-    const price = assetAddr ? prices[assetAddr] : undefined;
-    const underlying = fund ? scaleAmount(fund.total_amount, ASSET_DP) : 0;
-    return {
-      id: contractId,
-      name: info.name,
-      supplyAsset: {
-        symbol: asset?.symbol ?? info.symbol,
-        name: asset?.name,
-        contractAddress: asset?.address,
-      },
-      tvl: price != null ? fmtUsd(underlying * price) : undefined,
-      apy7d: info.apy != null ? `${info.apy.toFixed(2)}%` : undefined,
-    };
-  });
-}
-
-type VaultPositionRow = {
-  vaultId: string;
-  name: string;
-  asset: string;
-  icon: string | null;
-  deposited: number; // asset units
-  value: number; // asset units
-  earnings: number; // asset units
-  apy: number | null;
-  price: number | null;
+type Action = {
+  mode: "deposit" | "withdraw" | "claim";
+  vault: VaultCatalogEntry;
+  position?: VaultPositionLite;
+  presetAmount?: string;
 };
 
+const fmtAsset = (n: number) =>
+  n.toLocaleString(undefined, { maximumFractionDigits: 4 });
+
+// One vault, plus this wallet's position in it when there is one. The position
+// block deliberately shows only what the card doesn't already say (the vault's
+// name, asset and APY are above it): deposited, current value, earnings, claim.
 function VaultCard({
   v,
+  row,
   t,
   canAct,
-  canWithdraw,
+  isMainnet,
   onDeposit,
   onWithdraw,
+  onClaim,
 }: {
   v: VaultCatalogEntry;
+  row?: VaultPositionRow;
   t: ReturnType<typeof useI18n>["t"];
   canAct: boolean;
-  canWithdraw: boolean;
+  isMainnet: boolean;
   onDeposit: () => void;
   onWithdraw: () => void;
+  onClaim: () => void;
 }) {
+  const vt = t.nekoVaults;
   const icon = iconUrl(v.supplyAsset.iconSrc);
+  const asset = v.supplyAsset.symbol;
+  const canClaim = !!row && row.earnings > 0 && isMainnet;
+
   return (
-    <div className="rounded-2xl border border-border bg-background p-5 space-y-4">
+    <div className="flex flex-col rounded-2xl border border-border bg-background p-5">
       <div className="flex items-start gap-3">
         {icon ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={icon}
-            alt={v.supplyAsset.symbol}
-            className="h-9 w-9 rounded-full bg-surface object-contain"
+            alt={asset}
+            className="h-10 w-10 rounded-full bg-surface object-contain"
           />
         ) : (
-          <div className="h-9 w-9 rounded-full bg-surface flex items-center justify-center text-[10px] font-bold text-muted">
-            {v.supplyAsset.symbol.slice(0, 3)}
-          </div>
+          <TokenBadge symbol={asset} size={40} />
         )}
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold text-foreground truncate">{v.name}</p>
-          <div className="mt-0.5 flex items-center gap-2">
-            {v.category && (
-              <span className="rounded-md bg-primary-light px-1.5 py-0.5 text-[10px] font-semibold text-primary capitalize">
-                {v.category}
-              </span>
-            )}
-            <span className="text-[10px] font-mono text-muted-light">
-              {v.supplyAsset.symbol}
-              {v.supplyAsset.network ? ` · ${v.supplyAsset.network}` : ""}
-            </span>
+          <p className="truncate text-sm font-bold text-foreground">{v.name}</p>
+          <div className="mt-1">
+            <Chip tone="primary">{vt.lending}</Chip>
           </div>
         </div>
       </div>
 
-      <div className="flex items-end justify-between">
+      <div className="mt-4 space-y-1 text-[11px] text-muted">
+        <p>
+          {vt.supply}{" "}
+          <span className="font-semibold text-foreground">{asset}</span> {vt.on}{" "}
+          <span className="text-foreground">{vt.stellar}</span>
+        </p>
+        <p>
+          {vt.createdBy} <span className="text-foreground">Neko</span>
+        </p>
+      </div>
+
+      <div className="mt-3 flex items-end justify-between border-t border-border/60 pt-3">
         <div>
-          <p className="text-[10px] font-mono text-muted-light uppercase tracking-wider">
-            {t.nekoVaults.tvl}
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
+            {vt.tvl}
           </p>
           <p className="text-sm font-bold text-foreground">{v.tvl ?? "—"}</p>
         </div>
         <div className="text-right">
-          <p className="text-[10px] font-mono text-muted-light uppercase tracking-wider">
-            {t.nekoVaults.apy}
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
+            {vt.apy}
           </p>
           <p className="text-sm font-bold text-success">
             {v.apy7d && v.apy7d !== "-" ? v.apy7d : "—"}
@@ -136,35 +111,78 @@ function VaultCard({
         </div>
       </div>
 
+      {row && (
+        <div className="mt-3 rounded-xl bg-surface p-3">
+          <p className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
+            {vt.yourPosition}
+          </p>
+          <dl className="mt-2 space-y-1.5 text-xs">
+            <div className="flex items-baseline justify-between gap-2">
+              <dt className="text-muted">{vt.deposited}</dt>
+              <dd className="font-mono text-foreground">
+                {fmtAsset(row.deposited)} {asset}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <dt className="text-muted">{vt.value}</dt>
+              <dd className="text-right font-mono text-foreground">
+                {fmtAsset(row.value)} {asset}
+                {row.price != null && (
+                  <span className="ml-1 text-[10px] text-muted-light">
+                    ({fmtUsd(row.value * row.price)})
+                  </span>
+                )}
+              </dd>
+            </div>
+            <div className="flex items-baseline justify-between gap-2">
+              <dt className="text-muted">{vt.earnings}</dt>
+              <dd
+                className={`font-mono ${row.earnings > 0 ? "text-success" : "text-muted"}`}
+              >
+                {row.earnings > 0 ? "+" : ""}
+                {fmtAsset(row.earnings)} {asset}
+              </dd>
+            </div>
+          </dl>
+          <button
+            onClick={onClaim}
+            disabled={!canClaim}
+            title={canClaim ? undefined : vt.claimNone}
+            className="mt-3 w-full rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {canClaim
+              ? `${vt.claim} ${fmtAsset(row.earnings)} ${asset}`
+              : vt.claim}
+          </button>
+        </div>
+      )}
+
       <div
-        className="grid grid-cols-2 gap-2"
-        title={canAct ? undefined : t.nekoVaults.connect}
+        className="mt-4 grid grid-cols-2 gap-2"
+        title={canAct ? undefined : vt.connect}
       >
         <button
           onClick={onDeposit}
           disabled={!canAct}
-          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          className="rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {t.nekoVaults.deposit}
+          {vt.deposit}
         </button>
         <button
           onClick={onWithdraw}
-          disabled={!canAct || !canWithdraw}
-          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+          disabled={!canAct || !row}
+          className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {t.nekoVaults.withdraw}
+          {vt.withdraw}
         </button>
       </div>
-
-      <p className="text-[10px] font-mono text-muted-light">
-        {t.nekoVaults.createdBy} {v.createdBy ?? "—"}
-      </p>
     </div>
   );
 }
 
 export default function NekoVaultsPage() {
   const { t } = useI18n();
+  const vt = t.nekoVaults;
   const { isAuthenticated, wallet } = usePollar();
   const walletAddress = wallet?.address ?? "";
   const isMainnet = useNekoMainnet();
@@ -175,13 +193,8 @@ export default function NekoVaultsPage() {
   const [prices, setPrices] = useState<PriceMap | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [view, setView] = useState<"vaults" | "positions">("vaults");
-  const [action, setAction] = useState<{
-    mode: "deposit" | "withdraw" | "claim";
-    vault: VaultCatalogEntry;
-    position?: VaultPositionLite;
-    presetAmount?: string;
-  } | null>(null);
+  const [asset, setAsset] = useState("all");
+  const [action, setAction] = useState<Action | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -199,13 +212,12 @@ export default function NekoVaultsPage() {
         nekoGet<Positions>(`/dashboard/positions/${walletAddress}`),
         nekoGet<AuditRecord[]>(`/v1/audit?limit=50&wallet=${walletAddress}`),
       ]);
-      setPositions(pos.status === "fulfilled" ? pos.value : null);
+      const posValue = pos.status === "fulfilled" ? pos.value : null;
+      setPositions(posValue);
       setAudit(aud.status === "fulfilled" ? aud.value : []);
       // Prices for the assets of vaults the wallet actually holds.
       const ids = new Set(
-        (pos.status === "fulfilled" ? pos.value.vaultPositions : []).map((vp) =>
-          String(vp.vaultId),
-        ),
+        (posValue?.vaultPositions ?? []).map((vp) => String(vp.vaultId)),
       );
       const symbols = Array.from(
         new Set(
@@ -229,103 +241,63 @@ export default function NekoVaultsPage() {
     load();
   }, [load]);
 
-  const posByVault = useMemo(() => {
-    const m = new Map<string, VaultPositionLite>();
-    for (const vp of positions?.vaultPositions ?? []) {
-      m.set(String(vp.vaultId), {
-        userShares: String(vp.userShares),
-        pricePerShare: String(vp.pricePerShare),
-      });
-    }
-    return m;
-  }, [positions]);
+  const posByVault = useMemo(() => positionsByVault(positions), [positions]);
 
-  // Join positions ⨯ catalog ⨯ audit ⨯ prices into displayable vault rows.
-  const rows: VaultPositionRow[] = useMemo(() => {
-    if (!positions) return [];
-    const catById = new Map(vaults.map((v) => [v.id, v]));
-    const out: VaultPositionRow[] = [];
-    for (const vp of positions.vaultPositions) {
-      const id = String(vp.vaultId);
-      const cat = catById.get(id);
-      if (!cat) continue; // only DeFindex catalog vaults belong on this tab
-      const shares = Number(vp.userShares);
-      const pps = Number(vp.pricePerShare);
-      const value = (shares * pps) / 10 ** (SHARES_DP + PPS_DP);
-      const deposited = audit
-        .filter((a) => a.pool_id === id)
-        .reduce((sum, a) => {
-          if (a.action_type === "vaults_deposit")
-            return sum + (a.token_amount_in || 0);
-          if (a.action_type === "vaults_withdraw")
-            return sum - (a.token_amount_in || 0);
-          return sum;
-        }, 0);
-      out.push({
-        vaultId: id,
-        name: cat.name,
-        asset: cat.supplyAsset.symbol,
-        icon: iconUrl(cat.supplyAsset.iconSrc),
-        deposited,
-        value,
-        earnings: value - deposited,
-        apy: parseApy(cat.apy7d),
-        price: prices?.prices?.[cat.supplyAsset.symbol]?.price ?? null,
-      });
-    }
-    return out;
-  }, [positions, vaults, audit, prices]);
+  const rows = useMemo(
+    () => computeVaultRows(positions, vaults, audit, prices),
+    [positions, vaults, audit, prices],
+  );
+  const rowByVault = useMemo(
+    () => new Map(rows.map((r) => [r.vaultId, r])),
+    [rows],
+  );
+  const summary = useMemo(() => computeVaultSummary(rows), [rows]);
 
-  const summary = useMemo(() => {
-    let dep = 0;
-    let val = 0;
-    let earn = 0;
-    let apyWeighted = 0;
-    for (const r of rows) {
-      const p = r.price ?? 0;
-      dep += r.deposited * p;
-      val += r.value * p;
-      earn += r.earnings * p;
-      if (r.apy != null) apyWeighted += r.apy * r.value * p;
-    }
-    const netApy = val > 0 ? apyWeighted / val : 0;
-    return { dep, val, earn, netApy, projected: (val * netApy) / 100 };
-  }, [rows]);
+  const assetOptions = useMemo(
+    () => Array.from(new Set(vaults.map((v) => v.supplyAsset.symbol))).sort(),
+    [vaults],
+  );
+
+  // Filter by asset, then float the vaults this wallet is actually in to the
+  // top so a position is never buried below vaults the user has no stake in.
+  const visibleVaults = useMemo(() => {
+    const filtered =
+      asset === "all"
+        ? vaults
+        : vaults.filter((v) => v.supplyAsset.symbol === asset);
+    return [...filtered].sort((a, b) => {
+      const aHas = rowByVault.has(a.id) ? 1 : 0;
+      const bHas = rowByVault.has(b.id) ? 1 : 0;
+      return bHas - aHas;
+    });
+  }, [vaults, asset, rowByVault]);
 
   return (
     <div className="w-full space-y-6">
-      <header className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-            {t.nekoVaults.title}
-          </h1>
-          <p className="text-sm text-muted max-w-2xl">{t.nekoVaults.desc}</p>
-        </div>
+      <NekoBanner eyebrow={vt.bannerTag} title={vt.title} desc={vt.tagline} />
+
+      <div className="flex items-center justify-end gap-2">
+        {assetOptions.length > 0 && (
+          <select
+            value={asset}
+            onChange={(e) => setAsset(e.target.value)}
+            className="rounded-lg border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-foreground outline-none focus:border-primary"
+          >
+            <option value="all">{vt.allAssets}</option>
+            {assetOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        )}
         <button
           onClick={load}
           disabled={loading}
-          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-surface disabled:opacity-40 transition-colors"
+          className="shrink-0 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-surface disabled:opacity-40"
         >
-          {loading ? t.nekoVaults.loading : t.nekoVaults.refresh}
+          {loading ? vt.loading : vt.refresh}
         </button>
-      </header>
-
-      <div className="flex items-center gap-2">
-        {(["vaults", "positions"] as const).map((v) => (
-          <button
-            key={v}
-            onClick={() => setView(v)}
-            className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
-              view === v
-                ? "bg-primary text-white"
-                : "border border-border text-muted hover:text-foreground"
-            }`}
-          >
-            {v === "vaults"
-              ? t.nekoVaults.tabVaults
-              : t.nekoVaults.tabPositions}
-          </button>
-        ))}
       </div>
 
       {error && (
@@ -334,196 +306,79 @@ export default function NekoVaultsPage() {
         </div>
       )}
 
-      {view === "vaults" ? (
-        vaults.length === 0 ? (
-          <p className="text-xs font-mono text-muted-light">
-            {loading ? t.nekoVaults.loading : t.nekoVaults.noVaults}
-          </p>
-        ) : (
-          <>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {vaults.map((v) => (
-                <VaultCard
-                  key={v.id}
-                  v={v}
-                  t={t}
-                  canAct={isAuthenticated && isMainnet}
-                  canWithdraw={posByVault.has(v.id)}
-                  onDeposit={() => setAction({ mode: "deposit", vault: v })}
-                  onWithdraw={() =>
-                    setAction({
-                      mode: "withdraw",
-                      vault: v,
-                      position: posByVault.get(v.id),
-                    })
-                  }
-                />
-              ))}
+      {/* Portfolio totals across every vault — only meaningful once there's a
+          position, and not derivable from any single card. */}
+      {rows.length > 0 && (
+        <div className="overflow-hidden rounded-2xl border border-border">
+          <div className="border-b border-border px-4 py-3">
+            <span className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
+              {vt.portfolioTitle}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 divide-x divide-border md:grid-cols-4">
+            <div className="px-4 py-4">
+              <p className="mb-1 text-xs text-muted">{vt.totalDeposited}</p>
+              <p className="text-sm font-bold text-foreground">
+                {fmtUsd(summary.dep)}
+              </p>
             </div>
-          </>
-        )
-      ) : !isAuthenticated ? (
-        <div className="rounded-2xl border border-border bg-surface px-6 py-10 text-center">
-          <p className="text-sm text-muted">{t.nekoVaults.connect}</p>
+            <div className="px-4 py-4">
+              <p className="mb-1 text-xs text-muted">{vt.totalEarnings}</p>
+              <p className="text-sm font-bold text-success">
+                {fmtUsd(summary.earn)}
+              </p>
+            </div>
+            <div className="px-4 py-4">
+              <p className="mb-1 text-xs text-muted">{vt.netApy}</p>
+              <p className="text-sm font-bold text-success">
+                {summary.netApy.toFixed(2)}%
+              </p>
+            </div>
+            <div className="px-4 py-4">
+              <p className="mb-1 text-xs text-muted">{vt.projectedYield}</p>
+              <p className="text-sm font-bold text-foreground">
+                {fmtUsd(summary.projected)}
+              </p>
+            </div>
+          </div>
         </div>
-      ) : rows.length === 0 ? (
+      )}
+
+      {visibleVaults.length === 0 ? (
         <p className="text-xs font-mono text-muted-light">
-          {loading ? t.nekoVaults.loading : t.nekoVaults.noPositions}
+          {loading ? vt.loading : vt.noVaults}
         </p>
       ) : (
-        <div className="space-y-6">
-          {/* portfolio summary */}
-          <div className="rounded-2xl border border-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
-                {t.nekoVaults.portfolioTitle}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-border">
-              <div className="px-4 py-4">
-                <p className="text-xs text-muted mb-1">
-                  {t.nekoVaults.totalDeposited}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  {fmtUsd(summary.dep)}
-                </p>
-              </div>
-              <div className="px-4 py-4">
-                <p className="text-xs text-muted mb-1">
-                  {t.nekoVaults.totalEarnings}
-                </p>
-                <p className="text-sm font-bold text-success">
-                  {fmtUsd(summary.earn)}
-                </p>
-              </div>
-              <div className="px-4 py-4">
-                <p className="text-xs text-muted mb-1">{t.nekoVaults.netApy}</p>
-                <p className="text-sm font-bold text-success">
-                  {summary.netApy.toFixed(2)}%
-                </p>
-              </div>
-              <div className="px-4 py-4">
-                <p className="text-xs text-muted mb-1">
-                  {t.nekoVaults.projectedYield}
-                </p>
-                <p className="text-sm font-bold text-foreground">
-                  {fmtUsd(summary.projected)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* positions table */}
-          <div className="rounded-2xl border border-border overflow-hidden">
-            <div className="px-4 py-3 border-b border-border">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-muted-light">
-                {t.nekoVaults.posTitle}
-              </span>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[640px] text-left text-xs sm:text-sm">
-                <thead>
-                  <tr className="border-b border-border text-[10px] font-mono uppercase tracking-wider text-muted-light">
-                    <th className="px-4 py-2.5 font-medium">
-                      {t.nekoVaults.vaultCol}
-                    </th>
-                    <th className="px-4 py-2.5 font-medium">
-                      {t.nekoVaults.assetCol}
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-right">
-                      {t.nekoVaults.deposited}
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-right">
-                      {t.nekoVaults.earnings}
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-right">
-                      {t.nekoVaults.value}
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-right">
-                      {t.nekoVaults.apyPos}
-                    </th>
-                    <th className="px-4 py-2.5 font-medium text-right">
-                      {t.nekoVaults.claim}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map((r) => {
-                    // Claim withdraws only the accrued yield (value − deposited),
-                    // leaving the principal invested — mirrors Neko's "Claim".
-                    const cat = vaults.find((v) => v.id === r.vaultId);
-                    const pos = posByVault.get(r.vaultId);
-                    const canClaim =
-                      !!cat && !!pos && r.earnings > 0 && isMainnet;
-                    return (
-                      <tr
-                        key={r.vaultId}
-                        className="border-b border-border/50 last:border-0"
-                      >
-                        <td className="px-4 py-3">
-                          <div className="flex items-center gap-2">
-                            {r.icon && (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={r.icon}
-                                alt={r.asset}
-                                className="h-6 w-6 rounded-full bg-surface object-contain"
-                              />
-                            )}
-                            <span className="font-medium text-foreground">
-                              {r.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="px-4 py-3 text-muted">{r.asset}</td>
-                        <td className="px-4 py-3 text-right font-mono text-foreground">
-                          {r.deposited.toFixed(2)} {r.asset}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-success">
-                          {r.price != null
-                            ? `+${fmtUsd(r.earnings * r.price)}`
-                            : `${r.earnings.toFixed(4)} ${r.asset}`}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono">
-                          <span className="text-success">
-                            {r.value.toFixed(2)} {r.asset}
-                          </span>
-                          {r.price != null && (
-                            <span className="block text-[10px] text-muted-light">
-                              {fmtUsd(r.value * r.price)}
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono text-success">
-                          {r.apy != null ? `${r.apy.toFixed(2)}%` : "—"}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <button
-                            onClick={() =>
-                              cat &&
-                              setAction({
-                                mode: "claim",
-                                vault: cat,
-                                position: pos,
-                                presetAmount: r.earnings.toFixed(ASSET_DP),
-                              })
-                            }
-                            disabled={!canClaim}
-                            title={
-                              canClaim ? undefined : t.nekoVaults.claimNone
-                            }
-                            className="rounded-lg bg-primary px-2.5 py-1 text-xs font-semibold text-white hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                          >
-                            {t.nekoVaults.claim}
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {visibleVaults.map((v) => {
+            const row = rowByVault.get(v.id);
+            const pos = posByVault.get(v.id);
+            return (
+              <VaultCard
+                key={v.id}
+                v={v}
+                row={row}
+                t={t}
+                canAct={isAuthenticated && isMainnet}
+                isMainnet={isMainnet}
+                onDeposit={() => setAction({ mode: "deposit", vault: v })}
+                onWithdraw={() =>
+                  setAction({ mode: "withdraw", vault: v, position: pos })
+                }
+                // Claim withdraws only the accrued yield (value − deposited),
+                // leaving the principal invested — mirrors Neko's "Claim".
+                onClaim={() =>
+                  row &&
+                  setAction({
+                    mode: "claim",
+                    vault: v,
+                    position: pos,
+                    presetAmount: row.earnings.toFixed(ASSET_DP),
+                  })
+                }
+              />
+            );
+          })}
         </div>
       )}
 

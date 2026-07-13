@@ -8,12 +8,18 @@ export const ASSET_DP = 7; // Neko RWA assets are 7-decimal
 export const SHARES_DP = 7; // DeFindex vault shares are 7-decimal
 export const PPS_DP = 12; // price-per-share fixed-point decimals
 
-// Subset of Pollar's invoke_contract ScValArg union that we use.
+// Subset of Pollar's invoke_contract ScValArg union that we use. `map` models a
+// Soroban struct (an ScMap with symbol keys) — Blend's `Request` needs it; Aqua
+// takes u128 amounts rather than i128.
 export type ScArg =
   | { type: "bool"; value: boolean }
+  | { type: "u32"; value: number }
   | { type: "i128"; value: string }
+  | { type: "u128"; value: string }
   | { type: "address"; value: string }
-  | { type: "vec"; value: ScArg[] };
+  | { type: "symbol"; value: string }
+  | { type: "vec"; value: ScArg[] }
+  | { type: "map"; value: { key: ScArg; val: ScArg }[] };
 
 // Human decimal string → smallest-unit bigint, without floats.
 export function toRaw(amount: string, decimals = ASSET_DP): bigint {

@@ -183,6 +183,7 @@ export const ALL_GROUPS: NavGroup[] = [
     tabs: [
       { href: "/neko/overview", label: "overview" },
       { href: "/neko/dashboard", label: "dashboard" },
+      { href: "/neko/discover", label: "discover" },
       { href: "/neko/pools", label: "pools" },
       { href: "/neko/vaults", label: "vaults" },
     ],
