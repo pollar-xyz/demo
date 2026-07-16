@@ -24,7 +24,7 @@ import { useNekoUnlocked } from './neko/_GateProvider';
 
 const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34'; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
 const DEFAULT_API_KEY_MAINNET = 'pub_mainnet_921399523168e5775276241dc1c786b2';
-const BASE_URL = 'https://sdk.api.local.pollar.xyz';
+const BASE_URL = 'https://sdk.api.pollar.xyz';
 
 // The logo that drifts across a locked group's ComingSoon overlay (hover it to
 // peek — see ComingSoon). Keyed by nav group; only groups with an asset show it.
