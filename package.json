@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3060",
+    "dev": "next dev -p 3070",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -25,6 +25,7 @@
     "@pollar/stellar-wallets-kit-adapter": "0.10.0-rc.10",
     "@privy-io/react-auth": "3.32.0",
     "@stellar/stellar-sdk": "^15.0.0",
+    "jsqr": "^1.4.0",
     "next": "16.2.9",
     "react": "19.2.3",
     "react-dom": "19.2.3",
