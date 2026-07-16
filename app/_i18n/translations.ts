@@ -214,6 +214,7 @@ export const en = {
         "assets the connected wallet holds — loaded via refreshWalletBalance().",
       amountLabel: "Amount",
       amountPh: "10",
+      available: "Available",
       run: "Run payment",
       running: "Submitting…",
       stateIdle: "Fill in destination, asset and amount, then run the payment.",
@@ -276,6 +277,39 @@ export const en = {
           "Re-renders your component as the payment builds, signs and submits. Mirrors getClient().getTransactionState().",
       },
     ],
+    scan: {
+      tabLabel: "Scan & Pay",
+      desc: "Scan a Stellar SEP-7 payment QR (web+stellar:pay) — destination, amount, asset and memo are read off the code and prefilled, then you review and pay with runTx('payment').",
+      fromQr: "from QR",
+      detectedTitle: "Payment details from the QR",
+      memoLabel: "Memo",
+      msgLabel: "Message",
+      originLabel: "Origin",
+      signaturePresent: "signed",
+      memoUnsupported:
+        "This memo type isn't supported by runTx — it won't be attached.",
+      editHint:
+        "Review the prefilled fields — you can edit them before paying.",
+      pay: "Pay",
+      rescan: "Scan another",
+      // scanner component
+      modeCamera: "Camera",
+      modePaste: "Paste / Upload",
+      cameraStart: "Start camera",
+      cameraStop: "Stop camera",
+      cameraHint: "Point your camera at a Stellar (SEP-7) payment QR.",
+      cameraDenied: "Camera access was blocked. Use paste or upload instead.",
+      cameraUnsupported:
+        "This browser can't open the camera. Use paste or upload.",
+      scanning: "Scanning…",
+      pasteLabel: "Paste a web+stellar: URI",
+      pastePh: "web+stellar:pay?destination=…",
+      pasteBtn: "Parse URI",
+      uploadBtn: "Upload QR image",
+      decodeFailed: "No QR code found in that image.",
+      notSep7: "That QR isn't a Stellar SEP-7 payment URI.",
+      onlyPay: "Only 'pay' intents are supported here (this is a 'tx' intent).",
+    },
   },
 
   receive: {
@@ -2323,6 +2357,7 @@ export const es: Dictionary = {
         "los activos que tiene la billetera conectada: se cargan con refreshWalletBalance().",
       amountLabel: "Monto",
       amountPh: "10",
+      available: "Disponible",
       run: "Ejecutar pago",
       running: "Enviando…",
       stateIdle: "Completa destino, activo y monto, y luego ejecuta el pago.",
@@ -2385,6 +2420,40 @@ export const es: Dictionary = {
           "Vuelve a renderizar tu componente mientras el pago se construye, firma y envía. Refleja getClient().getTransactionState().",
       },
     ],
+    scan: {
+      tabLabel: "Escanear y pagar",
+      desc: "Escanea un QR de pago Stellar SEP-7 (web+stellar:pay): el destino, el monto, el activo y el memo se leen del código y se rellenan; luego revisas y pagas con runTx('payment').",
+      fromQr: "del QR",
+      detectedTitle: "Datos del pago leídos del QR",
+      memoLabel: "Memo",
+      msgLabel: "Mensaje",
+      originLabel: "Origen",
+      signaturePresent: "firmado",
+      memoUnsupported: "runTx no admite este tipo de memo; no se adjuntará.",
+      editHint:
+        "Revisa los campos rellenados: puedes editarlos antes de pagar.",
+      pay: "Pagar",
+      rescan: "Escanear otro",
+      // componente de escaneo
+      modeCamera: "Cámara",
+      modePaste: "Pegar / Subir",
+      cameraStart: "Iniciar cámara",
+      cameraStop: "Detener cámara",
+      cameraHint: "Apunta la cámara a un QR de pago Stellar (SEP-7).",
+      cameraDenied:
+        "Se bloqueó el acceso a la cámara. Usa pegar o subir en su lugar.",
+      cameraUnsupported:
+        "Este navegador no puede abrir la cámara. Usa pegar o subir.",
+      scanning: "Escaneando…",
+      pasteLabel: "Pega una URI web+stellar:",
+      pastePh: "web+stellar:pay?destination=…",
+      pasteBtn: "Analizar URI",
+      uploadBtn: "Subir imagen del QR",
+      decodeFailed: "No se encontró ningún QR en esa imagen.",
+      notSep7: "Ese QR no es una URI de pago Stellar SEP-7.",
+      onlyPay:
+        "Aquí solo se admiten intenciones 'pay' (esta es una intención 'tx').",
+    },
   },
 
   receive: {
@@ -4442,6 +4511,7 @@ export const pt: Dictionary = {
         "os ativos que a carteira conectada possui — carregados via refreshWalletBalance().",
       amountLabel: "Valor",
       amountPh: "10",
+      available: "Disponível",
       run: "Executar pagamento",
       running: "Enviando…",
       stateIdle: "Preencha destino, ativo e valor e então execute o pagamento.",
@@ -4504,6 +4574,40 @@ export const pt: Dictionary = {
           "Re-renderiza seu componente enquanto o pagamento é construído, assinado e enviado. Reflete getClient().getTransactionState().",
       },
     ],
+    scan: {
+      tabLabel: "Escanear e pagar",
+      desc: "Escaneie um QR de pagamento Stellar SEP-7 (web+stellar:pay): destino, valor, ativo e memo são lidos do código e preenchidos; depois você revisa e paga com runTx('payment').",
+      fromQr: "do QR",
+      detectedTitle: "Dados do pagamento lidos do QR",
+      memoLabel: "Memo",
+      msgLabel: "Mensagem",
+      originLabel: "Origem",
+      signaturePresent: "assinado",
+      memoUnsupported:
+        "O runTx não suporta este tipo de memo; ele não será anexado.",
+      editHint:
+        "Revise os campos preenchidos: você pode editá-los antes de pagar.",
+      pay: "Pagar",
+      rescan: "Escanear outro",
+      // componente de leitura
+      modeCamera: "Câmera",
+      modePaste: "Colar / Enviar",
+      cameraStart: "Iniciar câmera",
+      cameraStop: "Parar câmera",
+      cameraHint: "Aponte a câmera para um QR de pagamento Stellar (SEP-7).",
+      cameraDenied: "O acesso à câmera foi bloqueado. Use colar ou enviar.",
+      cameraUnsupported:
+        "Este navegador não consegue abrir a câmera. Use colar ou enviar.",
+      scanning: "Escaneando…",
+      pasteLabel: "Cole uma URI web+stellar:",
+      pastePh: "web+stellar:pay?destination=…",
+      pasteBtn: "Analisar URI",
+      uploadBtn: "Enviar imagem do QR",
+      decodeFailed: "Nenhum QR encontrado nessa imagem.",
+      notSep7: "Esse QR não é uma URI de pagamento Stellar SEP-7.",
+      onlyPay:
+        "Aqui só há suporte para intenções 'pay' (esta é uma intenção 'tx').",
+    },
   },
 
   receive: {
