@@ -2,8 +2,18 @@
 
 import { useMemo, useState } from "react";
 import { usePollar } from "@pollar/react";
-import { useEscrow } from "./adapter";
-import type { TrustlessWorkAdapter } from "./adapter";
+import {
+  trustlessWorkAdapter,
+  sendTransaction,
+  getEscrowsBySigner,
+  getEscrowsByRole,
+  getEscrowByContractIds,
+  getMultipleEscrowBalance,
+} from "./adapter";
+import type {
+  TrustlessWorkAdapter,
+  SendTransactionResult,
+} from "./adapter";
 import { DualCode } from "@/app/_components/CodePanels";
 import { FnReference } from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
@@ -136,7 +146,7 @@ const roleField = (key: string, label: string): FieldDef => ({
 const DEPLOY_COMMON: FieldDef[] = [
   { key: "engagementId", label: "engagementId", required: true, placeholder: "ENG-001", half: true },
   { key: "title", label: "title", required: true, placeholder: "Design Landing Page", half: true },
-  { key: "description", label: "description", type: "textarea", placeholder: "Landing for the new product…" },
+  { key: "description", label: "description", type: "textarea", required: true, placeholder: "Landing for the new product…" },
   { key: "trustline.address", label: "trustline.address", placeholder: DEFAULT_TRUSTLINE_ADDR, half: true },
   { key: "trustline.symbol", label: "trustline.symbol", placeholder: "USDC", half: true },
 ];
@@ -292,6 +302,50 @@ const SINGLE_OPS: OpDef[] = [
       contractId: r("contractId"),
       platformAddress: r("platformAddress"),
       targetDate: toApiDate(r("targetDate")),
+    }),
+  },
+  {
+    id: "update",
+    label: "Update escrow",
+    method: "updateSingle",
+    blurb:
+      "PUT /escrow/single-release/update-escrow — replaces the escrow's editable properties.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+      ...DEPLOY_COMMON,
+      { key: "amount", label: "amount", type: "number", required: true, placeholder: "5", half: true },
+      { key: "platformFee", label: "platformFee %", type: "number", required: true, placeholder: "5", half: true },
+      roleField("approver", "roles.approver"),
+      roleField("serviceProvider", "roles.serviceProvider"),
+      roleField("platformAddress", "roles.platformAddress"),
+      roleField("releaseSigner", "roles.releaseSigner"),
+      roleField("disputeResolver", "roles.disputeResolver"),
+      roleField("receiver", "roles.receiver"),
+    ],
+    milestones: "single",
+    build: ({ r, wallet, milestones }) => ({
+      signer: wallet,
+      contractId: r("contractId"),
+      escrow: {
+        engagementId: r("engagementId"),
+        title: r("title"),
+        description: r("description"),
+        roles: {
+          approver: r("roles.approver"),
+          serviceProvider: r("roles.serviceProvider"),
+          platformAddress: r("roles.platformAddress"),
+          releaseSigner: r("roles.releaseSigner"),
+          disputeResolver: r("roles.disputeResolver"),
+          receiver: r("roles.receiver"),
+        },
+        amount: num(r("amount")),
+        platformFee: num(r("platformFee")),
+        milestones: milestones.map((m) => ({ description: m.description })),
+        trustline: {
+          address: r("trustline.address") || DEFAULT_TRUSTLINE_ADDR,
+          symbol: r("trustline.symbol") || "USDC",
+        },
+      },
     }),
   },
 ];
@@ -474,6 +528,50 @@ const MULTI_OPS: OpDef[] = [
       targetDate: toApiDate(r("targetDate")),
     }),
   },
+  {
+    id: "update",
+    label: "Update escrow",
+    method: "updateMulti",
+    blurb:
+      "PUT /escrow/multi-release/update-escrow — replaces the escrow's editable properties.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+      ...DEPLOY_COMMON,
+      { key: "platformFee", label: "platformFee %", type: "number", required: true, placeholder: "5", half: true },
+      roleField("approver", "roles.approver"),
+      roleField("serviceProvider", "roles.serviceProvider"),
+      roleField("platformAddress", "roles.platformAddress"),
+      roleField("releaseSigner", "roles.releaseSigner"),
+      roleField("disputeResolver", "roles.disputeResolver"),
+    ],
+    milestones: "multi",
+    build: ({ r, wallet, milestones }) => ({
+      signer: wallet,
+      contractId: r("contractId"),
+      escrow: {
+        engagementId: r("engagementId"),
+        title: r("title"),
+        description: r("description"),
+        roles: {
+          approver: r("roles.approver"),
+          serviceProvider: r("roles.serviceProvider"),
+          platformAddress: r("roles.platformAddress"),
+          releaseSigner: r("roles.releaseSigner"),
+          disputeResolver: r("roles.disputeResolver"),
+        },
+        platformFee: num(r("platformFee")),
+        milestones: milestones.map((m) => ({
+          description: m.description,
+          receiver: m.receiver || wallet,
+          amount: num(m.amount),
+        })),
+        trustline: {
+          address: r("trustline.address") || DEFAULT_TRUSTLINE_ADDR,
+          symbol: r("trustline.symbol") || "USDC",
+        },
+      },
+    }),
+  },
 ];
 
 const OPS: Record<Family, OpDef[]> = { single: SINGLE_OPS, multi: MULTI_OPS };
@@ -500,13 +598,153 @@ export const trustlessWorkAdapter: TrustlessWorkAdapter = {
 export const useEscrow =
   createPollarAdapterHook<TrustlessWorkAdapter>('escrow');`;
 
+// ─── read-only helpers panel ──────────────────────────────────────────────────
+//
+// The indexer/helper endpoints return plain data (no XDR to sign), so they're a
+// separate panel: pick a query, run it, inspect the JSON. These are what power
+// Trustless Work's "my escrows" dashboard views.
+
+type ReadOp = {
+  id: string;
+  label: string;
+  blurb: string;
+  input: "signer" | "contractIds" | "addresses";
+  run: (value: string, wallet: string) => Promise<unknown>;
+};
+
+const csv = (s: string): string[] =>
+  s
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+const READ_OPS: ReadOp[] = [
+  {
+    id: "bySigner",
+    label: "By signer",
+    blurb: "GET /helper/get-escrows-by-signer — escrows this wallet deployed.",
+    input: "signer",
+    run: (v, wallet) => getEscrowsBySigner({ signer: v || wallet }),
+  },
+  {
+    id: "byRole",
+    label: "By role",
+    blurb: "GET /helper/get-escrows-by-role — escrows where an address holds a role.",
+    input: "signer",
+    run: (v, wallet) => getEscrowsByRole({ roleAddress: v || wallet }),
+  },
+  {
+    id: "byContractIds",
+    label: "By contract IDs",
+    blurb: "GET /helper/get-escrow-by-contract-ids — look up specific escrows.",
+    input: "contractIds",
+    run: (v) => getEscrowByContractIds(csv(v)),
+  },
+  {
+    id: "balances",
+    label: "Balances",
+    blurb: "GET /helper/get-multiple-escrow-balance — on-chain balances by address.",
+    input: "addresses",
+    run: (v) => getMultipleEscrowBalance(csv(v)),
+  },
+];
+
+function HelpersPanel({ walletAddress }: { walletAddress: string }) {
+  const [readId, setReadId] = useState<string>(READ_OPS[0]!.id);
+  const [value, setValue] = useState("");
+  const [result, setResult] = useState<unknown>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const readOp = READ_OPS.find((o) => o.id === readId) ?? READ_OPS[0]!;
+  const placeholder =
+    readOp.input === "signer"
+      ? walletAddress || "G…"
+      : readOp.input === "contractIds"
+        ? "C…, C… (comma-separated)"
+        : "C…, C… (comma-separated addresses)";
+
+  async function run() {
+    setError(null);
+    setResult(null);
+    setLoading(true);
+    try {
+      setResult(await readOp.run(value.trim(), walletAddress));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Request failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="mt-10 space-y-4 border-t border-border pt-8">
+      <div>
+        <h2 className="text-lg font-bold tracking-tight text-foreground">
+          Indexer &amp; helpers
+        </h2>
+        <p className="text-sm text-muted mt-1">
+          Read-only Trustless Work endpoints — no signing. These back the
+          dashboard&apos;s escrow lists and balances.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-1 border-b border-border">
+        {READ_OPS.map((o) => (
+          <button
+            key={o.id}
+            onClick={() => {
+              setReadId(o.id);
+              setError(null);
+              setResult(null);
+            }}
+            className={`text-xs px-3 py-2 border-b-2 -mb-px transition-colors ${
+              readOp.id === o.id
+                ? "border-primary text-primary font-semibold"
+                : "border-transparent text-muted-light hover:text-foreground"
+            }`}
+          >
+            {o.label}
+          </button>
+        ))}
+      </div>
+
+      <p className="text-xs font-mono text-muted-light">{readOp.blurb}</p>
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input
+          className={inp}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          placeholder={placeholder}
+          spellCheck={false}
+        />
+        <button
+          onClick={run}
+          disabled={loading}
+          className={`${btn("primary")} shrink-0`}
+        >
+          {loading ? "Running…" : "Run"}
+        </button>
+      </div>
+
+      {error && <p className="text-xs font-mono text-error">{error}</p>}
+
+      {result !== null && (
+        <pre className="rounded-lg border border-border bg-background p-4 text-xs font-mono text-foreground overflow-x-auto max-h-96 whitespace-pre-wrap break-all">
+          {JSON.stringify(result, null, 2)}
+        </pre>
+      )}
+    </div>
+  );
+}
+
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function EscrowPage() {
   const { t } = useI18n();
-  const { wallet, isAuthenticated, tx, openTxModal } = usePollar();
+  const { wallet, isAuthenticated, tx, openTxModal, signTx } = usePollar();
   const walletAddress = wallet?.address ?? "";
-  const escrow = useEscrow();
 
   const [family, setFamily] = useState<Family>("single");
   const [opId, setOpId] = useState<string>("deploy");
@@ -520,6 +758,7 @@ export default function EscrowPage() {
   ]);
   const [error, setError] = useState<string | null>(null);
   const [inFlight, setInFlight] = useState(false);
+  const [result, setResult] = useState<SendTransactionResult | null>(null);
 
   const ops = OPS[family];
   const op = ops.find((o) => o.id === opId) ?? ops[0]!;
@@ -548,15 +787,63 @@ export default function EscrowPage() {
     setFamily(f);
     setOpId("deploy");
     setError(null);
+    setResult(null);
+  }
+
+  // Client-side guard: surface empty required fields before hitting TW, which
+  // otherwise 400s (e.g. an empty top-level description → "must not be empty").
+  function validate(): string | null {
+    const missing = op.fields
+      .filter((f) => f.required && !resolve(f.key))
+      .map((f) => f.label);
+
+    if (op.milestones) {
+      if (milestones.length === 0) missing.push("at least one milestone");
+      milestones.forEach((m, i) => {
+        if (!m.description.trim())
+          missing.push(`milestone ${i + 1} description`);
+        if (op.milestones === "multi" && !m.amount.trim())
+          missing.push(`milestone ${i + 1} amount`);
+      });
+    }
+
+    if (op.distributions) {
+      distributions.forEach((d, i) => {
+        if (!d.address.trim()) missing.push(`distribution ${i + 1} address`);
+        if (!d.amount.trim()) missing.push(`distribution ${i + 1} amount`);
+      });
+    }
+
+    return missing.length
+      ? `Missing required field${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}`
+      : null;
   }
 
   async function submit() {
     setError(null);
+    setResult(null);
+    const invalid = validate();
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
     setInFlight(true);
     try {
-      // every method takes exactly one params object → same call shape.
-      const fn = escrow[op.method] as (p: unknown) => Promise<unknown>;
-      await fn(params);
+      // Match Trustless Work's own dApp: build → sign → send-transaction. We call
+      // the raw adapter (not the auto-submitting useEscrow hook) so Pollar only
+      // SIGNS, then hand the signed XDR to TW's helper — that endpoint broadcasts
+      // AND indexes the escrow, which is what makes it appear in the dashboard.
+      const fn = trustlessWorkAdapter[op.method] as (
+        p: unknown,
+      ) => Promise<{ unsignedTransaction: string }>;
+      const { unsignedTransaction } = await fn(params);
+      const signed = await signTx(unsignedTransaction);
+      if (signed.status !== "signed") {
+        throw new Error(
+          signed.details ?? signed.message ?? t.common.unknownError,
+        );
+      }
+      setResult(await sendTransaction(signed.signedXdr));
     } catch (e) {
       setError(e instanceof Error ? e.message : t.common.unknownError);
     } finally {
@@ -566,14 +853,20 @@ export default function EscrowPage() {
 
   // ── live code preview ─────────────────────────────────────────────────────
   const p = serializeVal(params, 0);
-  const react = `const { ${op.method} } = useEscrow();
+  const react = `const { signTx } = usePollar();
 
-// adapter calls Trustless Work → returns unsigned XDR.
-// Pollar signs + submits with the user's wallet automatically.
-await ${op.method}(${p});`;
+// adapter hits Trustless Work → returns the unsigned XDR
+const { unsignedTransaction } =
+  await trustlessWorkAdapter.${op.method}(${p});
+
+// Pollar signs it (custodial → /tx/sign, external → wallet adapter)
+const { signedXdr } = await signTx(unsignedTransaction);
+
+// TW broadcasts AND indexes the escrow → shows in the dashboard
+const res = await sendTransaction(signedXdr);`;
 
   const core = `import { PollarClient } from '@pollar/core';
-import { trustlessWorkAdapter } from './adapter';
+import { trustlessWorkAdapter, sendTransaction } from './adapter';
 
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
@@ -582,8 +875,9 @@ await client.ready();
 const { unsignedTransaction } =
   await trustlessWorkAdapter.${op.method}(${p});
 
-// Pollar signs + submits with the connected wallet
-await client.signAndSubmitTx(unsignedTransaction);`;
+// Pollar signs only — TW submits + indexes via its helper
+const { signedXdr } = await client.signTx(unsignedTransaction);
+const res = await sendTransaction(signedXdr);`;
 
   // ── render ────────────────────────────────────────────────────────────────
   return (
@@ -879,7 +1173,7 @@ await client.signAndSubmitTx(unsignedTransaction);`;
                           ? "bg-primary-light text-primary"
                           : tx.step === "signing"
                             ? "bg-warning-light text-warning animate-pulse"
-                            : tx.step === "success"
+                            : tx.step === "success" || tx.step === "signed"
                               ? "bg-success-light text-success"
                               : "bg-error-light text-error"
                   }`}
@@ -913,6 +1207,28 @@ await client.signAndSubmitTx(unsignedTransaction);`;
             </div>
           </div>
 
+          {/* send-transaction response — TW returns the indexed escrow here */}
+          {result && (
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-border bg-surface text-xs font-mono text-muted-light">
+                send-transaction response
+              </div>
+              <div className="p-4 text-xs font-mono bg-background overflow-x-auto">
+                {result.contractId && (
+                  <div className="mb-2">
+                    <p className="text-muted-light mb-1">contractId</p>
+                    <p className="text-success break-all">
+                      {result.contractId}
+                    </p>
+                  </div>
+                )}
+                <pre className="whitespace-pre-wrap break-all text-foreground">
+                  {JSON.stringify(result, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+
           <FnReference
             title={t.escrow.reactFnsTitle}
             intro={t.escrow.reactFnsIntro}
@@ -925,6 +1241,8 @@ await client.signAndSubmitTx(unsignedTransaction);`;
           />
         </div>
       </div>
+
+      <HelpersPanel walletAddress={walletAddress} />
     </div>
   );
 }

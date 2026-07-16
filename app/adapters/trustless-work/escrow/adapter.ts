@@ -18,23 +18,51 @@ const TW_API = "https://dev.api.trustlesswork.com";
 // Get one from https://dapp.trustlesswork.com and set NEXT_PUBLIC_TW_API_KEY.
 const TW_API_KEY = process.env.NEXT_PUBLIC_TW_API_KEY ?? "";
 
-async function tw<T>(
+async function twRequest<T>(
   path: string,
-  body: T,
-): Promise<{ unsignedTransaction: string }> {
+  init: { method: string; body?: unknown },
+): Promise<T> {
   const res = await fetch(`${TW_API}${path}`, {
-    method: "POST",
+    method: init.method,
     headers: {
       "Content-Type": "application/json",
       "x-api-key": TW_API_KEY,
     },
-    body: JSON.stringify(body),
+    ...(init.body !== undefined && { body: JSON.stringify(init.body) }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.message ?? `TrustlessWork error: ${res.status}`);
   }
   return res.json();
+}
+
+// Every deployer/escrow route builds an unsigned XDR the caller then signs.
+function tw<T>(path: string, body: T): Promise<{ unsignedTransaction: string }> {
+  return twRequest(path, { method: "POST", body });
+}
+
+// PUT variant — only /escrow/{single,multi}-release/update-escrow use it.
+function twPut<T>(
+  path: string,
+  body: T,
+): Promise<{ unsignedTransaction: string }> {
+  return twRequest(path, { method: "PUT", body });
+}
+
+// GET helper for the read-only /helper/* endpoints. TW takes array params in a
+// bracketed CSV form (e.g. contractIds=[C…,C…]); scalars are passed verbatim.
+function twGet<T>(
+  path: string,
+  query: Record<string, string | number | boolean | string[] | undefined>,
+): Promise<T> {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(query)) {
+    if (v === undefined || v === "") continue;
+    qs.set(k, Array.isArray(v) ? `[${v.join(",")}]` : String(v));
+  }
+  const suffix = qs.toString() ? `?${qs}` : "";
+  return twRequest(`${path}${suffix}`, { method: "GET" });
 }
 
 // ─── shared value objects ─────────────────────────────────────────────────────
@@ -170,6 +198,89 @@ export type WithdrawRemainingParams = {
   distributions: Distribution[];
 };
 
+// ─── update-escrow params ─────────────────────────────────────────────────────
+//
+// update-escrow (PUT) replaces the escrow's editable properties with a full
+// escrow object — the same shape TW returns from send-transaction, carrying the
+// lifecycle flags/status the deploy payload doesn't have yet.
+
+export type EscrowFlags = {
+  disputed: boolean;
+  released: boolean;
+  resolved: boolean;
+};
+
+export type SingleMilestoneState = {
+  description: string;
+  status?: string;
+  evidence?: string;
+  approved?: boolean;
+};
+
+export type MultiMilestoneState = MultiMilestone & {
+  status?: string;
+  evidence?: string;
+  approved?: boolean;
+  flags?: EscrowFlags;
+};
+
+export type SingleEscrowData = {
+  engagementId: string;
+  title: string;
+  description: string;
+  roles: SingleRoles;
+  amount: number;
+  platformFee: number;
+  milestones: SingleMilestoneState[];
+  flags?: EscrowFlags;
+  trustline: Trustline;
+  receiverMemo?: number;
+  isActive?: boolean;
+};
+
+export type MultiEscrowData = Omit<SingleEscrowData, "amount" | "milestones"> & {
+  roles: MultiRoles;
+  milestones: MultiMilestoneState[];
+};
+
+export type UpdateSingleParams = {
+  signer: string;
+  contractId: string;
+  escrow: SingleEscrowData;
+};
+
+export type UpdateMultiParams = {
+  signer: string;
+  contractId: string;
+  escrow: MultiEscrowData;
+};
+
+// ─── read + submit results (no XDR — plain data) ──────────────────────────────
+
+export type SendTransactionResult = {
+  status: string;
+  message?: string;
+  contractId?: string;
+  escrow?: Record<string, unknown>;
+};
+
+// Shared filters for the get-escrows-by-{signer,role} indexer queries.
+export type EscrowQuery = {
+  signer?: string;
+  role?: string;
+  roleAddress?: string;
+  status?: string;
+  type?: "single-release" | "multi-release";
+  engagementId?: string;
+  title?: string;
+  isActive?: boolean;
+  validateOnChain?: boolean;
+  orderBy?: "createdAt" | "updatedAt" | "amount";
+  orderDirection?: "asc" | "desc";
+  page?: number;
+  pageSize?: number;
+};
+
 // ─── adapter type ─────────────────────────────────────────────────────────────
 
 export type TrustlessWorkAdapter = {
@@ -182,6 +293,7 @@ export type TrustlessWorkAdapter = {
   disputeSingle: AdapterFn<DisputeEscrowParams>;
   resolveSingle: AdapterFn<ResolveDisputeParams>;
   extendTtlSingle: AdapterFn<ExtendTtlParams>;
+  updateSingle: AdapterFn<UpdateSingleParams>;
   // multi-release
   deployMulti: AdapterFn<DeployMultiParams>;
   fundMulti: AdapterFn<FundParams>;
@@ -192,6 +304,7 @@ export type TrustlessWorkAdapter = {
   resolveMulti: AdapterFn<ResolveMilestoneParams>;
   withdrawMulti: AdapterFn<WithdrawRemainingParams>;
   extendTtlMulti: AdapterFn<ExtendTtlParams>;
+  updateMulti: AdapterFn<UpdateMultiParams>;
 };
 
 // ─── adapter implementation ───────────────────────────────────────────────────
@@ -208,6 +321,7 @@ export const trustlessWorkAdapter: TrustlessWorkAdapter = {
   disputeSingle: (p) => tw("/escrow/single-release/dispute-escrow", p),
   resolveSingle: (p) => tw("/escrow/single-release/resolve-dispute", p),
   extendTtlSingle: (p) => tw("/escrow/single-release/extend-ttl", p),
+  updateSingle: (p) => twPut("/escrow/single-release/update-escrow", p),
 
   // multi-release ──────────────────────────────────────────────────────────────
   deployMulti: (p) => tw("/deployer/multi-release", p),
@@ -221,7 +335,51 @@ export const trustlessWorkAdapter: TrustlessWorkAdapter = {
   resolveMulti: (p) => tw("/escrow/multi-release/resolve-milestone-dispute", p),
   withdrawMulti: (p) => tw("/escrow/multi-release/withdraw-remaining-funds", p),
   extendTtlMulti: (p) => tw("/escrow/multi-release/extend-ttl", p),
+  updateMulti: (p) => twPut("/escrow/multi-release/update-escrow", p),
 };
+
+// ─── helper endpoints (no XDR — called directly, not through the adapter hook) ─
+//
+// These return plain data rather than an unsigned XDR, so they can't live on
+// trustlessWorkAdapter (the useEscrow() wrapper would try to sign + submit their
+// result). Deploy/lifecycle now route through sendTransaction: the adapter fn
+// builds the XDR, Pollar's signTx signs it, and this posts the signed XDR so TW
+// broadcasts AND indexes the escrow — which is what makes it show in the dashboard.
+
+export function sendTransaction(
+  signedXdr: string,
+): Promise<SendTransactionResult> {
+  return twRequest("/helper/send-transaction", {
+    method: "POST",
+    body: { signedXdr },
+  });
+}
+
+// Indexer query powering the "my escrows" views — filter by the wallet's signer.
+export function getEscrowsBySigner<T = unknown>(query: EscrowQuery): Promise<T> {
+  return twGet("/helper/get-escrows-by-signer", query);
+}
+
+// Same filters, but matches on a role address rather than the tx signer.
+export function getEscrowsByRole<T = unknown>(query: EscrowQuery): Promise<T> {
+  return twGet("/helper/get-escrows-by-role", query);
+}
+
+export function getEscrowByContractIds<T = unknown>(
+  contractIds: string[],
+  opts?: { isActive?: boolean; validateOnChain?: boolean },
+): Promise<T> {
+  return twGet("/helper/get-escrow-by-contract-ids", {
+    contractIds,
+    ...opts,
+  });
+}
+
+export function getMultipleEscrowBalance<T = unknown>(
+  addresses: string[],
+): Promise<T> {
+  return twGet("/helper/get-multiple-escrow-balance", { addresses });
+}
 
 // ─── hook ─────────────────────────────────────────────────────────────────────
 
