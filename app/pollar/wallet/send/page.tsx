@@ -230,7 +230,7 @@ export default function SendPage() {
         x.type !== "native" &&
         `${x.code}:${"issuer" in x ? x.issuer : ""}` === key,
     );
-    if (b && b.type !== "native" && "issuer" in b && b.issuer) {
+    if (b && b.type && b.type !== "native" && "issuer" in b && b.issuer) {
       return { type: b.type, code: b.code, issuer: b.issuer };
     }
     if (extraAssets[key]) return extraAssets[key];
