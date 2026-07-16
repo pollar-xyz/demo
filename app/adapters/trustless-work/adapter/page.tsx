@@ -9,13 +9,19 @@ import { createPollarAdapterHook } from '@pollar/react';
 
 const TW_API = 'https://dev.api.trustlesswork.com';
 
+// Every Trustless Work request needs an x-api-key header.
+const TW_API_KEY = process.env.NEXT_PUBLIC_TW_API_KEY ?? '';
+
 async function tw<T>(
   path: string,
   body: T,
 ): Promise<{ unsignedTransaction: string }> {
   const res = await fetch(\`\${TW_API}\${path}\`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': TW_API_KEY,
+    },
     body: JSON.stringify(body),
   });
   if (!res.ok) {
@@ -26,21 +32,50 @@ async function tw<T>(
 }
 
 export type TrustlessWorkAdapter = {
-  deployEscrow: AdapterFn<DeployEscrowParams>;
-  fundEscrow: AdapterFn<FundEscrowParams>;
-  approveMilestone: AdapterFn<ApproveMilestoneParams>;
-  releaseFunds: AdapterFn<ReleaseFundsParams>;
-  initiateDispute: AdapterFn<InitiateDisputeParams>;
-  resolveDispute: AdapterFn<ResolveDisputeParams>;
+  // single-release
+  deploySingle: AdapterFn<DeploySingleParams>;
+  fundSingle: AdapterFn<FundParams>;
+  approveMilestoneSingle: AdapterFn<ApproveMilestoneParams>;
+  changeStatusSingle: AdapterFn<ChangeMilestoneStatusParams>;
+  releaseSingle: AdapterFn<ReleaseFundsParams>;
+  disputeSingle: AdapterFn<DisputeEscrowParams>;
+  resolveSingle: AdapterFn<ResolveDisputeParams>;
+  extendTtlSingle: AdapterFn<ExtendTtlParams>;
+  // multi-release
+  deployMulti: AdapterFn<DeployMultiParams>;
+  fundMulti: AdapterFn<FundParams>;
+  approveMilestoneMulti: AdapterFn<ApproveMilestoneParams>;
+  changeStatusMulti: AdapterFn<ChangeMilestoneStatusParams>;
+  releaseMulti: AdapterFn<ReleaseMilestoneParams>;
+  disputeMulti: AdapterFn<DisputeMilestoneParams>;
+  resolveMulti: AdapterFn<ResolveMilestoneParams>;
+  withdrawMulti: AdapterFn<WithdrawRemainingParams>;
+  extendTtlMulti: AdapterFn<ExtendTtlParams>;
 };
 
+// Trustless Work splits escrows into two families: single-release (one payout)
+// and multi-release (a payout per milestone). Deploys go through /deployer/*.
 export const trustlessWorkAdapter: TrustlessWorkAdapter = {
-  deployEscrow:     (p) => tw('/escrow/initialize-escrow', p),
-  fundEscrow:       (p) => tw('/escrow/fund-escrow', p),
-  approveMilestone: (p) => tw('/escrow/approve-milestone', p),
-  releaseFunds:     (p) => tw('/escrow/complete-escrow', p),
-  initiateDispute:  (p) => tw('/escrow/dispute-escrow', p),
-  resolveDispute:   (p) => tw('/escrow/resolute-dispute', p),
+  // single-release
+  deploySingle:  (p) => tw('/deployer/single-release', p),
+  fundSingle:    (p) => tw('/escrow/single-release/fund-escrow', p),
+  approveMilestoneSingle: (p) => tw('/escrow/single-release/approve-milestone', p),
+  changeStatusSingle:     (p) => tw('/escrow/single-release/change-milestone-status', p),
+  releaseSingle: (p) => tw('/escrow/single-release/release-funds', p),
+  disputeSingle: (p) => tw('/escrow/single-release/dispute-escrow', p),
+  resolveSingle: (p) => tw('/escrow/single-release/resolve-dispute', p),
+  extendTtlSingle: (p) => tw('/escrow/single-release/extend-ttl', p),
+
+  // multi-release
+  deployMulti:   (p) => tw('/deployer/multi-release', p),
+  fundMulti:     (p) => tw('/escrow/multi-release/fund-escrow', p),
+  approveMilestoneMulti: (p) => tw('/escrow/multi-release/approve-milestone', p),
+  changeStatusMulti:     (p) => tw('/escrow/multi-release/change-milestone-status', p),
+  releaseMulti:  (p) => tw('/escrow/multi-release/release-milestone-funds', p),
+  disputeMulti:  (p) => tw('/escrow/multi-release/dispute-milestone', p),
+  resolveMulti:  (p) => tw('/escrow/multi-release/resolve-milestone-dispute', p),
+  withdrawMulti: (p) => tw('/escrow/multi-release/withdraw-remaining-funds', p),
+  extendTtlMulti: (p) => tw('/escrow/multi-release/extend-ttl', p),
 };`;
 
 const REGISTER = `// 1. register the adapter on the Pollar provider

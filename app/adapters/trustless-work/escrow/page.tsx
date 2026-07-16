@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { usePollar } from "@pollar/react";
 import { useEscrow } from "./adapter";
+import type { TrustlessWorkAdapter } from "./adapter";
 import { DualCode } from "@/app/_components/CodePanels";
 import { FnReference } from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
@@ -20,22 +21,24 @@ const btn = (variant: "primary" | "secondary") =>
 function Field({
   label,
   required,
+  optionalLabel,
   children,
   note,
 }: {
   label: string;
   required?: boolean;
+  optionalLabel: string;
   note?: string;
   children: React.ReactNode;
 }) {
-  const { t } = useI18n();
   return (
     <div className="space-y-1">
       <label className={lbl}>
         {label}
-        {required && <span className="ml-1 text-muted-light">*</span>}
-        {!required && (
-          <span className="ml-1 text-muted-light">{t.common.optional}</span>
+        {required ? (
+          <span className="ml-1 text-muted-light">*</span>
+        ) : (
+          <span className="ml-1 text-muted-light">{optionalLabel}</span>
         )}
       </label>
       {children}
@@ -44,7 +47,7 @@ function Field({
   );
 }
 
-// ─── code preview serializer ──────────────────────────────────────────────────
+// ─── value serializer (for the live code preview) ─────────────────────────────
 
 function serializeVal(val: unknown, depth = 0): string {
   const pad = "  ".repeat(depth);
@@ -53,6 +56,13 @@ function serializeVal(val: unknown, depth = 0): string {
   if (typeof val === "boolean") return String(val);
   if (typeof val === "number") return String(val);
   if (typeof val === "string") return `'${val}'`;
+  if (Array.isArray(val)) {
+    if (val.length === 0) return "[]";
+    const items = val
+      .map((v) => `${inner}${serializeVal(v, depth + 1)}`)
+      .join(",\n");
+    return `[\n${items},\n${pad}]`;
+  }
   if (typeof val === "object") {
     const entries = Object.entries(val as Record<string, unknown>);
     if (entries.length === 0) return "{}";
@@ -64,22 +74,427 @@ function serializeVal(val: unknown, depth = 0): string {
   return String(val);
 }
 
-// ─── operation tabs ───────────────────────────────────────────────────────────
+const num = (s: string): number => {
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+};
 
-type Tab = "deploy" | "fund" | "milestone" | "dispute";
-const TABS: Tab[] = ["deploy", "fund", "milestone", "dispute"];
+// convert a native <input type="date"> value (2025-12-31) to the API's format.
+const toApiDate = (s: string): string => s.replaceAll("-", "/");
+
+// ─── defaults ─────────────────────────────────────────────────────────────────
+
+// Testnet USDC trustline used by the Trustless Work dapp.
+const DEFAULT_TRUSTLINE_ADDR =
+  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+
+// ─── operation config ─────────────────────────────────────────────────────────
+
+type Family = "single" | "multi";
+
+type FieldDef = {
+  key: string;
+  label: string;
+  type?: "text" | "number" | "textarea" | "date";
+  required?: boolean;
+  placeholder?: string;
+  note?: string;
+  wallet?: boolean; // prefill with the connected wallet when left empty
+  half?: boolean;
+};
+
+type BuildCtx = {
+  r: (key: string) => string; // resolved field value (applies wallet fallback)
+  wallet: string;
+  milestones: MilestoneRow[];
+  distributions: DistributionRow[];
+};
+
+type OpDef = {
+  id: string;
+  label: string;
+  method: keyof TrustlessWorkAdapter;
+  blurb: string;
+  fields: FieldDef[];
+  milestones?: Family; // render the milestones editor (single = desc only)
+  distributions?: boolean; // render the distributions editor
+  build: (c: BuildCtx) => Record<string, unknown>;
+};
+
+type MilestoneRow = { description: string; receiver: string; amount: string };
+type DistributionRow = { address: string; amount: string };
+
+// role fields shared by both deploy forms (multi has no `receiver`).
+const roleField = (key: string, label: string): FieldDef => ({
+  key: `roles.${key}`,
+  label,
+  wallet: true,
+  placeholder: "G…",
+  half: true,
+});
+
+const DEPLOY_COMMON: FieldDef[] = [
+  { key: "engagementId", label: "engagementId", required: true, placeholder: "ENG-001", half: true },
+  { key: "title", label: "title", required: true, placeholder: "Design Landing Page", half: true },
+  { key: "description", label: "description", type: "textarea", placeholder: "Landing for the new product…" },
+  { key: "trustline.address", label: "trustline.address", placeholder: DEFAULT_TRUSTLINE_ADDR, half: true },
+  { key: "trustline.symbol", label: "trustline.symbol", placeholder: "USDC", half: true },
+];
+
+const SINGLE_OPS: OpDef[] = [
+  {
+    id: "deploy",
+    label: "Deploy",
+    method: "deploySingle",
+    blurb: "POST /deployer/single-release — creates the escrow contract.",
+    fields: [
+      ...DEPLOY_COMMON,
+      { key: "amount", label: "amount", type: "number", required: true, placeholder: "5", half: true },
+      { key: "platformFee", label: "platformFee %", type: "number", required: true, placeholder: "5", half: true },
+      roleField("approver", "roles.approver"),
+      roleField("serviceProvider", "roles.serviceProvider"),
+      roleField("platformAddress", "roles.platformAddress"),
+      roleField("releaseSigner", "roles.releaseSigner"),
+      roleField("disputeResolver", "roles.disputeResolver"),
+      roleField("receiver", "roles.receiver"),
+    ],
+    milestones: "single",
+    build: ({ r, wallet, milestones }) => ({
+      signer: wallet,
+      engagementId: r("engagementId"),
+      title: r("title"),
+      description: r("description"),
+      roles: {
+        approver: r("roles.approver"),
+        serviceProvider: r("roles.serviceProvider"),
+        platformAddress: r("roles.platformAddress"),
+        releaseSigner: r("roles.releaseSigner"),
+        disputeResolver: r("roles.disputeResolver"),
+        receiver: r("roles.receiver"),
+      },
+      amount: num(r("amount")),
+      platformFee: num(r("platformFee")),
+      milestones: milestones.map((m) => ({ description: m.description })),
+      trustline: {
+        address: r("trustline.address") || DEFAULT_TRUSTLINE_ADDR,
+        symbol: r("trustline.symbol") || "USDC",
+      },
+    }),
+  },
+  {
+    id: "fund",
+    label: "Fund",
+    method: "fundSingle",
+    blurb: "POST /escrow/single-release/fund-escrow — deposits the amount.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+      { key: "amount", label: "amount", type: "number", required: true, placeholder: "5" },
+    ],
+    build: ({ r, wallet }) => ({
+      contractId: r("contractId"),
+      signer: wallet,
+      amount: num(r("amount")),
+    }),
+  },
+  {
+    id: "approve",
+    label: "Approve milestone",
+    method: "approveMilestoneSingle",
+    blurb: "POST /escrow/single-release/approve-milestone — approver marks a milestone done.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+      { key: "approver", label: "approver", wallet: true, placeholder: "G…" },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      milestoneIndex: r("milestoneIndex"),
+      approver: r("approver"),
+    }),
+  },
+  {
+    id: "changeStatus",
+    label: "Change status",
+    method: "changeStatusSingle",
+    blurb: "POST /escrow/single-release/change-milestone-status — service provider updates a milestone.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+      { key: "newStatus", label: "newStatus", required: true, placeholder: "Completed", half: true },
+      { key: "newEvidence", label: "newEvidence", placeholder: "https://…", half: true },
+      { key: "serviceProvider", label: "serviceProvider", wallet: true, placeholder: "G…" },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      milestoneIndex: r("milestoneIndex"),
+      newStatus: r("newStatus"),
+      newEvidence: r("newEvidence"),
+      serviceProvider: r("serviceProvider"),
+    }),
+  },
+  {
+    id: "release",
+    label: "Release funds",
+    method: "releaseSingle",
+    blurb: "POST /escrow/single-release/release-funds — releases the full amount to the receiver.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "releaseSigner", label: "releaseSigner", wallet: true, placeholder: "G…", half: true },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      releaseSigner: r("releaseSigner"),
+    }),
+  },
+  {
+    id: "dispute",
+    label: "Dispute",
+    method: "disputeSingle",
+    blurb: "POST /escrow/single-release/dispute-escrow — flags the escrow as disputed.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+    ],
+    build: ({ r, wallet }) => ({
+      contractId: r("contractId"),
+      signer: wallet,
+    }),
+  },
+  {
+    id: "resolve",
+    label: "Resolve dispute",
+    method: "resolveSingle",
+    blurb: "POST /escrow/single-release/resolve-dispute — dispute resolver splits the funds.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "disputeResolver", label: "disputeResolver", wallet: true, placeholder: "G…", half: true },
+    ],
+    distributions: true,
+    build: ({ r, distributions }) => ({
+      contractId: r("contractId"),
+      disputeResolver: r("disputeResolver"),
+      distributions: distributions.map((d) => ({
+        address: d.address,
+        amount: num(d.amount),
+      })),
+    }),
+  },
+  {
+    id: "extendTtl",
+    label: "Extend TTL",
+    method: "extendTtlSingle",
+    blurb: "POST /escrow/single-release/extend-ttl — bumps the contract's rent expiry.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+      { key: "platformAddress", label: "platformAddress", wallet: true, placeholder: "G…" },
+      { key: "targetDate", label: "targetDate", type: "date", required: true },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      platformAddress: r("platformAddress"),
+      targetDate: toApiDate(r("targetDate")),
+    }),
+  },
+];
+
+const MULTI_OPS: OpDef[] = [
+  {
+    id: "deploy",
+    label: "Deploy",
+    method: "deployMulti",
+    blurb: "POST /deployer/multi-release — each milestone carries its own receiver + amount.",
+    fields: [
+      ...DEPLOY_COMMON,
+      { key: "platformFee", label: "platformFee %", type: "number", required: true, placeholder: "5", half: true },
+      roleField("approver", "roles.approver"),
+      roleField("serviceProvider", "roles.serviceProvider"),
+      roleField("platformAddress", "roles.platformAddress"),
+      roleField("releaseSigner", "roles.releaseSigner"),
+      roleField("disputeResolver", "roles.disputeResolver"),
+    ],
+    milestones: "multi",
+    build: ({ r, wallet, milestones }) => ({
+      signer: wallet,
+      engagementId: r("engagementId"),
+      title: r("title"),
+      description: r("description"),
+      roles: {
+        approver: r("roles.approver"),
+        serviceProvider: r("roles.serviceProvider"),
+        platformAddress: r("roles.platformAddress"),
+        releaseSigner: r("roles.releaseSigner"),
+        disputeResolver: r("roles.disputeResolver"),
+      },
+      platformFee: num(r("platformFee")),
+      milestones: milestones.map((m) => ({
+        description: m.description,
+        receiver: m.receiver || wallet,
+        amount: num(m.amount),
+      })),
+      trustline: {
+        address: r("trustline.address") || DEFAULT_TRUSTLINE_ADDR,
+        symbol: r("trustline.symbol") || "USDC",
+      },
+    }),
+  },
+  {
+    id: "fund",
+    label: "Fund",
+    method: "fundMulti",
+    blurb: "POST /escrow/multi-release/fund-escrow — deposits funds into the escrow.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+      { key: "amount", label: "amount", type: "number", required: true, placeholder: "5" },
+    ],
+    build: ({ r, wallet }) => ({
+      contractId: r("contractId"),
+      signer: wallet,
+      amount: num(r("amount")),
+    }),
+  },
+  {
+    id: "approve",
+    label: "Approve milestone",
+    method: "approveMilestoneMulti",
+    blurb: "POST /escrow/multi-release/approve-milestone — approver marks a milestone done.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+      { key: "approver", label: "approver", wallet: true, placeholder: "G…" },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      milestoneIndex: r("milestoneIndex"),
+      approver: r("approver"),
+    }),
+  },
+  {
+    id: "changeStatus",
+    label: "Change status",
+    method: "changeStatusMulti",
+    blurb: "POST /escrow/multi-release/change-milestone-status — service provider updates a milestone.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+      { key: "newStatus", label: "newStatus", required: true, placeholder: "Completed", half: true },
+      { key: "newEvidence", label: "newEvidence", placeholder: "https://…", half: true },
+      { key: "serviceProvider", label: "serviceProvider", wallet: true, placeholder: "G…" },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      milestoneIndex: r("milestoneIndex"),
+      newStatus: r("newStatus"),
+      newEvidence: r("newEvidence"),
+      serviceProvider: r("serviceProvider"),
+    }),
+  },
+  {
+    id: "release",
+    label: "Release milestone",
+    method: "releaseMulti",
+    blurb: "POST /escrow/multi-release/release-milestone-funds — releases one milestone's funds.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+      { key: "releaseSigner", label: "releaseSigner", wallet: true, placeholder: "G…" },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      releaseSigner: r("releaseSigner"),
+      milestoneIndex: r("milestoneIndex"),
+    }),
+  },
+  {
+    id: "dispute",
+    label: "Dispute milestone",
+    method: "disputeMulti",
+    blurb: "POST /escrow/multi-release/dispute-milestone — flags one milestone as disputed.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+    ],
+    build: ({ r, wallet }) => ({
+      contractId: r("contractId"),
+      milestoneIndex: r("milestoneIndex"),
+      signer: wallet,
+    }),
+  },
+  {
+    id: "resolve",
+    label: "Resolve dispute",
+    method: "resolveMulti",
+    blurb: "POST /escrow/multi-release/resolve-milestone-dispute — resolver splits a milestone's funds.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "milestoneIndex", label: "milestoneIndex", required: true, placeholder: "0", half: true },
+      { key: "disputeResolver", label: "disputeResolver", wallet: true, placeholder: "G…" },
+    ],
+    distributions: true,
+    build: ({ r, distributions }) => ({
+      contractId: r("contractId"),
+      disputeResolver: r("disputeResolver"),
+      milestoneIndex: r("milestoneIndex"),
+      distributions: distributions.map((d) => ({
+        address: d.address,
+        amount: num(d.amount),
+      })),
+    }),
+  },
+  {
+    id: "withdraw",
+    label: "Withdraw remaining",
+    method: "withdrawMulti",
+    blurb: "POST /escrow/multi-release/withdraw-remaining-funds — withdraws leftover funds after resolution.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…", half: true },
+      { key: "disputeResolver", label: "disputeResolver", wallet: true, placeholder: "G…", half: true },
+    ],
+    distributions: true,
+    build: ({ r, distributions }) => ({
+      contractId: r("contractId"),
+      disputeResolver: r("disputeResolver"),
+      distributions: distributions.map((d) => ({
+        address: d.address,
+        amount: num(d.amount),
+      })),
+    }),
+  },
+  {
+    id: "extendTtl",
+    label: "Extend TTL",
+    method: "extendTtlMulti",
+    blurb: "POST /escrow/multi-release/extend-ttl — bumps the contract's rent expiry.",
+    fields: [
+      { key: "contractId", label: "contractId", required: true, placeholder: "C…" },
+      { key: "platformAddress", label: "platformAddress", wallet: true, placeholder: "G…" },
+      { key: "targetDate", label: "targetDate", type: "date", required: true },
+    ],
+    build: ({ r }) => ({
+      contractId: r("contractId"),
+      platformAddress: r("platformAddress"),
+      targetDate: toApiDate(r("targetDate")),
+    }),
+  },
+];
+
+const OPS: Record<Family, OpDef[]> = { single: SINGLE_OPS, multi: MULTI_OPS };
 
 const SETUP_NOTE = `// adapter.ts — register once in your app
 export const trustlessWorkAdapter: TrustlessWorkAdapter = {
-  deployEscrow:     (p) => tw('/escrow/initialize-escrow', p),
-  fundEscrow:       (p) => tw('/escrow/fund-escrow', p),
-  approveMilestone: (p) => tw('/escrow/approve-milestone', p),
-  releaseFunds:     (p) => tw('/escrow/complete-escrow', p),
-  initiateDispute:  (p) => tw('/escrow/dispute-escrow', p),
-  resolveDispute:   (p) => tw('/escrow/resolute-dispute', p),
+  // single-release
+  deploySingle:  (p) => tw('/deployer/single-release', p),
+  fundSingle:    (p) => tw('/escrow/single-release/fund-escrow', p),
+  releaseSingle: (p) => tw('/escrow/single-release/release-funds', p),
+  resolveSingle: (p) => tw('/escrow/single-release/resolve-dispute', p),
+  // …approve / change-status / dispute / extend-ttl
+
+  // multi-release
+  deployMulti:   (p) => tw('/deployer/multi-release', p),
+  releaseMulti:  (p) => tw('/escrow/multi-release/release-milestone-funds', p),
+  withdrawMulti: (p) => tw('/escrow/multi-release/withdraw-remaining-funds', p),
+  // …fund / approve / change-status / dispute / resolve / extend-ttl
 };
 
-// each adapter fn must return { unsignedTransaction: string }.
+// each adapter fn returns { unsignedTransaction: string }.
 // Pollar then signs + submits with the user's wallet automatically.
 
 export const useEscrow =
@@ -93,154 +508,71 @@ export default function EscrowPage() {
   const walletAddress = wallet?.address ?? "";
   const escrow = useEscrow();
 
-  const [tab, setTab] = useState<Tab>("deploy");
+  const [family, setFamily] = useState<Family>("single");
+  const [opId, setOpId] = useState<string>("deploy");
+  const [bag, setBag] = useState<Record<string, string>>({});
+  const [milestones, setMilestones] = useState<MilestoneRow[]>([
+    { description: "Design the wireframe", receiver: "", amount: "" },
+  ]);
+  const [distributions, setDistributions] = useState<DistributionRow[]>([
+    { address: "", amount: "" },
+    { address: "", amount: "" },
+  ]);
   const [error, setError] = useState<string | null>(null);
-  const [inFlight, setInFlight] = useState<string | null>(null);
+  const [inFlight, setInFlight] = useState(false);
 
-  // deploy fields
-  const [engagementId, setEngagementId] = useState("");
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [approver, setApprover] = useState("");
-  const [serviceProvider, setServiceProvider] = useState("");
-  const [platformAddress, setPlatformAddress] = useState("");
-  const [amount, setAmount] = useState("");
-  const [platformFee, setPlatformFee] = useState("0");
+  const ops = OPS[family];
+  const op = ops.find((o) => o.id === opId) ?? ops[0]!;
 
-  // fund / milestone / dispute fields
-  const [contractId, setContractId] = useState("");
-  const [milestoneIndex, setMilestoneIndex] = useState("0");
-  const [approverFunds, setApproverFunds] = useState("");
-  const [serviceProviderFunds, setServiceProviderFunds] = useState("");
+  const set = (key: string, value: string) =>
+    setBag((b) => ({ ...b, [key]: value }));
 
-  // ── run wrapper — tracks per-button in-flight + surfaces errors ────────────
-  async function run(label: string, fn: () => Promise<unknown>) {
+  // resolved field value — applies the wallet fallback for role-style fields.
+  const resolve = useMemo(() => {
+    return (key: string): string => {
+      const raw = (bag[key] ?? "").trim();
+      if (raw) return raw;
+      const f = op.fields.find((f) => f.key === key);
+      return f?.wallet ? walletAddress : "";
+    };
+  }, [bag, op, walletAddress]);
+
+  const params = op.build({
+    r: resolve,
+    wallet: walletAddress,
+    milestones,
+    distributions,
+  });
+
+  function switchFamily(f: Family) {
+    setFamily(f);
+    setOpId("deploy");
     setError(null);
-    setInFlight(label);
+  }
+
+  async function submit() {
+    setError(null);
+    setInFlight(true);
     try {
-      await fn();
+      // every method takes exactly one params object → same call shape.
+      const fn = escrow[op.method] as (p: unknown) => Promise<unknown>;
+      await fn(params);
     } catch (e) {
       setError(e instanceof Error ? e.message : t.common.unknownError);
     } finally {
-      setInFlight(null);
+      setInFlight(false);
     }
   }
 
-  // ── handlers ────────────────────────────────────────────────────────────────
-  function handleDeploy() {
-    run("deploy", () =>
-      escrow.deployEscrow({
-        engagementId: engagementId.trim(),
-        title: title.trim(),
-        description: description.trim(),
-        approver: approver.trim() || walletAddress,
-        serviceProvider: serviceProvider.trim(),
-        platformAddress: platformAddress.trim(),
-        amount: amount.trim(),
-        platformFee: platformFee.trim(),
-        signer: walletAddress,
-      }),
-    );
-  }
-  function handleFund() {
-    run("fund", () =>
-      escrow.fundEscrow({
-        contractId: contractId.trim(),
-        signer: walletAddress,
-      }),
-    );
-  }
-  function handleApproveMilestone() {
-    run("approve", () =>
-      escrow.approveMilestone({
-        contractId: contractId.trim(),
-        milestoneIndex: milestoneIndex.trim(),
-        signer: walletAddress,
-      }),
-    );
-  }
-  function handleReleaseFunds() {
-    run("release", () =>
-      escrow.releaseFunds({
-        contractId: contractId.trim(),
-        signer: walletAddress,
-      }),
-    );
-  }
-  function handleInitiateDispute() {
-    run("dispute", () =>
-      escrow.initiateDispute({
-        contractId: contractId.trim(),
-        signer: walletAddress,
-      }),
-    );
-  }
-  function handleResolveDispute() {
-    run("resolve", () =>
-      escrow.resolveDispute({
-        contractId: contractId.trim(),
-        approverFunds: approverFunds.trim(),
-        serviceProviderFunds: serviceProviderFunds.trim(),
-        signer: walletAddress,
-      }),
-    );
-  }
-
-  // ── live code preview per tab ───────────────────────────────────────────────
-  function buildPreviewCode(): { react: string; core: string } {
-    const fnFor: Record<Tab, string> = {
-      deploy: "deployEscrow",
-      fund: "fundEscrow",
-      milestone: "approveMilestone",
-      dispute: "initiateDispute",
-    };
-
-    let params: Record<string, unknown> = {};
-    switch (tab) {
-      case "deploy":
-        params = {
-          engagementId: engagementId || "unique-id-001",
-          title: title || "Web development contract",
-          description: description || "...",
-          approver: approver || walletAddress || "G...",
-          serviceProvider: serviceProvider || "G...",
-          platformAddress: platformAddress || "G...",
-          amount: amount || "100",
-          platformFee: platformFee || "0",
-          signer: walletAddress || "G...",
-        };
-        break;
-      case "fund":
-        params = {
-          contractId: contractId || "C...",
-          signer: walletAddress || "G...",
-        };
-        break;
-      case "milestone":
-        params = {
-          contractId: contractId || "C...",
-          milestoneIndex: milestoneIndex || "0",
-          signer: walletAddress || "G...",
-        };
-        break;
-      case "dispute":
-        params = {
-          contractId: contractId || "C...",
-          signer: walletAddress || "G...",
-        };
-        break;
-    }
-
-    const fn = fnFor[tab];
-    const p = serializeVal(params, 0);
-
-    const react = `const { ${fn} } = useEscrow();
+  // ── live code preview ─────────────────────────────────────────────────────
+  const p = serializeVal(params, 0);
+  const react = `const { ${op.method} } = useEscrow();
 
 // adapter calls Trustless Work → returns unsigned XDR.
 // Pollar signs + submits with the user's wallet automatically.
-await ${fn}(${p});`;
+await ${op.method}(${p});`;
 
-    const core = `import { PollarClient } from '@pollar/core';
+  const core = `import { PollarClient } from '@pollar/core';
 import { trustlessWorkAdapter } from './adapter';
 
 const client = new PollarClient({ apiKey, baseUrl });
@@ -248,17 +580,12 @@ await client.ready();
 
 // the adapter hits Trustless Work → returns an unsigned XDR
 const { unsignedTransaction } =
-  await trustlessWorkAdapter.${fn}(${p});
+  await trustlessWorkAdapter.${op.method}(${p});
 
 // Pollar signs + submits with the connected wallet
 await client.signAndSubmitTx(unsignedTransaction);`;
 
-    return { react, core };
-  }
-
-  const preview = buildPreviewCode();
-
-  // ── render ──────────────────────────────────────────────────────────────────
+  // ── render ────────────────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-5xl">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
@@ -269,7 +596,6 @@ await client.signAndSubmitTx(unsignedTransaction);`;
               {t.escrow.title}
             </h1>
             <p className="text-sm text-muted mt-1.5">
-              {/* every locale's desc contains the literal "Trustless Work" — link it */}
               {t.escrow.desc.split("Trustless Work").map((part, i) => (
                 <span key={i}>
                   {i > 0 && (
@@ -288,254 +614,244 @@ await client.signAndSubmitTx(unsignedTransaction);`;
             </p>
           </div>
 
-          {/* tabs */}
-          <div className="flex gap-1 border-b border-border">
-            {TABS.map((value) => (
+          {/* family toggle */}
+          <div className="inline-flex rounded-lg border border-border p-0.5">
+            {(["single", "multi"] as Family[]).map((f) => (
               <button
-                key={value}
-                onClick={() => {
-                  setTab(value);
-                  setError(null);
-                }}
-                className={`text-xs px-3 py-2 border-b-2 transition-colors ${
-                  tab === value
-                    ? "border-primary text-primary font-semibold"
-                    : "border-transparent text-muted-light hover:text-foreground"
+                key={f}
+                onClick={() => switchFamily(f)}
+                className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  family === f
+                    ? "bg-primary text-white"
+                    : "text-muted-light hover:text-foreground"
                 }`}
               >
-                {t.escrow.tabs[value]}
+                {f === "single" ? "Single-Release" : "Multi-Release"}
               </button>
             ))}
           </div>
 
-          {/* ── deploy ────────────────────────────────────────────────────── */}
-          {tab === "deploy" && (
-            <div className="space-y-3">
-              <Field label={t.escrow.engagementId} required>
-                <input
-                  className={inp}
-                  value={engagementId}
-                  onChange={(e) => setEngagementId(e.target.value)}
-                  placeholder="unique-id-001"
-                  spellCheck={false}
-                />
-              </Field>
-              <Field label={t.escrow.titleField} required>
-                <input
-                  className={inp}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Web development contract"
-                />
-              </Field>
-              <Field label={t.escrow.description}>
-                <input
-                  className={inp}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Full-stack web app..."
-                />
-              </Field>
-              <Field
-                label={t.escrow.approver}
-                required
-                note={t.escrow.approverNote}
+          {/* operation tabs */}
+          <div className="flex flex-wrap gap-1 border-b border-border">
+            {ops.map((o) => (
+              <button
+                key={o.id}
+                onClick={() => {
+                  setOpId(o.id);
+                  setError(null);
+                }}
+                className={`text-xs px-3 py-2 border-b-2 -mb-px transition-colors ${
+                  op.id === o.id
+                    ? "border-primary text-primary font-semibold"
+                    : "border-transparent text-muted-light hover:text-foreground"
+                }`}
               >
-                <input
-                  className={inp}
-                  value={approver}
-                  onChange={(e) => setApprover(e.target.value)}
-                  placeholder={walletAddress || "G..."}
-                  spellCheck={false}
-                />
-              </Field>
-              <Field label={t.escrow.serviceProvider} required>
-                <input
-                  className={inp}
-                  value={serviceProvider}
-                  onChange={(e) => setServiceProvider(e.target.value)}
-                  placeholder="G..."
-                  spellCheck={false}
-                />
-              </Field>
-              <Field label={t.escrow.platformAddress} required>
-                <input
-                  className={inp}
-                  value={platformAddress}
-                  onChange={(e) => setPlatformAddress(e.target.value)}
-                  placeholder="G..."
-                  spellCheck={false}
-                />
-              </Field>
-              <div className="grid grid-cols-2 gap-3">
-                <Field label={t.escrow.amountUsdc} required>
-                  <input
-                    className={inp}
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                    placeholder="100"
-                  />
-                </Field>
-                <Field label={t.escrow.platformFee} required>
-                  <input
-                    className={inp}
-                    value={platformFee}
-                    onChange={(e) => setPlatformFee(e.target.value)}
-                    placeholder="0"
-                  />
-                </Field>
-              </div>
-            </div>
-          )}
+                {o.label}
+              </button>
+            ))}
+          </div>
 
-          {/* ── fund ──────────────────────────────────────────────────────── */}
-          {tab === "fund" && (
-            <div className="space-y-3">
-              <Field
-                label={t.escrow.contractId}
-                required
-                note={t.escrow.contractIdNote}
-              >
-                <input
-                  className={inp}
-                  value={contractId}
-                  onChange={(e) => setContractId(e.target.value)}
-                  placeholder="C..."
-                  spellCheck={false}
-                />
-              </Field>
-            </div>
-          )}
+          <p className="text-xs font-mono text-muted-light">{op.blurb}</p>
 
-          {/* ── milestone ─────────────────────────────────────────────────── */}
-          {tab === "milestone" && (
-            <div className="space-y-3">
-              <Field label={t.escrow.contractId} required>
-                <input
-                  className={inp}
-                  value={contractId}
-                  onChange={(e) => setContractId(e.target.value)}
-                  placeholder="C..."
-                  spellCheck={false}
-                />
-              </Field>
-              <Field label={t.escrow.milestoneIndex} required>
-                <input
-                  className={inp}
-                  type="number"
-                  value={milestoneIndex}
-                  onChange={(e) => setMilestoneIndex(e.target.value)}
-                  placeholder="0"
-                  min={0}
-                />
-              </Field>
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={handleApproveMilestone}
-                  disabled={!isAuthenticated || inFlight !== null}
-                  className={btn("secondary")}
+          {/* scalar fields */}
+          <div className="grid grid-cols-2 gap-3">
+            {op.fields.map((f) => (
+              <div key={f.key} className={f.half ? "" : "col-span-2"}>
+                <Field
+                  label={f.label}
+                  required={f.required}
+                  optionalLabel={t.common.optional}
+                  note={
+                    f.wallet
+                      ? t.escrow.approverNote
+                      : f.key === "contractId"
+                        ? t.escrow.contractIdNote
+                        : undefined
+                  }
                 >
-                  {inFlight === "approve"
-                    ? t.escrow.signing
-                    : t.escrow.approveMilestone}
-                </button>
-                <button
-                  onClick={handleReleaseFunds}
-                  disabled={!isAuthenticated || inFlight !== null}
-                  className={btn("secondary")}
-                >
-                  {inFlight === "release"
-                    ? t.escrow.signing
-                    : t.escrow.releaseFunds}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── dispute ───────────────────────────────────────────────────── */}
-          {tab === "dispute" && (
-            <div className="space-y-3">
-              <Field label={t.escrow.contractId} required>
-                <input
-                  className={inp}
-                  value={contractId}
-                  onChange={(e) => setContractId(e.target.value)}
-                  placeholder="C..."
-                  spellCheck={false}
-                />
-              </Field>
-              <div className="flex gap-2 pt-1">
-                <button
-                  onClick={handleInitiateDispute}
-                  disabled={!isAuthenticated || inFlight !== null}
-                  className={btn("secondary")}
-                >
-                  {inFlight === "dispute"
-                    ? t.escrow.signing
-                    : t.escrow.initiateDispute}
-                </button>
-              </div>
-              <div className="pt-2 border-t border-border space-y-3">
-                <p className="text-xs font-mono text-muted-light">
-                  {t.escrow.resolveDispute}
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <Field label={t.escrow.approverFunds} required>
+                  {f.type === "textarea" ? (
+                    <textarea
+                      className={inp}
+                      rows={2}
+                      value={bag[f.key] ?? ""}
+                      onChange={(e) => set(f.key, e.target.value)}
+                      placeholder={f.placeholder}
+                    />
+                  ) : (
                     <input
                       className={inp}
-                      value={approverFunds}
-                      onChange={(e) => setApproverFunds(e.target.value)}
-                      placeholder="50"
+                      type={f.type === "number" ? "number" : f.type === "date" ? "date" : "text"}
+                      value={bag[f.key] ?? ""}
+                      onChange={(e) => set(f.key, e.target.value)}
+                      placeholder={f.wallet ? walletAddress || f.placeholder : f.placeholder}
+                      spellCheck={false}
                     />
-                  </Field>
-                  <Field label={t.escrow.serviceProviderFunds} required>
-                    <input
-                      className={inp}
-                      value={serviceProviderFunds}
-                      onChange={(e) => setServiceProviderFunds(e.target.value)}
-                      placeholder="50"
-                    />
-                  </Field>
+                  )}
+                </Field>
+              </div>
+            ))}
+          </div>
+
+          {/* milestones editor (deploy) */}
+          {op.milestones && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className={lbl}>milestones</span>
+                <button
+                  onClick={() =>
+                    setMilestones((m) => [
+                      ...m,
+                      { description: "", receiver: "", amount: "" },
+                    ])
+                  }
+                  className={btn("secondary")}
+                >
+                  + milestone
+                </button>
+              </div>
+              {milestones.map((m, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-12 gap-2 items-start rounded-lg border border-border p-2"
+                >
+                  <input
+                    className={`${inp} col-span-12 ${op.milestones === "multi" ? "sm:col-span-6" : "sm:col-span-11"}`}
+                    value={m.description}
+                    onChange={(e) =>
+                      setMilestones((arr) =>
+                        arr.map((x, j) =>
+                          j === i ? { ...x, description: e.target.value } : x,
+                        ),
+                      )
+                    }
+                    placeholder="description"
+                  />
+                  {op.milestones === "multi" && (
+                    <>
+                      <input
+                        className={`${inp} col-span-8 sm:col-span-3`}
+                        value={m.receiver}
+                        onChange={(e) =>
+                          setMilestones((arr) =>
+                            arr.map((x, j) =>
+                              j === i ? { ...x, receiver: e.target.value } : x,
+                            ),
+                          )
+                        }
+                        placeholder="receiver G…"
+                        spellCheck={false}
+                      />
+                      <input
+                        className={`${inp} col-span-4 sm:col-span-2`}
+                        type="number"
+                        value={m.amount}
+                        onChange={(e) =>
+                          setMilestones((arr) =>
+                            arr.map((x, j) =>
+                              j === i ? { ...x, amount: e.target.value } : x,
+                            ),
+                          )
+                        }
+                        placeholder="amount"
+                      />
+                    </>
+                  )}
+                  <button
+                    onClick={() =>
+                      setMilestones((arr) =>
+                        arr.length > 1 ? arr.filter((_, j) => j !== i) : arr,
+                      )
+                    }
+                    className="col-span-12 sm:col-span-1 text-muted-light hover:text-error text-sm"
+                    aria-label="remove milestone"
+                  >
+                    ✕
+                  </button>
                 </div>
-                <button
-                  onClick={handleResolveDispute}
-                  disabled={!isAuthenticated || inFlight !== null}
-                  className={`${btn("primary")} w-full sm:w-auto`}
-                >
-                  {inFlight === "resolve"
-                    ? t.escrow.signing
-                    : t.escrow.resolveDispute}
-                </button>
-              </div>
+              ))}
             </div>
           )}
 
-          {/* submit (only for deploy/fund — milestone/dispute have inline buttons) */}
+          {/* distributions editor (resolve / withdraw) */}
+          {op.distributions && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className={lbl}>distributions</span>
+                <button
+                  onClick={() =>
+                    setDistributions((d) => [...d, { address: "", amount: "" }])
+                  }
+                  className={btn("secondary")}
+                >
+                  + distribution
+                </button>
+              </div>
+              {distributions.map((d, i) => (
+                <div
+                  key={i}
+                  className="grid grid-cols-12 gap-2 items-center rounded-lg border border-border p-2"
+                >
+                  <input
+                    className={`${inp} col-span-8`}
+                    value={d.address}
+                    onChange={(e) =>
+                      setDistributions((arr) =>
+                        arr.map((x, j) =>
+                          j === i ? { ...x, address: e.target.value } : x,
+                        ),
+                      )
+                    }
+                    placeholder="address G…"
+                    spellCheck={false}
+                  />
+                  <input
+                    className={`${inp} col-span-3`}
+                    type="number"
+                    value={d.amount}
+                    onChange={(e) =>
+                      setDistributions((arr) =>
+                        arr.map((x, j) =>
+                          j === i ? { ...x, amount: e.target.value } : x,
+                        ),
+                      )
+                    }
+                    placeholder="amount"
+                  />
+                  <button
+                    onClick={() =>
+                      setDistributions((arr) =>
+                        arr.length > 1 ? arr.filter((_, j) => j !== i) : arr,
+                      )
+                    }
+                    className="col-span-1 text-muted-light hover:text-error text-sm"
+                    aria-label="remove distribution"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* submit */}
           <div className="space-y-2 pt-1">
             {error && <p className="text-xs font-mono text-error">{error}</p>}
-            {(tab === "deploy" || tab === "fund") && (
-              <button
-                onClick={tab === "deploy" ? handleDeploy : handleFund}
-                disabled={!isAuthenticated || inFlight !== null}
-                className={`${btn("primary")} w-full sm:w-auto`}
-              >
-                {!isAuthenticated
-                  ? t.common.connectWalletToContinue
-                  : inFlight === "deploy"
-                    ? t.escrow.signing
-                    : inFlight === "fund"
-                      ? t.escrow.signing
-                      : tab === "deploy"
-                        ? t.escrow.deployEscrow
-                        : t.escrow.fundEscrow}
-              </button>
-            )}
+            <button
+              onClick={submit}
+              disabled={!isAuthenticated || inFlight}
+              className={`${btn("primary")} w-full sm:w-auto`}
+            >
+              {!isAuthenticated
+                ? t.common.connectWalletToContinue
+                : inFlight
+                  ? t.escrow.signing
+                  : op.label}
+            </button>
           </div>
         </div>
 
         {/* ── right: live code preview + tx state ───────────────────────── */}
         <div className="lg:sticky lg:top-6 space-y-4">
-          {/* setup hint */}
           <details className="rounded-lg border border-border overflow-hidden text-xs">
             <summary className="cursor-pointer px-4 py-2.5 bg-surface border-b border-border font-mono text-muted-light select-none">
               {t.escrow.setupSummary}
@@ -545,10 +861,8 @@ await client.signAndSubmitTx(unsignedTransaction);`;
             </pre>
           </details>
 
-          {/* current tab call — core + react */}
-          <DualCode core={preview.core} react={preview.react} />
+          <DualCode core={core} react={react} />
 
-          {/* tx state (from usePollar) — shows the auto-sign-and-submit progress */}
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
               <div className="flex items-center gap-2">
@@ -599,7 +913,6 @@ await client.signAndSubmitTx(unsignedTransaction);`;
             </div>
           </div>
 
-          {/* SDK reference — the functions behind the adapter flow */}
           <FnReference
             title={t.escrow.reactFnsTitle}
             intro={t.escrow.reactFnsIntro}
