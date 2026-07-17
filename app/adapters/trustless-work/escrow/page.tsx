@@ -790,12 +790,23 @@ export default function EscrowPage() {
     setResult(null);
   }
 
-  // Client-side guard: surface empty required fields before hitting TW, which
-  // otherwise 400s (e.g. an empty top-level description → "must not be empty").
+  // Client-side guard: surface empty required fields (TW 400s on an empty
+  // description) and negative amounts (TW: "must be greater than or equal to 0")
+  // before hitting the API.
   function validate(): string | null {
     const missing = op.fields
       .filter((f) => f.required && !resolve(f.key))
       .map((f) => f.label);
+
+    // Numeric fields (amount, platformFee, …) must be ≥ 0 — TW rejects negatives.
+    const negative: string[] = [];
+    const checkAmount = (label: string, raw: string) => {
+      const v = raw.trim();
+      if (v && num(v) < 0) negative.push(label);
+    };
+    op.fields
+      .filter((f) => f.type === "number")
+      .forEach((f) => checkAmount(f.label, resolve(f.key)));
 
     if (op.milestones) {
       if (milestones.length === 0) missing.push("at least one milestone");
@@ -804,6 +815,7 @@ export default function EscrowPage() {
           missing.push(`milestone ${i + 1} description`);
         if (op.milestones === "multi" && !m.amount.trim())
           missing.push(`milestone ${i + 1} amount`);
+        checkAmount(`milestone ${i + 1} amount`, m.amount);
       });
     }
 
@@ -811,12 +823,19 @@ export default function EscrowPage() {
       distributions.forEach((d, i) => {
         if (!d.address.trim()) missing.push(`distribution ${i + 1} address`);
         if (!d.amount.trim()) missing.push(`distribution ${i + 1} amount`);
+        checkAmount(`distribution ${i + 1} amount`, d.amount);
       });
     }
 
-    return missing.length
-      ? `Missing required field${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}`
-      : null;
+    const problems: string[] = [];
+    if (missing.length)
+      problems.push(
+        `Missing required field${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}`,
+      );
+    if (negative.length)
+      problems.push(`Must be ≥ 0: ${negative.join(", ")}`);
+
+    return problems.length ? problems.join(" — ") : null;
   }
 
   async function submit() {
