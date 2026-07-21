@@ -137,10 +137,12 @@ export function VaultActionModal({
     setTlBusy(true);
     setTlError(null);
     try {
-      const outcome = await setTrustline(
-        { code: assetRecord.code, issuer: assetRecord.issuer },
-        { sponsored: assetRecord.sponsored },
-      );
+      // No sponsorship flag: since v0.11.1 the server derives it from the app's
+      // dashboard config, and the opt-out (`skipSponsorship`) is the only knob.
+      const outcome = await setTrustline({
+        code: assetRecord.code,
+        issuer: assetRecord.issuer,
+      });
       if (outcome.status === "error") {
         setTlError(outcome.details ?? t.nekoVaults.signFailed);
       } else {

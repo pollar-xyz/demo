@@ -175,14 +175,22 @@ export default function SendPage() {
     }
   }, [tab, isAuthenticated, walletBalance.step, refreshWalletBalance]);
 
-  const balances =
-    walletBalance.step === "loaded" ? walletBalance.data.balances : [];
+  // Balances went multichain in v0.11, but this form is Stellar-only (SEP-7,
+  // XDR, trustlines) — keep just the Stellar rows so a Solana/Polygon token
+  // never reaches the picker. Rows minted before multichain carry no `chain`.
+  const balances = (
+    walletBalance.step === "loaded" ? walletBalance.data.balances : []
+  ).filter((b) => (b.chain ?? "STELLAR") === "STELLAR");
 
   const heldKeys = new Set(
     balances
       .filter((b) => b.type !== "native")
       .map((b) => `${b.code}:${"issuer" in b ? b.issuer : ""}`),
   );
+
+  // An amount the API returned as null means the chain couldn't be read, not an
+  // empty wallet — show it as unknown rather than as a zero to spend against.
+  const fmtAvailable = (value: string | null) => value ?? "—";
 
   // The wallet's held amount of an issued asset, or null when balances aren't
   // loaded yet (so we don't claim a misleading "0" before the fetch lands).
@@ -205,7 +213,7 @@ export default function SendPage() {
       .filter((b) => b.type !== "native")
       .map((b) => ({
         value: `${b.code}:${"issuer" in b ? b.issuer : ""}`,
-        label: `${b.code} · ${b.available}`,
+        label: `${b.code} · ${fmtAvailable(b.available)}`,
       })),
     ...Object.entries(extraAssets)
       .filter(([key]) => !heldKeys.has(key))
@@ -230,7 +238,16 @@ export default function SendPage() {
         x.type !== "native" &&
         `${x.code}:${"issuer" in x ? x.issuer : ""}` === key,
     );
-    if (b && b.type && b.type !== "native" && "issuer" in b && b.issuer) {
+    // `token` (SPL / ERC-20) joined the union in v0.11 and has no Stellar
+    // classic equivalent, so it can't become a PaymentAsset.
+    if (
+      b &&
+      b.type &&
+      b.type !== "native" &&
+      b.type !== "token" &&
+      "issuer" in b &&
+      b.issuer
+    ) {
       return { type: b.type, code: b.code, issuer: b.issuer };
     }
     if (extraAssets[key]) return extraAssets[key];
@@ -245,11 +262,11 @@ export default function SendPage() {
     if (walletBalance.step !== "loaded") return null;
     if (selectedAsset.type === "native") {
       const n = balances.find((b) => b.type === "native");
-      return { code: "XLM", available: n ? n.available : "0" };
+      return { code: "XLM", available: n ? fmtAvailable(n.available) : "0" };
     }
     return {
       code: selectedAsset.code,
-      available: availableFor(selectedAsset) ?? "0",
+      available: fmtAvailable(availableFor(selectedAsset)),
     };
   }
 

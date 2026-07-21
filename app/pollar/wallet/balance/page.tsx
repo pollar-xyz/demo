@@ -352,11 +352,12 @@ export default function BalancePage() {
                           </span>
                         )}
                       </td>
+                      {/* null = the chain couldn't be read, not a zero balance */}
                       <td className="px-4 py-2.5 text-right text-foreground">
-                        {b.balance}
+                        {b.balance ?? "—"}
                       </td>
                       <td className="px-4 py-2.5 text-right text-muted-light">
-                        {b.available}
+                        {b.available ?? "—"}
                       </td>
                     </tr>
                   ))}

@@ -257,7 +257,9 @@ export function PoolDetailModal({
     (code: string): number | null => {
       if (walletBalance.step !== "loaded") return null;
       const rec = walletBalance.data.balances.find((b) => b.code === code);
-      return rec ? Number(rec.balance) : null;
+      // A null `balance` means the chain couldn't be read, not an empty wallet —
+      // keep it as "unknown" instead of letting Number(null) report a real 0.
+      return rec?.balance != null ? Number(rec.balance) : null;
     },
     [walletBalance],
   );
