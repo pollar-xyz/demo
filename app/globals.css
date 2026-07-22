@@ -111,39 +111,49 @@ body {
   }
 }
 
-/* @pollar/react's <ChainSelect> expects the SDK's own stylesheet
-   (@pollar/react/dist/index.css), which this demo deliberately does not import:
-   it declares --pollar-* variables globally and sizes controls for the prebuilt
-   modals, not for these Tailwind pages. Without it the component renders as an
-   unstyled native select.
+/* @pollar/react's stylesheet IS loaded (Shell.tsx imports it), but it never
+   DECLARES the --pollar-* custom properties it reads. The SDK sets them as
+   inline styles on each prebuilt modal's root element, derived from the
+   provider's theme + accentColor.
 
-   The wallet forms sidestep this with ChainField (the demo's own Select), but
-   the chains tab shows the real component on purpose, so give it the demo's
-   look here. Only these three class names are borrowed; if the SDK stylesheet
-   is ever imported for real, drop this block rather than fight it. */
-.pollar-send-label {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-family: var(--font-mono), monospace;
-  font-size: 0.75rem;
-  color: var(--muted);
+   So an SDK component rendered on its own — outside any modal — inherits none
+   of them, and every rule referencing one is invalid at computed-value time.
+   `border: 1px solid var(--pollar-border)` collapses to `0px none`: that, not
+   a missing import, is why a bare <ChainSelect> comes out borderless.
+
+   .pollar-scope hands those components the demo's own tokens. They flip with
+   .dark on their own, so the control follows the page theme. The size rules
+   bring the SDK's 44px/1rem control down to this demo's form scale. Scoped
+   rather than :root so the modals — which set these inline anyway — stay
+   untouched. */
+.pollar-scope {
+  --pollar-accent: var(--primary);
+  --pollar-bg: var(--background);
+  --pollar-border: var(--border);
+  --pollar-input-bg: var(--background);
+  --pollar-text: var(--foreground);
+  --pollar-muted: var(--muted);
+  --pollar-input-height: auto;
+  --pollar-input-border-radius: 0.5rem;
 }
 
-.pollar-input.pollar-send-select {
-  width: 100%;
-  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  background-color: var(--background);
-  color: var(--foreground);
+.pollar-scope .pollar-input {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.75rem;
   font-family: var(--font-mono), monospace;
   font-size: 0.875rem;
-  outline: none;
-  cursor: pointer;
   transition: border-color 0.15s;
 }
 
-.pollar-input.pollar-send-select:focus {
+/* The SDK focuses with a 2px accent ring; the demo's inputs move the border. */
+.pollar-scope .pollar-input:focus {
   border-color: var(--primary);
   box-shadow: none;
+}
+
+.pollar-scope .pollar-send-label {
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
 }

@@ -191,13 +191,18 @@ export default function ChainsPage() {
 
                 {/* a working picker, driven by the values above */}
                 <div className="border-t border-border pt-3 space-y-2">
-                  <ChainSelect
-                    label={t.chains.pickerLabel}
-                    value={selected}
-                    options={chains}
-                    onChange={setPicked}
-                    disabled={!ready}
-                  />
+                  {/* The real SDK component, not the demo's Select — documenting
+                      it is this page's point. pollar-scope lends it the demo's
+                      tokens, which the SDK otherwise only sets inside a modal. */}
+                  <div className="pollar-scope">
+                    <ChainSelect
+                      label={t.chains.pickerLabel}
+                      value={selected}
+                      options={chains}
+                      onChange={setPicked}
+                      disabled={!ready}
+                    />
+                  </div>
                   <p className="text-xs font-mono text-muted">
                     addressForChain() ={" "}
                     <span className="text-foreground break-all">
