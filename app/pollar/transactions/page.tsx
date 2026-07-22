@@ -430,8 +430,15 @@ function PathInput({
 
 export default function TransactionsPage() {
   const { t: tr } = useI18n();
-  const { buildTx, signAndSubmitTx, isAuthenticated, tx, openTxModal } =
-    usePollar();
+  const {
+    buildTx,
+    signAndSubmitTx,
+    signTx,
+    submitTx,
+    isAuthenticated,
+    tx,
+    openTxModal,
+  } = usePollar();
 
   const [op, setOp] = useState<Op>("payment");
   const [error, setError] = useState<string | null>(null);
@@ -609,6 +616,36 @@ export default function TransactionsPage() {
     }
   }
 
+  // ── step 2-3: sign + submit in one call (custodial-friendly) ────────────────
+  async function handleSignSubmit(unsignedXdr?: string) {
+    setError(null);
+    try {
+      await signAndSubmitTx(unsignedXdr);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : tr.transactions.invalidParams);
+    }
+  }
+
+  // ── step 2: sign only (external wallets) → drives tx.step to "signed" ────────
+  async function handleSign(unsignedXdr: string) {
+    setError(null);
+    try {
+      await signTx(unsignedXdr);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : tr.transactions.invalidParams);
+    }
+  }
+
+  // ── step 3: submit the already-signed XDR ───────────────────────────────────
+  async function handleSubmitSigned(signedXdr: string) {
+    setError(null);
+    try {
+      await submitTx(signedXdr);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : tr.transactions.invalidParams);
+    }
+  }
+
   function switchOp(next: Op) {
     setOp(next);
     setError(null);
@@ -681,6 +718,29 @@ export default function TransactionsPage() {
   }
 
   const preview = buildPreviewCode();
+
+  // ── step-by-step derived state ──────────────────────────────────────────────
+  const busy =
+    tx.step === "building" ||
+    tx.step === "signing" ||
+    tx.step === "submitting" ||
+    tx.step === "signing-submitting" ||
+    tx.step === "building-signing-submitting";
+
+  // XDR available at the current step (undefined until built / signed).
+  const unsignedXdr =
+    "buildData" in tx ? (tx.buildData?.unsignedXdr ?? undefined) : undefined;
+  const signedXdr = "signedXdr" in tx ? tx.signedXdr : undefined;
+  const signedReached = [
+    "signed",
+    "submitting",
+    "submitted",
+    "success",
+  ].includes(tx.step);
+
+  // step 2 (sign) + step 3 (submit) code previews — mirror the split buttons.
+  const signCode = `const { signTx } = usePollar();\n\n// external wallets only — custodial: use signAndSubmitTx\nconst unsignedXdr =\n  '${(unsignedXdr ?? "…").slice(0, 60)}…';\n\nconst { signedXdr } = await signTx(unsignedXdr);`;
+  const submitCode = `const { submitTx } = usePollar();\n\nconst signedXdr =\n  '${(signedXdr ?? "…").slice(0, 60)}…';\n\nconst { hash } = await submitTx(signedXdr);`;
 
   // ── render ─────────────────────────────────────────────────────────────────
   return (
@@ -999,17 +1059,14 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {/* submit */}
+          {/* actions — step by step: 1 build → 2 sign → 3 submit ─────────────── */}
           <div className="space-y-2 pt-2">
             {error && <p className="text-xs font-mono text-error">{error}</p>}
             <div className="flex flex-wrap gap-2">
+              {/* 1. build */}
               <button
                 onClick={handleSubmit}
-                disabled={
-                  !isAuthenticated ||
-                  tx.step === "building" ||
-                  tx.step === "signing"
-                }
+                disabled={!isAuthenticated || busy}
                 className={`${btn("primary")} w-full sm:w-auto`}
               >
                 {!isAuthenticated
@@ -1018,13 +1075,49 @@ export default function TransactionsPage() {
                     ? tr.transactions.building
                     : "1. buildTx"}
               </button>
+
+              {/* after build: 2-3 one-shot, plus a 2-only (sign) button */}
               {tx.step === "built" && tx.buildData && (
+                <>
+                  <button
+                    onClick={() => handleSignSubmit(unsignedXdr)}
+                    disabled={busy}
+                    className={`${btn("primary")} w-full sm:w-auto`}
+                  >
+                    2-3. signAndSubmitTx
+                  </button>
+                  {unsignedXdr && (
+                    <button
+                      onClick={() => handleSign(unsignedXdr)}
+                      disabled={busy}
+                      className={`${btn("secondary")} w-full sm:w-auto`}
+                    >
+                      2. signTx
+                    </button>
+                  )}
+                </>
+              )}
+
+              {/* after sign: 3-only (submit) */}
+              {tx.step === "signed" && signedXdr && (
                 <button
-                  onClick={() => signAndSubmitTx(tx.buildData.unsignedXdr)}
+                  onClick={() => handleSubmitSigned(signedXdr)}
+                  disabled={busy}
                   className={`${btn("primary")} w-full sm:w-auto`}
                 >
-                  2. signAndSubmitTx
+                  3. submitTx
                 </button>
+              )}
+
+              {/* busy indicator while a sign/submit is in flight */}
+              {(tx.step === "signing" ||
+                tx.step === "submitting" ||
+                tx.step === "signing-submitting") && (
+                <span className="self-center text-xs font-mono text-warning animate-pulse">
+                  {tx.step === "submitting"
+                    ? tr.transactions.submitting
+                    : tr.transactions.signing}
+                </span>
               )}
             </div>
             <p className="text-[10px] font-mono text-muted-light">
@@ -1044,7 +1137,7 @@ export default function TransactionsPage() {
             code={preview.core}
           />
 
-          {/* react code preview (split into build + submit steps) */}
+          {/* react code preview (split into build → sign → submit steps) */}
           <div className="rounded-xl bg-surface border border-border dark:bg-[#1a1a1a] dark:border-transparent overflow-hidden">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-border dark:border-white/10">
               <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
@@ -1058,7 +1151,7 @@ export default function TransactionsPage() {
               </span>
             </div>
 
-            {/* step 1 */}
+            {/* step 1 — build */}
             <div className="border-b border-border dark:border-white/10">
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                 <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">
@@ -1073,28 +1166,37 @@ export default function TransactionsPage() {
               </pre>
             </div>
 
-            {/* step 2 */}
+            {/* step 2 — sign */}
             <div
-              className={
+              className={`border-b border-border dark:border-white/10 ${
                 tx.step === "idle" || tx.step === "building" ? "opacity-40" : ""
-              }
+              }`}
             >
               <div className="px-4 pt-3 pb-1 flex items-center gap-2">
                 <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">
                   2
                 </span>
                 <span className="text-[10px] font-mono text-muted-light">
+                  {tr.transactions.signStep}
+                </span>
+              </div>
+              <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
+                {highlight(signCode)}
+              </pre>
+            </div>
+
+            {/* step 3 — submit */}
+            <div className={signedReached ? "" : "opacity-40"}>
+              <div className="px-4 pt-3 pb-1 flex items-center gap-2">
+                <span className="text-[10px] font-mono font-medium bg-primary text-white rounded px-1.5 py-0.5">
+                  3
+                </span>
+                <span className="text-[10px] font-mono text-muted-light">
                   {tr.transactions.submitStep}
                 </span>
               </div>
               <pre className="px-4 pb-4 pt-1 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto whitespace-pre leading-relaxed">
-                {highlight(
-                  "buildData" in tx && tx.buildData?.unsignedXdr
-                    ? `const { signAndSubmitTx } = usePollar();\n\nconst unsignedXdr =\n  '${tx.buildData.unsignedXdr.slice(0, 60)}...';\n\nawait signAndSubmitTx(unsignedXdr);`
-                    : "buildData" in tx && tx.buildData
-                      ? `const { signAndSubmitTx } = usePollar();\n\n// custodial flow — no client-side XDR.\n// the SDK submits the built transaction for you.\nawait signAndSubmitTx();`
-                      : `const { signAndSubmitTx } = usePollar();\n\n// available after buildTx resolves\nawait signAndSubmitTx(unsignedXdr);`,
-                )}
+                {highlight(submitCode)}
               </pre>
             </div>
           </div>
@@ -1157,10 +1259,34 @@ export default function TransactionsPage() {
                 </div>
               )}
 
+              {/* unsigned XDR — available from "built" onwards */}
+              {unsignedXdr && (
+                <div>
+                  <p className="text-xs font-mono text-muted-light mb-1">
+                    unsigned xdr
+                  </p>
+                  <p className="text-xs font-mono text-muted break-all max-h-24 overflow-y-auto">
+                    {unsignedXdr}
+                  </p>
+                </div>
+              )}
+
+              {/* signed XDR — appears after step 2 (sign) */}
+              {signedXdr && (
+                <div>
+                  <p className="text-xs font-mono text-muted-light mb-1">
+                    signed xdr
+                  </p>
+                  <p className="text-xs font-mono text-warning break-all max-h-24 overflow-y-auto">
+                    {signedXdr}
+                  </p>
+                </div>
+              )}
+
               {"hash" in tx && tx.hash && (
                 <div>
                   <p className="text-xs font-mono text-muted-light mb-1">
-                    hash
+                    hash · {tx.step}
                   </p>
                   <p className="text-xs font-mono text-success break-all">
                     {tx.hash}
@@ -1168,12 +1294,21 @@ export default function TransactionsPage() {
                 </div>
               )}
 
-              {tx.step === "error" && tx.details && (
-                <p className="text-xs font-mono text-error">
-                  {typeof tx.details === "string"
-                    ? tx.details
-                    : JSON.stringify(tx.details, null, 2)}
-                </p>
+              {tx.step === "error" && (
+                <div className="space-y-1">
+                  <p className="text-xs font-mono text-error">
+                    phase: {tx.phase}
+                    {tx.code ? ` · ${tx.code}` : ""}
+                  </p>
+                  {(tx.message || tx.details) && (
+                    <p className="text-xs font-mono text-error break-all">
+                      {tx.message ??
+                        (typeof tx.details === "string"
+                          ? tx.details
+                          : JSON.stringify(tx.details, null, 2))}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
