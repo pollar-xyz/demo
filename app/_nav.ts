@@ -69,6 +69,7 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/pollar/wallet/send", label: "send" },
       { href: "/pollar/wallet/receive", label: "receive" },
       { href: "/pollar/wallet/balance", label: "balance" },
+      { href: "/pollar/wallet/chains", label: "chains" },
       { href: "/pollar/wallet/assets", label: "assets" },
       { href: "/pollar/wallet/history", label: "history" },
       { href: "/pollar/wallet/distribution", label: "distribution" },

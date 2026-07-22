@@ -37,6 +37,7 @@ export const en = {
     receive: "Receive",
     history: "History",
     balance: "Balance",
+    chains: "Chains",
     assets: "Assets",
     ramp: "Ramp",
     kyc: "KYC",
@@ -220,6 +221,17 @@ export const en = {
       stateIdle: "Fill in destination, asset and amount, then run the payment.",
       nativeOnly:
         "Connect a wallet to load its held assets — native XLM is shown by default.",
+      networkLabel: "Network",
+      destinationPhOther: "Recipient address on this chain",
+      tokenLabel: "Token",
+      nativeCoinHint:
+        "the chain's own coin — sent by omitting `mint` entirely.",
+      mintHint:
+        "an SPL / ERC-20 mint. There is no issuer and no trustline off Stellar.",
+      baseUnitsError:
+        "More decimal places than this asset has. Truncating would send less than you typed, so the amount is refused.",
+      custodialOnly:
+        "Custodial wallets only: this chain's signature would expire before an external wallet could add its own, so the whole payment runs in one server-side call.",
     },
     coreFnsTitle: "Functions used",
     coreFnsIntro:
@@ -314,23 +326,48 @@ export const en = {
 
   receive: {
     title: "Receive",
-    desc: "Show the connected wallet's address and QR code so others can send funds to it. Pollar renders the whole view inside a modal.",
+    desc: "Show the addresses others can send funds to — one per chain the app is provisioned on. Pollar renders the address and its QR code inside a modal.",
     open: "Open Receive modal",
     note: "takes no arguments — it reads the connected wallet address from context.",
     reactDesc:
       "Drop-in button that opens a prebuilt modal showing the connected wallet's address and a QR code.",
     coreDesc:
-      "Read the connected wallet's public key from the auth state and render the address + QR yourself.",
+      "Read every wallet the user holds straight off the client and render the addresses yourself.",
+    coreNote:
+      "one entry per chain; a wallet minted before multichain carries no chain and is Stellar by definition.",
+    addressesTitle: "Your addresses",
+    addressesIntro:
+      "One address per chain the app serves and the user holds — the same account, a different wallet on each network.",
+    networkLabel: "Network",
+    copy: "Copy",
+    copied: "Copied",
+    noWallets: "Connect a wallet to see its addresses.",
+    qrNote:
+      "The prebuilt modal draws the QR code; this panel lists the raw addresses the SDK exposes per chain.",
     coreFnsTitle: "Functions used",
     coreFnsIntro:
       "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
     coreFns: [
       {
+        fn: "getWallets()",
+        tag: "sync",
+        params: "No arguments — reads the wallets stored on the session.",
+        returns:
+          "WalletInfo[] — every wallet the user holds, one per chain, each with address, custody, provider and chain. [] when unauthenticated.",
+      },
+      {
+        fn: "getWallet()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "WalletInfo | null — the Stellar wallet (the primary chain). Kept as-is so pre-multichain code keeps working.",
+      },
+      {
         fn: "getAuthState()",
         tag: "sync",
         params: "No arguments.",
         returns:
-          "AuthState — when step === 'authenticated', session.wallet?.publicKey is the receiving address (a G… string).",
+          "AuthState — when step === 'authenticated', session.wallet?.publicKey is the Stellar receiving address (a G… string).",
       },
     ],
     reactFnsTitle: "Hook & values used",
@@ -359,7 +396,39 @@ export const en = {
         params:
           "Not a function — a WalletInfo object read from usePollar(), or null when not connected.",
         returns:
-          "The connected wallet (wallet.address holds the public key, wallet.custody/provider its type); re-renders when the session changes.",
+          "The Stellar wallet (wallet.address holds the public key, wallet.custody/provider its type); re-renders when the session changes.",
+      },
+      {
+        fn: "wallets",
+        tag: "reactive value",
+        params:
+          "Not a function — a WalletInfo[] read from usePollar(); [] when unauthenticated.",
+        returns:
+          "Every wallet the user holds, one per chain — a superset of wallet, with chain populated. This is what drives a network selector.",
+      },
+      {
+        fn: "useChains()",
+        tag: "hook",
+        params:
+          "No arguments. Cross-references the app's configured chains with the wallets the user actually holds.",
+        returns:
+          "{ chains, primaryChain, primaryAddress, ready } — chains is [] until /config resolves, so gate any picker on ready.",
+      },
+      {
+        fn: "addressForChain(wallets, chain)",
+        tag: "sync",
+        params:
+          "wallets: WalletInfo[] (from usePollar); chain: WalletChain | null.",
+        returns:
+          "string — the address to show for that chain, or '' when the user holds no wallet there.",
+      },
+      {
+        fn: "<ChainSelect />",
+        tag: "component",
+        params:
+          "value, options, onChange, plus optional label and disabled. Feed options from useChains().chains.",
+        returns:
+          "The network picker, or null when there is a single option — a one-chain app renders no selector at all.",
       },
     ],
   },
@@ -1099,7 +1168,7 @@ export const en = {
 
   balance: {
     title: "Balance",
-    desc: "Read a Stellar account's balances — the connected wallet's, or any address by public key.",
+    desc: "Read a wallet's balances across every chain the app is provisioned on — the connected wallet's, or any Stellar address by public key.",
     reactDesc:
       "Drop-in button that opens a prebuilt modal showing the connected wallet's balances, fully rendered.",
     coreDesc:
@@ -1115,8 +1184,14 @@ export const en = {
     idle: "Submit a request to load balances.",
     noBalances: "No balances found.",
     assetCol: "Asset",
+    chainCol: "Chain",
     balanceCol: "Balance",
     availableCol: "Available",
+    multichainTag: "multichain",
+    multichainNote:
+      "more than one chain answered — every row is tagged with the chain it lives on.",
+    unreadableNote:
+      "A dash means the chain could not be read (an unreachable RPC), not an empty wallet.",
     rawResponse: "Raw response",
     coreFnsTitle: "Functions used",
     coreFnsIntro:
@@ -1184,6 +1259,88 @@ export const en = {
     ],
   },
 
+  chains: {
+    title: "Chains",
+    desc: "The networks this app serves, cross-referenced with the wallets the user actually holds — the list every network picker in the SDK is driven by.",
+    reactDesc:
+      "useChains() resolves the app's configured chains against the user's wallets and hands you an ordered list, the primary chain, and its address.",
+    coreDesc:
+      "core hands you every wallet the user holds via getWallets(); ranking them against the app's config is what the react layer adds on top.",
+    orderFilterTitle: "The chain list orders AND filters",
+    orderFilterBody:
+      "The app's chain list from /applications/config does both jobs: a chain missing from it is dropped, not merely sorted last. That matters because wallets come from the session — written at login and kept for as long as it lives — while /config is refetched on every page load. So a chain switched off in the dashboard today disappears on the next reload, even for a user who logged in last week and still carries it in their stored session.",
+    connectFirst: "Connect a wallet to resolve the chain list.",
+    pickerLabel: "Network",
+    singleChainNote:
+      "One option, so ChainSelect renders nothing — the picker appears as soon as a second chain is enabled.",
+    walletsTitle: "Wallets on the session",
+    served: "served",
+    filtered: "filtered",
+    filteredNote: (list: string) =>
+      `The session carries a wallet on ${list}, but the app's config does not list that chain — so it is dropped everywhere in the UI.`,
+    coreFnsTitle: "Functions used",
+    coreFnsIntro:
+      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+    coreFns: [
+      {
+        fn: "getWallets()",
+        tag: "sync",
+        params: "No arguments — reads the wallets stored on the session.",
+        returns:
+          "WalletInfo[] — one per chain, in the order the backend listed them. No ranking and no filtering: core never sees /applications/config.",
+      },
+      {
+        fn: "getWallet()",
+        tag: "sync",
+        params: "No arguments.",
+        returns:
+          "WalletInfo | null — the Stellar wallet. Unchanged by multichain, so code written before v0.11 keeps working.",
+      },
+    ],
+    reactFnsTitle: "Hook, helpers & component used",
+    reactFnsIntro:
+      "useChains() comes from the hook layer; the three helpers below are plain functions you can call anywhere, and ChainSelect is the prebuilt picker.",
+    reactFns: [
+      {
+        fn: "useChains()",
+        tag: "hook",
+        params:
+          "No arguments. Reads wallets from context and the chain order from /applications/config.",
+        returns:
+          "{ chains, primaryChain, primaryAddress, ready } — chains is [] while /config is in flight, so a picker driven by it renders nothing rather than a list it must reorder a moment later.",
+      },
+      {
+        fn: "chainsOf(wallets, order?)",
+        tag: "sync",
+        params:
+          "wallets: WalletInfo[]; order?: readonly WalletChain[] — the app's chain list. Omit it and the wallets' own order is used as the fallback.",
+        returns:
+          "WalletChain[] — de-duplicated, since two wallets on one chain (a custodial plus a linked external one) are still a single network choice.",
+      },
+      {
+        fn: "resolveChain(chain)",
+        tag: "sync",
+        params: "chain: WalletChain | undefined.",
+        returns:
+          "WalletChain — absent counts as STELLAR, not as unknown: sessions and balance rows minted before multichain carry no chain and are Stellar by definition.",
+      },
+      {
+        fn: "addressForChain(wallets, chain)",
+        tag: "sync",
+        params: "wallets: WalletInfo[]; chain: WalletChain | null.",
+        returns:
+          "string — the address to show for that chain, or '' when the user holds no wallet there.",
+      },
+      {
+        fn: "<ChainSelect />",
+        tag: "component",
+        params: "value, options, onChange, plus optional label and disabled.",
+        returns:
+          "The picker, or null when options has a single entry — a one-chain app renders no selector at all.",
+      },
+    ],
+  },
+
   assets: {
     title: "Enabled assets",
     desc: "The app's dashboard-enabled assets paired with the connected wallet's on-chain trustline state — so you know which trustlines the wallet still needs to add. Native XLM is always present.",
@@ -1204,6 +1361,7 @@ export const en = {
     trustlineCol: "Trustline",
     established: "Established",
     missing: "Missing",
+    sponsoredTag: "sponsored",
     rawResponse: "Raw response",
     coreFnsTitle: "Functions used",
     coreFnsIntro:
@@ -1277,19 +1435,33 @@ export const en = {
       disable: "Disable trustline",
       running: "Submitting…",
       stateIdle: "Set the asset, then enable or disable its trustline.",
+      selfPayOff:
+        "Off: the app covers the 0.5 XLM reserve and the fee whenever its dashboard config says the asset is sponsored.",
+      selfPayOn:
+        "On: the user's own wallet pays, bypassing the sponsoring endpoints for a plain change_trust. This is also the only route a custom (non-app) asset has.",
+      txNote:
+        "tx.step only moves on the self-pay route — the sponsored endpoints submit server-side and never enter the transaction machine.",
       removedNote:
         "On a successful disable, the balance response reports trustlineRemoved: true.",
-      fnsTitle: "change_trust functions",
+      fnsTitle: "Trustline functions",
       fnsIntro:
-        "runTx is the one-shot path; the demo then re-renders the table via refreshAssets(). Both come from usePollar() (or the underlying PollarClient via getClient()).",
+        "setTrustline is the path to reach for: it picks the route by wallet type and lets each server endpoint sponsor or self-pay. runTx('change_trust') stays as the manual, always self-paid escape hatch. All come from usePollar() (or the underlying PollarClient via getClient()).",
       fns: [
+        {
+          fn: "setTrustline(asset, opts?)",
+          tag: "async",
+          params:
+            "asset: { code, issuer }; opts.limit?: string ('0' removes the trustline, omitted = max); opts.skipSponsorship?: boolean — force self-pay even when the app would sponsor.",
+          returns:
+            "Promise<TrustlineOutcome> — status: 'success' | 'pending' | 'error'. Custodial wallets get one server call; an external wallet gets a sponsor-signed XDR to co-sign. Does NOT refresh on its own.",
+        },
         {
           fn: "runTx(operation, params, options?)",
           tag: "async",
           params:
             "operation: 'change_trust'; params.asset: { type, code, issuer }; params.limit?: string ('0' removes the trustline, omitted = max).",
           returns:
-            "Promise<SubmitOutcome> — build → sign → submit in one call; status: 'success' | 'pending' | 'error'. Drives the reactive tx state.",
+            "Promise<SubmitOutcome> — build → sign → submit in one call, always paid by the user. This is what setTrustline falls back to under skipSponsorship.",
         },
         {
           fn: "buildTx(operation, params, options?)",
@@ -1451,10 +1623,13 @@ export const en = {
     memoPhId: "Numeric ID",
     memoPhText: "Text memo",
     building: "Building…",
+    signing: "Signing…",
+    submitting: "Submitting…",
     invalidParams: "Invalid params",
     tipPre: "Tip: ",
-    tipPost: " opens a built-in modal that handles step 2 for you.",
+    tipPost: " opens a built-in modal that handles steps 2–3 for you.",
     buildStep: "build transaction",
+    signStep: "sign the built XDR",
     submitStep: "submit signed transaction",
     stateLabel: "transaction state",
     stateIdle: "Submit a transaction to see its state here.",
@@ -2178,6 +2353,7 @@ export const es: Dictionary = {
     receive: "Recibir",
     history: "Historial",
     balance: "Saldo",
+    chains: "Cadenas",
     assets: "Activos",
     ramp: "Ramp",
     kyc: "KYC",
@@ -2363,6 +2539,17 @@ export const es: Dictionary = {
       stateIdle: "Completa destino, activo y monto, y luego ejecuta el pago.",
       nativeOnly:
         "Conecta una billetera para cargar sus activos; XLM nativo se muestra por defecto.",
+      networkLabel: "Red",
+      destinationPhOther: "Dirección del destinatario en esta cadena",
+      tokenLabel: "Token",
+      nativeCoinHint:
+        "la moneda propia de la cadena: se envía omitiendo `mint` por completo.",
+      mintHint:
+        "un mint de SPL / ERC-20. Fuera de Stellar no hay issuer ni trustline.",
+      baseUnitsError:
+        "Más decimales de los que tiene este activo. Truncar enviaría menos de lo que escribiste, así que se rechaza el monto.",
+      custodialOnly:
+        "Solo billeteras custodiales: la firma de esta cadena expiraría antes de que una billetera externa pudiera agregar la suya, así que todo el pago corre en una sola llamada del servidor.",
     },
     coreFnsTitle: "Funciones utilizadas",
     coreFnsIntro:
@@ -2458,23 +2645,48 @@ export const es: Dictionary = {
 
   receive: {
     title: "Recibir",
-    desc: "Muestra la dirección de la billetera conectada y su código QR para que otros puedan enviarle fondos. Pollar renderiza toda la vista dentro de un modal.",
+    desc: "Muestra las direcciones a las que otros pueden enviarte fondos: una por cada cadena donde la app está aprovisionada. Pollar renderiza la dirección y su código QR dentro de un modal.",
     open: "Abrir modal de recepción",
     note: "no recibe argumentos: lee la dirección de la billetera conectada desde el contexto.",
     reactDesc:
       "Botón listo que abre un modal prearmado con la dirección de la billetera conectada y un código QR.",
     coreDesc:
-      "Lee la clave pública de la billetera conectada desde el estado de autenticación y renderiza la dirección + QR tú mismo.",
+      "Lee del cliente todas las billeteras que tiene el usuario y renderiza las direcciones tú mismo.",
+    coreNote:
+      "una entrada por cadena; una billetera creada antes de multicadena no trae chain y es de Stellar por definición.",
+    addressesTitle: "Tus direcciones",
+    addressesIntro:
+      "Una dirección por cada cadena que la app sirve y el usuario tiene: la misma cuenta, una billetera distinta en cada red.",
+    networkLabel: "Red",
+    copy: "Copiar",
+    copied: "Copiado",
+    noWallets: "Conecta una billetera para ver sus direcciones.",
+    qrNote:
+      "El modal prearmado dibuja el código QR; este panel lista las direcciones crudas que el SDK expone por cadena.",
     coreFnsTitle: "Funciones utilizadas",
     coreFnsIntro:
       "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
     coreFns: [
       {
+        fn: "getWallets()",
+        tag: "sync",
+        params: "Sin argumentos: lee las billeteras guardadas en la sesión.",
+        returns:
+          "WalletInfo[]: todas las billeteras del usuario, una por cadena, cada una con address, custody, provider y chain. [] si no hay sesión.",
+      },
+      {
+        fn: "getWallet()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "WalletInfo | null: la billetera de Stellar (la cadena principal). Se mantiene igual para que el código anterior a multicadena siga funcionando.",
+      },
+      {
         fn: "getAuthState()",
         tag: "sync",
         params: "Sin argumentos.",
         returns:
-          "AuthState: cuando step === 'authenticated', session.wallet?.publicKey es la dirección de recepción (una cadena G…).",
+          "AuthState: cuando step === 'authenticated', session.wallet?.publicKey es la dirección de recepción de Stellar (una cadena G…).",
       },
     ],
     reactFnsTitle: "Hook y valores utilizados",
@@ -2503,7 +2715,39 @@ export const es: Dictionary = {
         params:
           "No es una función: es un objeto WalletInfo que se lee de usePollar(), o null cuando no hay conexión.",
         returns:
-          "La billetera conectada (wallet.address contiene la clave pública, wallet.custody/provider su tipo); vuelve a renderizar cuando cambia la sesión.",
+          "La billetera de Stellar (wallet.address contiene la clave pública, wallet.custody/provider su tipo); vuelve a renderizar cuando cambia la sesión.",
+      },
+      {
+        fn: "wallets",
+        tag: "reactive value",
+        params:
+          "No es una función: es un WalletInfo[] que se lee de usePollar(); [] cuando no hay sesión.",
+        returns:
+          "Todas las billeteras del usuario, una por cadena: un superconjunto de wallet, con chain poblado. Esto es lo que alimenta un selector de red.",
+      },
+      {
+        fn: "useChains()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Cruza las cadenas configuradas de la app con las billeteras que el usuario realmente tiene.",
+        returns:
+          "{ chains, primaryChain, primaryAddress, ready }: chains es [] hasta que /config resuelve, así que condiciona cualquier selector a ready.",
+      },
+      {
+        fn: "addressForChain(wallets, chain)",
+        tag: "sync",
+        params:
+          "wallets: WalletInfo[] (de usePollar); chain: WalletChain | null.",
+        returns:
+          "string: la dirección que corresponde a esa cadena, o '' cuando el usuario no tiene billetera ahí.",
+      },
+      {
+        fn: "<ChainSelect />",
+        tag: "component",
+        params:
+          "value, options, onChange, más label y disabled opcionales. Alimenta options desde useChains().chains.",
+        returns:
+          "El selector de red, o null cuando hay una sola opción: una app de una sola cadena no renderiza ningún selector.",
       },
     ],
   },
@@ -3249,7 +3493,7 @@ export const es: Dictionary = {
 
   balance: {
     title: "Saldo",
-    desc: "Lee los saldos de una cuenta de Stellar: la de la billetera conectada o la de cualquier dirección por clave pública.",
+    desc: "Lee los saldos de una billetera en todas las cadenas donde la app está aprovisionada: los de la billetera conectada o los de cualquier dirección de Stellar por clave pública.",
     reactDesc:
       "Botón listo que abre un modal prearmado con los saldos de la billetera conectada, ya renderizados.",
     coreDesc:
@@ -3265,8 +3509,14 @@ export const es: Dictionary = {
     idle: "Envía una solicitud para cargar los saldos.",
     noBalances: "No se encontraron saldos.",
     assetCol: "Activo",
+    chainCol: "Cadena",
     balanceCol: "Saldo",
     availableCol: "Disponible",
+    multichainTag: "multicadena",
+    multichainNote:
+      "respondió más de una cadena: cada fila viene etiquetada con la cadena en la que vive.",
+    unreadableNote:
+      "Un guion significa que no se pudo leer la cadena (RPC inalcanzable), no una billetera vacía.",
     rawResponse: "Response crudo",
     coreFnsTitle: "Funciones utilizadas",
     coreFnsIntro:
@@ -3334,6 +3584,88 @@ export const es: Dictionary = {
     ],
   },
 
+  chains: {
+    title: "Cadenas",
+    desc: "Las redes que sirve esta app, cruzadas con las billeteras que el usuario realmente tiene: la lista que alimenta todos los selectores de red del SDK.",
+    reactDesc:
+      "useChains() resuelve las cadenas configuradas de la app contra las billeteras del usuario y te entrega una lista ordenada, la cadena principal y su dirección.",
+    coreDesc:
+      "core te entrega todas las billeteras del usuario con getWallets(); ordenarlas según la config de la app es lo que agrega la capa de react.",
+    orderFilterTitle: "La lista de cadenas ordena Y filtra",
+    orderFilterBody:
+      "La lista de cadenas de la app que viene de /applications/config hace las dos cosas: una cadena que no esté en ella se descarta, no queda simplemente al final. Esto importa porque las billeteras vienen de la sesión —escrita al iniciar sesión y conservada mientras esta viva—, mientras que /config se vuelve a pedir en cada carga de página. Así, una cadena apagada hoy en el panel desaparece en el siguiente reload, incluso para un usuario que inició sesión la semana pasada y todavía la trae en su sesión guardada.",
+    connectFirst: "Conecta una billetera para resolver la lista de cadenas.",
+    pickerLabel: "Red",
+    singleChainNote:
+      "Una sola opción, así que ChainSelect no renderiza nada: el selector aparece en cuanto se habilite una segunda cadena.",
+    walletsTitle: "Billeteras en la sesión",
+    served: "servida",
+    filtered: "filtrada",
+    filteredNote: (list: string) =>
+      `La sesión trae una billetera en ${list}, pero la config de la app no lista esa cadena, así que se descarta en toda la UI.`,
+    coreFnsTitle: "Funciones utilizadas",
+    coreFnsIntro:
+      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getWallets()",
+        tag: "sync",
+        params: "Sin argumentos: lee las billeteras guardadas en la sesión.",
+        returns:
+          "WalletInfo[]: una por cadena, en el orden en que las listó el backend. Sin ranking ni filtrado: core nunca ve /applications/config.",
+      },
+      {
+        fn: "getWallet()",
+        tag: "sync",
+        params: "Sin argumentos.",
+        returns:
+          "WalletInfo | null: la billetera de Stellar. Multicadena no la cambió, así que el código escrito antes de v0.11 sigue funcionando.",
+      },
+    ],
+    reactFnsTitle: "Hook, helpers y componente utilizados",
+    reactFnsIntro:
+      "useChains() viene de la capa de hooks; los tres helpers de abajo son funciones normales que puedes llamar donde sea, y ChainSelect es el selector prearmado.",
+    reactFns: [
+      {
+        fn: "useChains()",
+        tag: "hook",
+        params:
+          "Sin argumentos. Lee las billeteras del contexto y el orden de cadenas de /applications/config.",
+        returns:
+          "{ chains, primaryChain, primaryAddress, ready }: chains es [] mientras /config está en vuelo, así que un selector alimentado por él no renderiza nada en vez de una lista que tendría que reordenar un instante después.",
+      },
+      {
+        fn: "chainsOf(wallets, order?)",
+        tag: "sync",
+        params:
+          "wallets: WalletInfo[]; order?: readonly WalletChain[], la lista de cadenas de la app. Si lo omites, se usa el orden de las billeteras como fallback.",
+        returns:
+          "WalletChain[]: sin duplicados, porque dos billeteras en una misma cadena (una custodial más una externa vinculada) siguen siendo una sola opción de red.",
+      },
+      {
+        fn: "resolveChain(chain)",
+        tag: "sync",
+        params: "chain: WalletChain | undefined.",
+        returns:
+          "WalletChain: la ausencia cuenta como STELLAR, no como desconocido: las sesiones y filas de saldo creadas antes de multicadena no traen chain y son de Stellar por definición.",
+      },
+      {
+        fn: "addressForChain(wallets, chain)",
+        tag: "sync",
+        params: "wallets: WalletInfo[]; chain: WalletChain | null.",
+        returns:
+          "string: la dirección que corresponde a esa cadena, o '' cuando el usuario no tiene billetera ahí.",
+      },
+      {
+        fn: "<ChainSelect />",
+        tag: "component",
+        params: "value, options, onChange, más label y disabled opcionales.",
+        returns:
+          "El selector, o null cuando options tiene una sola entrada: una app de una sola cadena no renderiza ningún selector.",
+      },
+    ],
+  },
+
   assets: {
     title: "Activos habilitados",
     desc: "Los activos habilitados en el panel de la app junto con el estado de trustline en cadena de la billetera conectada, para saber qué trustlines le faltan por agregar. XLM nativo siempre está presente.",
@@ -3354,6 +3686,7 @@ export const es: Dictionary = {
     trustlineCol: "Trustline",
     established: "Establecida",
     missing: "Falta",
+    sponsoredTag: "patrocinada",
     rawResponse: "Respuesta cruda",
     coreFnsTitle: "Funciones usadas",
     coreFnsIntro:
@@ -3428,12 +3761,26 @@ export const es: Dictionary = {
       running: "Enviando…",
       stateIdle:
         "Define el activo y luego habilita o deshabilita su trustline.",
+      selfPayOff:
+        "Apagado: la app cubre la reserva de 0.5 XLM y la comisión siempre que su config del panel diga que el activo está patrocinado.",
+      selfPayOn:
+        "Encendido: paga la billetera del propio usuario, saltándose los endpoints de patrocinio para hacer un change_trust normal. También es la única ruta que tiene un activo custom (ajeno a la app).",
+      txNote:
+        "tx.step solo se mueve en la ruta de auto-pago: los endpoints patrocinados envían del lado del servidor y nunca entran a la máquina de transacciones.",
       removedNote:
         "Tras una deshabilitación exitosa, la respuesta de balance reporta trustlineRemoved: true.",
-      fnsTitle: "Funciones de change_trust",
+      fnsTitle: "Funciones de trustline",
       fnsIntro:
-        "runTx es el camino de una sola llamada; el demo luego vuelve a renderizar la tabla con refreshAssets(). Ambas vienen de usePollar() (o del PollarClient subyacente vía getClient()).",
+        "setTrustline es el camino a usar: elige la ruta según el tipo de billetera y deja que cada endpoint del servidor patrocine o auto-pague. runTx('change_trust') queda como la salida manual, siempre auto-pagada. Todas vienen de usePollar() (o del PollarClient subyacente vía getClient()).",
       fns: [
+        {
+          fn: "setTrustline(asset, opts?)",
+          tag: "async",
+          params:
+            "asset: { code, issuer }; opts.limit?: string ('0' elimina la trustline, omitido = máximo); opts.skipSponsorship?: boolean, fuerza el auto-pago incluso cuando la app patrocinaría.",
+          returns:
+            "Promise<TrustlineOutcome>: status: 'success' | 'pending' | 'error'. Las billeteras custodiales reciben una sola llamada al servidor; una billetera externa recibe un XDR firmado por el patrocinador para co-firmar. NO refresca por su cuenta.",
+        },
         {
           fn: "runTx(operation, params, options?)",
           tag: "async",
@@ -3605,10 +3952,13 @@ export const es: Dictionary = {
     memoPhId: "ID numérico",
     memoPhText: "Memo de texto",
     building: "Construyendo…",
+    signing: "Firmando…",
+    submitting: "Enviando…",
     invalidParams: "Parámetros inválidos",
     tipPre: "Consejo: ",
-    tipPost: " abre un modal integrado que se encarga del paso 2 por ti.",
+    tipPost: " abre un modal integrado que se encarga de los pasos 2–3 por ti.",
     buildStep: "construir transacción",
+    signStep: "firmar el XDR construido",
     submitStep: "enviar transacción firmada",
     stateLabel: "estado de la transacción",
     stateIdle: "Envía una transacción para ver su estado aquí.",
@@ -4330,6 +4680,7 @@ export const pt: Dictionary = {
     receive: "Receber",
     history: "Histórico",
     balance: "Saldo",
+    chains: "Cadeias",
     assets: "Ativos",
     ramp: "Ramp",
     kyc: "KYC",
@@ -4517,6 +4868,17 @@ export const pt: Dictionary = {
       stateIdle: "Preencha destino, ativo e valor e então execute o pagamento.",
       nativeOnly:
         "Conecte uma carteira para carregar seus ativos; o XLM nativo é exibido por padrão.",
+      networkLabel: "Rede",
+      destinationPhOther: "Endereço do destinatário nesta cadeia",
+      tokenLabel: "Token",
+      nativeCoinHint:
+        "a moeda própria da cadeia — enviada omitindo `mint` por completo.",
+      mintHint:
+        "um mint de SPL / ERC-20. Fora da Stellar não há issuer nem trustline.",
+      baseUnitsError:
+        "Mais casas decimais do que este ativo possui. Truncar enviaria menos do que você digitou, então o valor é recusado.",
+      custodialOnly:
+        "Somente carteiras custodiais: a assinatura desta cadeia expiraria antes que uma carteira externa pudesse adicionar a sua, então todo o pagamento roda em uma única chamada do servidor.",
     },
     coreFnsTitle: "Funções utilizadas",
     coreFnsIntro:
@@ -4612,23 +4974,48 @@ export const pt: Dictionary = {
 
   receive: {
     title: "Receber",
-    desc: "Mostre o endereço da carteira conectada e o código QR para que outros possam enviar fundos para ela. A Pollar renderiza toda a visualização dentro de um modal.",
+    desc: "Mostre os endereços para os quais outros podem enviar fundos — um por cadeia em que o app está provisionado. A Pollar renderiza o endereço e seu código QR dentro de um modal.",
     open: "Abrir modal de recebimento",
     note: "não recebe argumentos — ele lê o endereço da carteira conectada do contexto.",
     reactDesc:
       "Botão pronto que abre um modal pré-montado com o endereço da carteira conectada e um código QR.",
     coreDesc:
-      "Leia a chave pública da carteira conectada a partir do estado de autenticação e renderize o endereço + QR você mesmo.",
+      "Leia do cliente todas as carteiras que o usuário possui e renderize os endereços você mesmo.",
+    coreNote:
+      "uma entrada por cadeia; uma carteira criada antes do multicadeia não traz chain e é da Stellar por definição.",
+    addressesTitle: "Seus endereços",
+    addressesIntro:
+      "Um endereço por cadeia que o app atende e o usuário possui — a mesma conta, uma carteira diferente em cada rede.",
+    networkLabel: "Rede",
+    copy: "Copiar",
+    copied: "Copiado",
+    noWallets: "Conecte uma carteira para ver seus endereços.",
+    qrNote:
+      "O modal pré-montado desenha o código QR; este painel lista os endereços crus que o SDK expõe por cadeia.",
     coreFnsTitle: "Funções utilizadas",
     coreFnsIntro:
       "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
     coreFns: [
       {
+        fn: "getWallets()",
+        tag: "sync",
+        params: "Sem argumentos: lê as carteiras guardadas na sessão.",
+        returns:
+          "WalletInfo[]: todas as carteiras do usuário, uma por cadeia, cada uma com address, custody, provider e chain. [] quando não há sessão.",
+      },
+      {
+        fn: "getWallet()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "WalletInfo | null: a carteira da Stellar (a cadeia principal). Mantida como estava para que o código anterior ao multicadeia siga funcionando.",
+      },
+      {
         fn: "getAuthState()",
         tag: "sync",
         params: "Sem argumentos.",
         returns:
-          "AuthState: quando step === 'authenticated', session.wallet?.publicKey é o endereço de recebimento (uma string G…).",
+          "AuthState: quando step === 'authenticated', session.wallet?.publicKey é o endereço de recebimento da Stellar (uma string G…).",
       },
     ],
     reactFnsTitle: "Hook e valores utilizados",
@@ -4656,7 +5043,39 @@ export const pt: Dictionary = {
         params:
           "Não é uma função: é um objeto WalletInfo lido de usePollar(), ou null quando não conectado.",
         returns:
-          "A carteira conectada (wallet.address contém a chave pública, wallet.custody/provider seu tipo); re-renderiza quando a sessão muda.",
+          "A carteira da Stellar (wallet.address contém a chave pública, wallet.custody/provider seu tipo); re-renderiza quando a sessão muda.",
+      },
+      {
+        fn: "wallets",
+        tag: "reactive value",
+        params:
+          "Não é uma função: é um WalletInfo[] lido de usePollar(); [] quando não há sessão.",
+        returns:
+          "Todas as carteiras do usuário, uma por cadeia — um superconjunto de wallet, com chain preenchido. É isso que alimenta um seletor de rede.",
+      },
+      {
+        fn: "useChains()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Cruza as cadeias configuradas do app com as carteiras que o usuário de fato possui.",
+        returns:
+          "{ chains, primaryChain, primaryAddress, ready }: chains é [] até /config resolver, então condicione qualquer seletor a ready.",
+      },
+      {
+        fn: "addressForChain(wallets, chain)",
+        tag: "sync",
+        params:
+          "wallets: WalletInfo[] (de usePollar); chain: WalletChain | null.",
+        returns:
+          "string: o endereço correspondente a essa cadeia, ou '' quando o usuário não tem carteira ali.",
+      },
+      {
+        fn: "<ChainSelect />",
+        tag: "component",
+        params:
+          "value, options, onChange, mais label e disabled opcionais. Alimente options a partir de useChains().chains.",
+        returns:
+          "O seletor de rede, ou null quando há uma única opção — um app de cadeia única não renderiza seletor nenhum.",
       },
     ],
   },
@@ -5401,7 +5820,7 @@ export const pt: Dictionary = {
 
   balance: {
     title: "Saldo",
-    desc: "Leia os saldos de uma conta Stellar: a da carteira conectada ou a de qualquer endereço pela chave pública.",
+    desc: "Leia os saldos de uma carteira em todas as cadeias em que o app está provisionado: os da carteira conectada ou os de qualquer endereço Stellar pela chave pública.",
     reactDesc:
       "Botão pronto que abre um modal pré-montado com os saldos da carteira conectada, já renderizados.",
     coreDesc:
@@ -5417,8 +5836,14 @@ export const pt: Dictionary = {
     idle: "Envie uma solicitação para carregar os saldos.",
     noBalances: "Nenhum saldo encontrado.",
     assetCol: "Ativo",
+    chainCol: "Cadeia",
     balanceCol: "Saldo",
     availableCol: "Disponível",
+    multichainTag: "multicadeia",
+    multichainNote:
+      "mais de uma cadeia respondeu — cada linha vem marcada com a cadeia em que vive.",
+    unreadableNote:
+      "Um travessão significa que a cadeia não pôde ser lida (RPC inalcançável), não uma carteira vazia.",
     rawResponse: "Response cru",
     coreFnsTitle: "Funções utilizadas",
     coreFnsIntro:
@@ -5486,6 +5911,88 @@ export const pt: Dictionary = {
     ],
   },
 
+  chains: {
+    title: "Cadeias",
+    desc: "As redes que este app atende, cruzadas com as carteiras que o usuário de fato possui — a lista que alimenta todos os seletores de rede do SDK.",
+    reactDesc:
+      "useChains() resolve as cadeias configuradas do app contra as carteiras do usuário e entrega uma lista ordenada, a cadeia principal e seu endereço.",
+    coreDesc:
+      "o core entrega todas as carteiras do usuário via getWallets(); ordená-las conforme a config do app é o que a camada do react acrescenta.",
+    orderFilterTitle: "A lista de cadeias ordena E filtra",
+    orderFilterBody:
+      "A lista de cadeias do app vinda de /applications/config faz as duas coisas: uma cadeia ausente dela é descartada, não apenas ordenada por último. Isso importa porque as carteiras vêm da sessão — escrita no login e mantida enquanto ela viver —, enquanto /config é buscado de novo a cada carregamento de página. Assim, uma cadeia desligada hoje no painel some no próximo reload, mesmo para um usuário que entrou na semana passada e ainda a carrega na sessão guardada.",
+    connectFirst: "Conecte uma carteira para resolver a lista de cadeias.",
+    pickerLabel: "Rede",
+    singleChainNote:
+      "Uma única opção, então o ChainSelect não renderiza nada — o seletor aparece assim que uma segunda cadeia for habilitada.",
+    walletsTitle: "Carteiras na sessão",
+    served: "atendida",
+    filtered: "filtrada",
+    filteredNote: (list: string) =>
+      `A sessão carrega uma carteira em ${list}, mas a config do app não lista essa cadeia — então ela é descartada em toda a UI.`,
+    coreFnsTitle: "Funções utilizadas",
+    coreFnsIntro:
+      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+    coreFns: [
+      {
+        fn: "getWallets()",
+        tag: "sync",
+        params: "Sem argumentos: lê as carteiras guardadas na sessão.",
+        returns:
+          "WalletInfo[]: uma por cadeia, na ordem em que o backend as listou. Sem ranking nem filtro: o core nunca vê /applications/config.",
+      },
+      {
+        fn: "getWallet()",
+        tag: "sync",
+        params: "Sem argumentos.",
+        returns:
+          "WalletInfo | null: a carteira da Stellar. O multicadeia não a mudou, então código escrito antes da v0.11 segue funcionando.",
+      },
+    ],
+    reactFnsTitle: "Hook, helpers e componente utilizados",
+    reactFnsIntro:
+      "useChains() vem da camada de hooks; os três helpers abaixo são funções comuns que você pode chamar em qualquer lugar, e ChainSelect é o seletor pré-montado.",
+    reactFns: [
+      {
+        fn: "useChains()",
+        tag: "hook",
+        params:
+          "Sem argumentos. Lê as carteiras do contexto e a ordem das cadeias de /applications/config.",
+        returns:
+          "{ chains, primaryChain, primaryAddress, ready }: chains é [] enquanto /config está em voo, então um seletor alimentado por ele não renderiza nada em vez de uma lista que teria de reordenar um instante depois.",
+      },
+      {
+        fn: "chainsOf(wallets, order?)",
+        tag: "sync",
+        params:
+          "wallets: WalletInfo[]; order?: readonly WalletChain[], a lista de cadeias do app. Se omitido, a ordem das próprias carteiras é o fallback.",
+        returns:
+          "WalletChain[]: sem duplicatas, porque duas carteiras numa mesma cadeia (uma custodial mais uma externa vinculada) ainda são uma só opção de rede.",
+      },
+      {
+        fn: "resolveChain(chain)",
+        tag: "sync",
+        params: "chain: WalletChain | undefined.",
+        returns:
+          "WalletChain: a ausência conta como STELLAR, não como desconhecido: sessões e linhas de saldo criadas antes do multicadeia não trazem chain e são da Stellar por definição.",
+      },
+      {
+        fn: "addressForChain(wallets, chain)",
+        tag: "sync",
+        params: "wallets: WalletInfo[]; chain: WalletChain | null.",
+        returns:
+          "string: o endereço correspondente a essa cadeia, ou '' quando o usuário não tem carteira ali.",
+      },
+      {
+        fn: "<ChainSelect />",
+        tag: "component",
+        params: "value, options, onChange, mais label e disabled opcionais.",
+        returns:
+          "O seletor, ou null quando options tem uma única entrada — um app de cadeia única não renderiza seletor nenhum.",
+      },
+    ],
+  },
+
   assets: {
     title: "Ativos habilitados",
     desc: "Os ativos habilitados no painel do app junto com o estado on-chain de trustline da carteira conectada — para saber quais trustlines a carteira ainda precisa adicionar. O XLM nativo está sempre presente.",
@@ -5506,6 +6013,7 @@ export const pt: Dictionary = {
     trustlineCol: "Trustline",
     established: "Estabelecida",
     missing: "Faltando",
+    sponsoredTag: "patrocinada",
     rawResponse: "Resposta crua",
     coreFnsTitle: "Funções usadas",
     coreFnsIntro:
@@ -5579,12 +6087,26 @@ export const pt: Dictionary = {
       disable: "Desabilitar trustline",
       running: "Enviando…",
       stateIdle: "Defina o ativo e então habilite ou desabilite sua trustline.",
+      selfPayOff:
+        "Desligado: o app cobre a reserva de 0,5 XLM e a taxa sempre que sua config do painel disser que o ativo é patrocinado.",
+      selfPayOn:
+        "Ligado: quem paga é a carteira do próprio usuário, pulando os endpoints de patrocínio para um change_trust comum. Essa também é a única rota que um ativo custom (alheio ao app) tem.",
+      txNote:
+        "tx.step só se move na rota de auto-pagamento — os endpoints patrocinados enviam do lado do servidor e nunca entram na máquina de transações.",
       removedNote:
         "Após uma desabilitação bem-sucedida, a resposta de saldo reporta trustlineRemoved: true.",
-      fnsTitle: "Funções de change_trust",
+      fnsTitle: "Funções de trustline",
       fnsIntro:
-        "runTx é o caminho de uma única chamada; o demo então re-renderiza a tabela com refreshAssets(). Ambas vêm de usePollar() (ou do PollarClient subjacente via getClient()).",
+        "setTrustline é o caminho a usar: escolhe a rota pelo tipo de carteira e deixa cada endpoint do servidor patrocinar ou auto-pagar. runTx('change_trust') fica como a saída manual, sempre auto-paga. Todas vêm de usePollar() (ou do PollarClient subjacente via getClient()).",
       fns: [
+        {
+          fn: "setTrustline(asset, opts?)",
+          tag: "async",
+          params:
+            "asset: { code, issuer }; opts.limit?: string ('0' remove a trustline, omitido = máximo); opts.skipSponsorship?: boolean, força o auto-pagamento mesmo quando o app patrocinaria.",
+          returns:
+            "Promise<TrustlineOutcome>: status: 'success' | 'pending' | 'error'. Carteiras custodiais recebem uma única chamada ao servidor; uma carteira externa recebe um XDR assinado pelo patrocinador para co-assinar. NÃO atualiza por conta própria.",
+        },
         {
           fn: "runTx(operation, params, options?)",
           tag: "async",
@@ -5755,10 +6277,13 @@ export const pt: Dictionary = {
     memoPhId: "ID numérico",
     memoPhText: "Memo de texto",
     building: "Construindo…",
+    signing: "Assinando…",
+    submitting: "Enviando…",
     invalidParams: "Parâmetros inválidos",
     tipPre: "Dica: ",
-    tipPost: " abre um modal integrado que cuida da etapa 2 para você.",
+    tipPost: " abre um modal integrado que cuida das etapas 2–3 para você.",
     buildStep: "construir transação",
+    signStep: "assinar o XDR construído",
     submitStep: "enviar transação assinada",
     stateLabel: "estado da transação",
     stateIdle: "Envie uma transação para ver o estado dela aqui.",

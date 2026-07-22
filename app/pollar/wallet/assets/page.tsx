@@ -72,40 +72,53 @@ function trustSnippet(
   code: string,
   issuer: string,
   limit: string,
+  skipSponsorship: boolean,
 ): string {
+  const shortAsset = `{ code: "${code.trim() || "USDC"}", issuer: "${
+    issuer.trim() || "G..."
+  }" }`;
   const asset = `{ type: "${type}", code: "${code.trim() || "USDC"}", issuer: "${
     issuer.trim() || "G..."
   }" }`;
-  const enableLimit = limit.trim() ? `, limit: "${limit.trim()}"` : "";
+  // Both opts are optional, so an empty object is worth omitting entirely.
+  const opts = [
+    limit.trim() ? `limit: "${limit.trim()}"` : "",
+    skipSponsorship ? "skipSponsorship: true" : "",
+  ].filter(Boolean);
+  const enableOpts = opts.length ? `, { ${opts.join(", ")} }` : "";
+  const caller = sdk === "react" ? "" : "client.";
 
-  if (sdk === "react") {
-    return `import { usePollar } from '@pollar/react';
+  const header =
+    sdk === "react"
+      ? `import { usePollar } from '@pollar/react';
 
-const { runTx, refreshAssets } = usePollar();
-const asset = ${asset};
-
-// enable — add the trustline (omit limit for the max, or cap it)
-await runTx('change_trust', { asset${enableLimit} });
-
-// disable — send "0" to remove it (the asset balance must be 0)
-await runTx('change_trust', { asset, limit: '0' });
-
-await refreshAssets(); // refresh trustlineEstablished below`;
-  }
-
-  return `import { PollarClient } from '@pollar/core';
+const { setTrustline, refreshAssets } = usePollar();`
+      : `import { PollarClient } from '@pollar/core';
 
 const client = new PollarClient({ apiKey, baseUrl });
-await client.ready();
-const asset = ${asset};
+await client.ready();`;
 
-// enable — build → sign → submit in one call
-await client.runTx('change_trust', { asset${enableLimit} });
+  return `${header}
 
-// disable — limit "0" removes the trustline (balance must be 0)
-await client.runTx('change_trust', { asset, limit: '0' });
+// Sponsorship is decided server-side from the app's dashboard
+// config. ${
+    skipSponsorship
+      ? "skipSponsorship forces the user's own wallet to pay."
+      : "Omit skipSponsorship and the app pays when eligible."
+  }
+await ${caller}setTrustline(${shortAsset}${enableOpts});
 
-await client.refreshAssets();`;
+// disable — limit "0" removes it (the asset balance must be 0)
+await ${caller}setTrustline(${shortAsset}, { limit: '0'${
+    skipSponsorship ? ", skipSponsorship: true" : ""
+  } });
+
+// setTrustline does not refresh on its own
+await ${caller}refreshAssets();
+
+// The manual escape hatch, always self-paid — this is what
+// setTrustline falls back to when skipSponsorship is set:
+// await ${caller}runTx('change_trust', { asset: ${asset} });`;
 }
 
 // ─── page ─────────────────────────────────────────────────────────────────────
@@ -116,7 +129,7 @@ export default function AssetsPage() {
     enabledAssets,
     refreshAssets,
     openEnabledAssetsModal,
-    runTx,
+    setTrustline,
     tx,
     openTxModal,
     wallet,
@@ -134,8 +147,12 @@ export default function AssetsPage() {
   const [ctIssuer, setCtIssuer] = useState("");
   const [ctLimit, setCtLimit] = useState("");
   const [ctError, setCtError] = useState<string | null>(null);
+  // Off by default so the demo shows the sponsored path first — the app pays.
+  const [ctSkipSponsorship, setCtSkipSponsorship] = useState(false);
   // tracks which button is mid-flight so only it shows the spinner label.
   const [ctMode, setCtMode] = useState<"enable" | "disable" | null>(null);
+  // key (`code:issuer`) of the row whose toggle is in flight, mirroring the modal.
+  const [rowBusy, setRowBusy] = useState<string | null>(null);
 
   // ── actions ─────────────────────────────────────────────────────────────────
   async function fetchAssets() {
@@ -151,29 +168,61 @@ export default function AssetsPage() {
     }
   }
 
-  // change_trust: a positive (or omitted) limit enables the trustline; limit
-  // "0" removes it. runTx builds → signs → submits in one call and drives the
-  // reactive `tx` state below.
+  // setTrustline picks the route by wallet type — custodial goes straight to the
+  // server, an external wallet gets an XDR back to co-sign — and each endpoint
+  // sponsors or self-pays according to the app's config. Omitting `limit` adds
+  // the trustline; "0" removes it. Ticking skipSponsorship opts out of the
+  // sponsoring endpoints entirely and falls back to a plain self-paid
+  // change_trust via runTx, which is also the only route a custom asset has.
   async function manageTrust(mode: "enable" | "disable") {
     setCtError(null);
     setCtMode(mode);
     const limit = mode === "disable" ? "0" : ctLimit.trim();
-    const params = {
-      asset: { type: ctType, code: ctCode.trim(), issuer: ctIssuer.trim() },
-      ...(limit ? { limit } : {}),
-    };
     try {
-      const outcome = await runTx("change_trust", params as never);
-      // refresh the table so trustlineEstablished reflects the new state.
-      if (outcome.status === "success" || outcome.status === "pending") {
-        await refreshAssets();
-      } else if (outcome.status === "error") {
+      const outcome = await setTrustline(
+        { code: ctCode.trim(), issuer: ctIssuer.trim() },
+        {
+          ...(limit ? { limit } : {}),
+          ...(ctSkipSponsorship ? { skipSponsorship: true } : {}),
+        },
+      );
+      // setTrustline never refreshes on its own, so trustlineEstablished in the
+      // table above would otherwise keep showing the pre-call state.
+      if (outcome.status === "error") {
         setCtError(outcome.details ?? t.common.unknownError);
+      } else {
+        await refreshAssets();
       }
     } catch (e) {
       setCtError(e instanceof Error ? e.message : t.common.unknownError);
     } finally {
       setCtMode(null);
+    }
+  }
+
+  // The same call, driven from a row instead of the form — this is exactly what
+  // the prebuilt modal's per-asset toggle does.
+  async function toggleRow(code: string, issuer: string, established: boolean) {
+    const key = `${code}:${issuer}`;
+    setLastError(null);
+    setRowBusy(key);
+    try {
+      const outcome = await setTrustline(
+        { code, issuer },
+        {
+          ...(established ? { limit: "0" } : {}),
+          ...(ctSkipSponsorship ? { skipSponsorship: true } : {}),
+        },
+      );
+      if (outcome.status === "error") {
+        setLastError(outcome.details ?? t.common.unknownError);
+      } else {
+        await refreshAssets();
+      }
+    } catch (e) {
+      setLastError(e instanceof Error ? e.message : t.common.unknownError);
+    } finally {
+      setRowBusy(null);
     }
   }
 
@@ -355,25 +404,61 @@ export default function AssetsPage() {
                     >
                       <td className="px-4 py-2.5 text-foreground">
                         {a.type === "native" ? "XLM" : a.code}
+                        {/* the app's own label for the asset, when it set one */}
+                        {a.name && (
+                          <span className="ml-1.5 text-[10px] text-muted-light">
+                            {a.name}
+                          </span>
+                        )}
                         {a.issuer && (
                           <span className="block text-[10px] text-muted-light truncate max-w-40">
                             {a.issuer}
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-2.5 text-muted-light">{a.type}</td>
+                      <td className="px-4 py-2.5 text-muted-light">
+                        {a.type}
+                        {/* Stellar-only: whether the app covers reserve + fee */}
+                        {a.sponsored && (
+                          <span className="ml-1.5 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] text-primary">
+                            {t.assets.sponsoredTag}
+                          </span>
+                        )}
+                      </td>
                       <td className="px-4 py-2.5 text-right">
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] ${
-                            a.trustlineEstablished
-                              ? "bg-success-light text-success"
-                              : "bg-surface text-muted-light"
-                          }`}
-                        >
-                          {a.trustlineEstablished
-                            ? t.assets.established
-                            : t.assets.missing}
-                        </span>
+                        <div className="flex items-center justify-end gap-2">
+                          <span
+                            className={`rounded px-1.5 py-0.5 text-[10px] ${
+                              a.trustlineEstablished
+                                ? "bg-success-light text-success"
+                                : "bg-surface text-muted-light"
+                            }`}
+                          >
+                            {a.trustlineEstablished
+                              ? t.assets.established
+                              : t.assets.missing}
+                          </span>
+                          {/* Native XLM needs no trustline, so it gets no toggle. */}
+                          {a.type !== "native" && a.issuer && (
+                            <button
+                              onClick={() =>
+                                toggleRow(
+                                  a.code,
+                                  a.issuer as string,
+                                  !!a.trustlineEstablished,
+                                )
+                              }
+                              disabled={!isAuthenticated || rowBusy !== null}
+                              className={`${btn("secondary")} shrink-0`}
+                            >
+                              {rowBusy === `${a.code}:${a.issuer}`
+                                ? t.common.loading
+                                : a.trustlineEstablished
+                                  ? t.assets.trust.disable
+                                  : t.assets.trust.enable}
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -474,6 +559,28 @@ export default function AssetsPage() {
               </p>
             </div>
 
+            {/* who pays — the opt-out that replaced the old `sponsored` flag */}
+            <div className="rounded-lg border border-border bg-surface px-3 py-2.5">
+              <label className="flex items-start gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={ctSkipSponsorship}
+                  onChange={(e) => setCtSkipSponsorship(e.target.checked)}
+                  className="mt-0.5 accent-primary"
+                />
+                <span>
+                  <span className="block text-xs font-mono text-foreground">
+                    skipSponsorship
+                  </span>
+                  <span className="block text-xs text-muted mt-0.5">
+                    {ctSkipSponsorship
+                      ? t.assets.trust.selfPayOn
+                      : t.assets.trust.selfPayOff}
+                  </span>
+                </span>
+              </label>
+            </div>
+
             {/* actions */}
             <div className="space-y-2 pt-1">
               {ctError && (
@@ -516,8 +623,22 @@ export default function AssetsPage() {
           {/* right: live code example + tx state */}
           <div className="lg:sticky lg:top-6 space-y-4">
             <DualCode
-              core={trustSnippet("core", ctType, ctCode, ctIssuer, ctLimit)}
-              react={trustSnippet("react", ctType, ctCode, ctIssuer, ctLimit)}
+              core={trustSnippet(
+                "core",
+                ctType,
+                ctCode,
+                ctIssuer,
+                ctLimit,
+                ctSkipSponsorship,
+              )}
+              react={trustSnippet(
+                "react",
+                ctType,
+                ctCode,
+                ctIssuer,
+                ctLimit,
+                ctSkipSponsorship,
+              )}
             />
 
             {/* transaction state (driven by runTx) */}
@@ -554,6 +675,12 @@ export default function AssetsPage() {
                     {t.assets.trust.stateIdle}
                   </p>
                 )}
+
+                {/* The sponsored endpoints submit server-side and never touch
+                    the tx machine — only the self-pay fallback runs through it. */}
+                <p className="text-[10px] font-mono text-muted-light">
+                  {t.assets.trust.txNote}
+                </p>
 
                 {"buildData" in tx && tx.buildData && (
                   <div className="space-y-2">

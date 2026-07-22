@@ -1,8 +1,11 @@
 "use client";
 
-import { usePollar } from "@pollar/react";
+import { ChainSelect, useChains, usePollar } from "@pollar/react";
+import type { SubmitOutcome, WalletChain } from "@pollar/core";
+import { toBaseUnits } from "@pollar/core";
 import type { Sep7Request } from "@cosmosapp/pay_sdk/web";
 import { useEffect, useState } from "react";
+import { ChainBadge } from "@/app/_components/ChainBadge";
 import { CodePanel } from "@/app/_components/CodePanels";
 import { Select } from "@/app/_components/Select";
 import { Sep7Scanner } from "@/app/_components/Sep7Scanner";
@@ -26,8 +29,17 @@ const btn = (variant: "primary" | "secondary") =>
 // The send page adds a third tab (QR scan) to the usual core/react split.
 type Tab = Sdk | "scan";
 
-// "native" is the special key for XLM; issued assets are keyed "CODE:ISSUER".
+// "native" is the special key for a chain's own coin; Stellar issued assets are
+// keyed "CODE:ISSUER", and non-Stellar tokens by their mint.
 const NATIVE_KEY = "native";
+
+// A chain's native-coin decimals, for when a balance row omits `decimals`.
+// Stellar never carries the field: every Stellar asset is 7-decimal.
+const NATIVE_DECIMALS: Record<WalletChain, number> = {
+  STELLAR: 7,
+  SOLANA: 9,
+  POLYGON: 18,
+};
 
 type IssuedAsset = {
   type: "credit_alphanum4" | "credit_alphanum12";
@@ -88,6 +100,41 @@ const res = await client.runTx('payment', {
 // res.hash`;
 }
 
+// Off Stellar the split flow doesn't apply: one call, integer base units, and
+// no XDR for a client to co-sign.
+function sendPaymentSnippet(
+  chain: WalletChain,
+  destination: string,
+  mint: string | null,
+  amount: string,
+  decimals: number,
+  baseUnits: string | null,
+): string {
+  return `import { usePollar } from '@pollar/react';
+import { toBaseUnits } from '@pollar/core';
+
+const { sendPayment } = usePollar();
+
+// ${chain} takes INTEGER base units, never a decimal string.
+const amount = toBaseUnits('${amount || "1.5"}', ${decimals});
+// → '${baseUnits ?? "…"}'
+
+const res = await sendPayment({
+  chain: '${chain}',
+  destination: '${destination || "…"}',
+  amount,${
+    mint
+      ? `
+  mint: '${mint}',`
+      : `
+  // mint omitted → the chain's native coin`
+  }
+});
+// res.status: 'success' | 'pending' | 'error'
+// Custodial wallets only: the signature would expire
+// before an external wallet could add its own.`;
+}
+
 // The scan tab: parse a SEP-7 QR, then run the very same payment.
 function scanSnippet(
   destination: string,
@@ -145,9 +192,11 @@ export default function SendPage() {
     walletBalance,
     refreshWalletBalance,
     runTx,
+    sendPayment,
     tx,
     openTxModal,
   } = usePollar();
+  const { chains, primaryChain, ready: chainsReady } = useChains();
 
   const [tab, setTab] = useState<Tab>("core");
 
@@ -156,6 +205,15 @@ export default function SendPage() {
   const [amount, setAmount] = useState("");
   const [assetKey, setAssetKey] = useState(NATIVE_KEY);
   const [coreError, setCoreError] = useState<string | null>(null);
+
+  // ── chain selection ─────────────────────────────────────────────────────────
+  // Stellar keeps the split build → sign → submit flow (so external adapters and
+  // passkeys still work); every other chain goes through one server-side call.
+  const [pickedChain, setPickedChain] = useState<WalletChain | null>(null);
+  const [mintKey, setMintKey] = useState(NATIVE_KEY);
+  const [sendOutcome, setSendOutcome] = useState<SubmitOutcome | null>(null);
+  const chain: WalletChain = pickedChain ?? primaryChain ?? "STELLAR";
+  const isStellar = chain === "STELLAR";
 
   // ── scan tab extras ─────────────────────────────────────────────────────────
   // Assets read off a QR the connected wallet may not hold — kept aside so the
@@ -175,12 +233,18 @@ export default function SendPage() {
     }
   }, [tab, isAuthenticated, walletBalance.step, refreshWalletBalance]);
 
-  // Balances went multichain in v0.11, but this form is Stellar-only (SEP-7,
-  // XDR, trustlines) — keep just the Stellar rows so a Solana/Polygon token
-  // never reaches the picker. Rows minted before multichain carry no `chain`.
-  const balances = (
-    walletBalance.step === "loaded" ? walletBalance.data.balances : []
-  ).filter((b) => (b.chain ?? "STELLAR") === "STELLAR");
+  const allBalances =
+    walletBalance.step === "loaded" ? walletBalance.data.balances : [];
+
+  // The Stellar branch (SEP-7, XDR, trustlines) only ever deals with Stellar
+  // rows, so a Solana/Polygon token never reaches its asset picker. Rows minted
+  // before multichain carry no `chain` and are Stellar by definition.
+  const balances = allBalances.filter(
+    (b) => (b.chain ?? "STELLAR") === "STELLAR",
+  );
+  const chainBalances = allBalances.filter(
+    (b) => (b.chain ?? "STELLAR") === chain,
+  );
 
   const heldKeys = new Set(
     balances
@@ -256,6 +320,35 @@ export default function SendPage() {
 
   const selectedAsset = assetFromKey(assetKey);
 
+  // ── non-Stellar asset + units ───────────────────────────────────────────────
+  // There is no issuer and no trustline off Stellar, so a token is identified by
+  // its mint. The record carries it in `issuer`, the only field that can hold it.
+  const mintOptions = chainBalances.map((b) => ({
+    value: b.type === "native" ? NATIVE_KEY : (b.issuer ?? b.code),
+    label: `${b.code} · ${fmtAvailable(b.available)}`,
+  }));
+
+  const selectedToken =
+    mintKey === NATIVE_KEY
+      ? chainBalances.find((b) => b.type === "native")
+      : chainBalances.find((b) => b.issuer === mintKey);
+
+  // Polygon and Solana tokens carry `decimals`; the chain's own coin may not.
+  const decimals = selectedToken?.decimals ?? NATIVE_DECIMALS[chain];
+
+  // Stellar takes a decimal string ("1.5"); every other chain takes integer base
+  // units. toBaseUnits throws on more fractional digits than the asset has —
+  // truncating there would send less than the user typed, so null means "refuse".
+  const baseUnits = (() => {
+    const value = amount.trim();
+    if (isStellar || !value) return null;
+    try {
+      return toBaseUnits(value, decimals);
+    } catch {
+      return null;
+    }
+  })();
+
   // Held amount + code of the selected asset, shown above the amount input.
   // Null until balances load, so we never render a stale/guessed number.
   function selectedAvailable(): { code: string; available: string } | null {
@@ -289,20 +382,52 @@ export default function SendPage() {
   }
 
   // ── action ──────────────────────────────────────────────────────────────────
-  async function sendPayment() {
+  async function submitPayment() {
     setCoreError(null);
+    setSendOutcome(null);
     try {
-      // one-shot build → sign → submit; drives the reactive `tx` state below.
-      const options = memoOption(memo, memoType);
-      const outcome = await runTx(
-        "payment",
-        {
-          destination: destination.trim(),
-          asset: selectedAsset,
-          amount: amount.trim(),
-        } as never,
-        options as never,
-      );
+      if (isStellar) {
+        // one-shot build → sign → submit; drives the reactive `tx` state below.
+        const options = memoOption(memo, memoType);
+        const outcome = await runTx(
+          "payment",
+          {
+            destination: destination.trim(),
+            asset: selectedAsset,
+            amount: amount.trim(),
+          } as never,
+          options as never,
+        );
+        if (outcome.status === "error") {
+          setCoreError(outcome.details ?? t.common.unknownError);
+        }
+        return;
+      }
+
+      // Non-Stellar: one server-side call, and the amount goes in integer base
+      // units. Refuse rather than send a rounded number the user didn't type.
+      if (!baseUnits) {
+        setCoreError(t.send.form.baseUnitsError);
+        return;
+      }
+      const mint = mintKey === NATIVE_KEY ? null : mintKey;
+      // The two arms carry identical fields, but each pins `chain` to a literal,
+      // so a widened WalletChain would match neither.
+      const outcome =
+        chain === "SOLANA"
+          ? await sendPayment({
+              chain: "SOLANA",
+              destination: destination.trim(),
+              amount: baseUnits,
+              mint,
+            })
+          : await sendPayment({
+              chain: "POLYGON",
+              destination: destination.trim(),
+              amount: baseUnits,
+              mint,
+            });
+      setSendOutcome(outcome);
       if (outcome.status === "error") {
         setCoreError(outcome.details ?? t.common.unknownError);
       }
@@ -312,14 +437,21 @@ export default function SendPage() {
   }
 
   // ── derived ─────────────────────────────────────────────────────────────────
-  const formReady = destination.trim().length > 0 && amount.trim().length > 0;
+  // Off Stellar an amount the asset can't represent is not a form the user can
+  // submit — baseUnits is null exactly then.
+  const formReady =
+    destination.trim().length > 0 &&
+    amount.trim().length > 0 &&
+    (isStellar || baseUnits !== null);
   const txBusy =
     tx.step === "building" ||
     tx.step === "signing" ||
     tx.step === "signing-submitting" ||
     tx.step === "submitting" ||
     tx.step === "building-signing-submitting";
-  const showTxState = tab === "core" || tab === "scan";
+  // `tx` is the Stellar build/sign/submit state machine; the one-call chains
+  // never enter it, so they report through `sendOutcome` instead.
+  const showTxState = (tab === "core" && isStellar) || tab === "scan";
   const memoSupported = memoOption(memo, memoType) !== undefined;
 
   const tabBtn = (value: Tab, label: string) => (
@@ -334,6 +466,69 @@ export default function SendPage() {
     >
       {label}
     </button>
+  );
+
+  // Off Stellar there is no issuer, no trustline and no XDR to show: one server
+  // call takes a mint and an integer amount, and only custodial wallets qualify.
+  const nonStellarFields = (
+    <div className="space-y-4">
+      <div>
+        <label className={lbl}>{t.send.form.destinationLabel} *</label>
+        <input
+          className={inp}
+          value={destination}
+          onChange={(e) => setDestination(e.target.value)}
+          placeholder={t.send.form.destinationPhOther}
+          spellCheck={false}
+        />
+      </div>
+
+      <div>
+        <label className={lbl}>{t.send.form.tokenLabel} *</label>
+        <Select
+          value={mintKey}
+          onChange={setMintKey}
+          options={
+            mintOptions.length > 0
+              ? mintOptions
+              : [{ value: NATIVE_KEY, label: chain }]
+          }
+        />
+        <p className="text-xs text-muted-light mt-0.5">
+          {mintKey === NATIVE_KEY
+            ? t.send.form.nativeCoinHint
+            : t.send.form.mintHint}
+        </p>
+      </div>
+
+      <div>
+        <label className={lbl}>{t.send.form.amountLabel} *</label>
+        <input
+          className={inp}
+          type="number"
+          min={0}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          placeholder={t.send.form.amountPh}
+        />
+        {/* What actually goes on the wire — the point of toBaseUnits(). */}
+        {amount.trim() && (
+          <p
+            className={`mt-1 text-[10px] font-mono ${
+              baseUnits ? "text-muted-light" : "text-warning"
+            }`}
+          >
+            {baseUnits
+              ? `toBaseUnits('${amount.trim()}', ${decimals}) → ${baseUnits}`
+              : t.send.form.baseUnitsError}
+          </p>
+        )}
+      </div>
+
+      <p className="rounded-lg border border-border bg-surface px-3 py-2 text-xs text-muted">
+        {t.send.form.custodialOnly}
+      </p>
+    </div>
   );
 
   // Shared payment fields — used by both the core tab and the scan review.
@@ -439,14 +634,30 @@ export default function SendPage() {
 
           {tab === "core" && (
             <div className="space-y-4">
-              {paymentFields}
+              {/* Renders nothing on a single-chain app, so the Stellar form is
+                  exactly what it was before multichain. */}
+              <ChainSelect
+                label={t.send.form.networkLabel}
+                value={chain}
+                options={chains}
+                onChange={(next) => {
+                  // A mint belongs to one chain, so it can't survive the switch.
+                  setPickedChain(next);
+                  setMintKey(NATIVE_KEY);
+                  setSendOutcome(null);
+                  setCoreError(null);
+                }}
+                disabled={!chainsReady}
+              />
+
+              {isStellar ? paymentFields : nonStellarFields}
 
               <div className="space-y-2 pt-1">
                 {coreError && (
                   <p className="text-xs font-mono text-error">{coreError}</p>
                 )}
                 <button
-                  onClick={sendPayment}
+                  onClick={submitPayment}
                   disabled={!isAuthenticated || !formReady || txBusy}
                   className={`${btn("primary")} w-full sm:w-auto`}
                 >
@@ -457,7 +668,9 @@ export default function SendPage() {
                       : t.send.form.run}
                 </button>
                 <p className="text-xs font-mono text-muted-light">
-                  <code className="text-foreground">{"runTx('payment')"}</code>
+                  <code className="text-foreground">
+                    {isStellar ? "runTx('payment')" : "sendPayment()"}
+                  </code>
                 </p>
               </div>
 
@@ -532,7 +745,7 @@ export default function SendPage() {
                       </p>
                     )}
                     <button
-                      onClick={sendPayment}
+                      onClick={submitPayment}
                       disabled={!isAuthenticated || !formReady || txBusy}
                       className={`${btn("primary")} w-full sm:w-auto`}
                     >
@@ -565,13 +778,27 @@ export default function SendPage() {
             />
           )}
 
-          {tab === "core" && (
-            <CodePanel
-              sdk="@pollar/core"
-              note="framework-agnostic"
-              code={coreSnippet(destination, selectedAsset, amount)}
-            />
-          )}
+          {tab === "core" &&
+            (isStellar ? (
+              <CodePanel
+                sdk="@pollar/core"
+                note="framework-agnostic"
+                code={coreSnippet(destination, selectedAsset, amount)}
+              />
+            ) : (
+              <CodePanel
+                sdk="@pollar/react + @pollar/core"
+                note={`${chain} · base units`}
+                code={sendPaymentSnippet(
+                  chain,
+                  destination,
+                  mintKey === NATIVE_KEY ? null : mintKey,
+                  amount,
+                  decimals,
+                  baseUnits,
+                )}
+              />
+            ))}
 
           {tab === "scan" && (
             <CodePanel
@@ -579,6 +806,38 @@ export default function SendPage() {
               note="SEP-7 → runTx"
               code={scanSnippet(destination, selectedAsset, amount, memo)}
             />
+          )}
+
+          {/* one-call chains: no tx state machine to watch, just the outcome */}
+          {tab === "core" && !isStellar && (
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
+                <span className="flex items-center gap-2 text-xs font-mono text-muted-light">
+                  sendPayment()
+                  <ChainBadge chain={chain} />
+                </span>
+                {sendOutcome && (
+                  <span
+                    className={`text-xs font-mono px-1.5 py-0.5 rounded ${
+                      sendOutcome.status === "error"
+                        ? "bg-error-light text-error"
+                        : "bg-success-light text-success"
+                    }`}
+                  >
+                    {sendOutcome.status}
+                  </span>
+                )}
+              </div>
+              {sendOutcome ? (
+                <pre className="p-4 text-xs font-mono text-slate-700 dark:text-slate-300 overflow-x-auto whitespace-pre leading-relaxed max-h-80 overflow-y-auto">
+                  {JSON.stringify(sendOutcome, null, 2)}
+                </pre>
+              ) : (
+                <p className="px-4 py-3 text-xs font-mono text-muted-light">
+                  {t.send.form.stateIdle}
+                </p>
+              )}
+            </div>
           )}
 
           {/* transaction state (driven by runTx) — core + scan tabs */}

@@ -3,6 +3,7 @@
 import { usePollar } from "@pollar/react";
 import type { WalletBalanceContent } from "@pollar/core";
 import { useState } from "react";
+import { ChainBadge } from "@/app/_components/ChainBadge";
 import { CodePanel } from "@/app/_components/CodePanels";
 import {
   CoreClientNote,
@@ -54,7 +55,8 @@ await client.ready();
 const { balances } = await client.getWalletBalance('${trimmedKey || "G..."}');
 
 balances.forEach(b => {
-  console.log(b.code, b.balance);
+  // every row is chain-tagged since v0.11 went multichain
+  console.log(b.chain, b.code, b.balance);
 });`
     : `import { PollarClient } from '@pollar/core';
 
@@ -68,7 +70,7 @@ await client.refreshBalance();
 const state = client.getWalletBalanceState();
 if (state.step === 'loaded') {
   state.data.balances.forEach(b => {
-    console.log(b.code, b.balance);
+    console.log(b.chain, b.code, b.balance);
   });
 }`;
 }
@@ -287,8 +289,16 @@ export default function BalancePage() {
           {/* live state + rendered table */}
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-border bg-surface">
-              <span className="text-xs font-mono text-muted-light">
+              <span className="flex items-center gap-2 text-xs font-mono text-muted-light">
                 {usingCustomKey ? "getWalletBalance()" : "walletBalance.step"}
+                {rawData?.multichain && (
+                  <span
+                    title={t.balance.multichainNote}
+                    className="rounded border border-border px-1.5 py-0.5 text-[10px] text-muted"
+                  >
+                    {t.balance.multichainTag}
+                  </span>
+                )}
               </span>
               <span
                 className={`text-xs font-mono px-1.5 py-0.5 rounded ${
@@ -330,6 +340,9 @@ export default function BalancePage() {
                     <th className="text-left px-4 py-2 text-muted-light font-medium">
                       {t.balance.assetCol}
                     </th>
+                    <th className="text-left px-4 py-2 text-muted-light font-medium">
+                      {t.balance.chainCol}
+                    </th>
                     <th className="text-right px-4 py-2 text-muted-light font-medium">
                       {t.balance.balanceCol}
                     </th>
@@ -346,11 +359,21 @@ export default function BalancePage() {
                     >
                       <td className="px-4 py-2.5 text-foreground">
                         {b.type === "native" ? "XLM" : b.code}
+                        {/* `decimals` is carried by Polygon/Solana tokens only —
+                            every Stellar asset is 7-decimal and omits it. */}
+                        {b.decimals != null && (
+                          <span className="ml-1.5 text-[10px] text-muted-light">
+                            {b.decimals} dp
+                          </span>
+                        )}
                         {"issuer" in b && b.issuer && (
                           <span className="block text-[10px] text-muted-light truncate max-w-40">
                             {b.issuer}
                           </span>
                         )}
+                      </td>
+                      <td className="px-4 py-2.5">
+                        <ChainBadge chain={b.chain} />
                       </td>
                       {/* null = the chain couldn't be read, not a zero balance */}
                       <td className="px-4 py-2.5 text-right text-foreground">
@@ -363,6 +386,13 @@ export default function BalancePage() {
                   ))}
                 </tbody>
               </table>
+            )}
+
+            {/* Only worth explaining once a row actually came back unreadable. */}
+            {balances?.some((b) => b.balance === null) && (
+              <p className="px-4 py-2.5 text-[10px] font-mono text-muted-light border-t border-border">
+                {t.balance.unreadableNote}
+              </p>
             )}
           </div>
 
