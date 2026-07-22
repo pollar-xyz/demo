@@ -110,3 +110,40 @@ body {
     animation: none;
   }
 }
+
+/* @pollar/react's <ChainSelect> expects the SDK's own stylesheet
+   (@pollar/react/dist/index.css), which this demo deliberately does not import:
+   it declares --pollar-* variables globally and sizes controls for the prebuilt
+   modals, not for these Tailwind pages. Without it the component renders as an
+   unstyled native select.
+
+   The wallet forms sidestep this with ChainField (the demo's own Select), but
+   the chains tab shows the real component on purpose, so give it the demo's
+   look here. Only these three class names are borrowed; if the SDK stylesheet
+   is ever imported for real, drop this block rather than fight it. */
+.pollar-send-label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-mono), monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.pollar-input.pollar-send-select {
+  width: 100%;
+  padding: 0.5rem 2.25rem 0.5rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-mono), monospace;
+  font-size: 0.875rem;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.pollar-input.pollar-send-select:focus {
+  border-color: var(--primary);
+  box-shadow: none;
+}

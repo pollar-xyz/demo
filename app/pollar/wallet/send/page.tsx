@@ -1,11 +1,12 @@
 "use client";
 
-import { ChainSelect, useChains, usePollar } from "@pollar/react";
+import { useChains, usePollar } from "@pollar/react";
 import type { SubmitOutcome, WalletChain } from "@pollar/core";
 import { toBaseUnits } from "@pollar/core";
 import type { Sep7Request } from "@cosmosapp/pay_sdk/web";
 import { useEffect, useState } from "react";
 import { ChainBadge } from "@/app/_components/ChainBadge";
+import { ChainField } from "@/app/_components/ChainField";
 import { CodePanel } from "@/app/_components/CodePanels";
 import { Select } from "@/app/_components/Select";
 import { Sep7Scanner } from "@/app/_components/Sep7Scanner";
@@ -636,19 +637,20 @@ export default function SendPage() {
             <div className="space-y-4">
               {/* Renders nothing on a single-chain app, so the Stellar form is
                   exactly what it was before multichain. */}
-              <ChainSelect
-                label={t.send.form.networkLabel}
-                value={chain}
-                options={chains}
-                onChange={(next) => {
-                  // A mint belongs to one chain, so it can't survive the switch.
-                  setPickedChain(next);
-                  setMintKey(NATIVE_KEY);
-                  setSendOutcome(null);
-                  setCoreError(null);
-                }}
-                disabled={!chainsReady}
-              />
+              {chainsReady && (
+                <ChainField
+                  label={t.send.form.networkLabel}
+                  value={chain}
+                  options={chains}
+                  onChange={(next) => {
+                    // A mint belongs to one chain, so it can't survive the switch.
+                    setPickedChain(next);
+                    setMintKey(NATIVE_KEY);
+                    setSendOutcome(null);
+                    setCoreError(null);
+                  }}
+                />
+              )}
 
               {isStellar ? paymentFields : nonStellarFields}
 

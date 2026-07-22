@@ -1,14 +1,10 @@
 "use client";
 
 import type { WalletChain } from "@pollar/core";
-import {
-  ChainSelect,
-  addressForChain,
-  useChains,
-  usePollar,
-} from "@pollar/react";
+import { addressForChain, useChains, usePollar } from "@pollar/react";
 import { useState } from "react";
 import { ChainBadge } from "@/app/_components/ChainBadge";
+import { ChainField } from "@/app/_components/ChainField";
 import { CodePanel } from "@/app/_components/CodePanels";
 import {
   CoreClientNote,
@@ -174,15 +170,16 @@ export default function ReceivePage() {
               <div className="p-4 space-y-4">
                 <p className="text-xs text-muted">{t.receive.addressesIntro}</p>
 
-                {/* ChainSelect renders nothing when there is only one option, so
-                    a single-chain app simply shows its address with no picker. */}
-                <ChainSelect
-                  label={t.receive.networkLabel}
-                  value={chain}
-                  options={chains}
-                  onChange={setPicked}
-                  disabled={!ready}
-                />
+                {/* Renders nothing when there is only one option, so a
+                    single-chain app simply shows its address with no picker. */}
+                {ready && (
+                  <ChainField
+                    label={t.receive.networkLabel}
+                    value={chain}
+                    options={chains}
+                    onChange={setPicked}
+                  />
+                )}
 
                 <div className="space-y-1.5">
                   <div className="flex items-center gap-2">
