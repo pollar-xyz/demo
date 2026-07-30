@@ -66,12 +66,15 @@ function serializeVal(val: unknown, depth = 0): string {
 
 const SETUP_NOTE = `// adapter.ts — register once in your app
 import { Agent } from 'nirium';
-const agent = new Agent({ network: 'testnet' });
 
-export const niriumAdapter: NiriumAdapter = {
-  // Nirium plans the x402 payment → unsigned XDR.
-  pay: (p) => agent.x402.buildPayment(p),
-};
+// The agent targets one network, so build the adapter per session.
+export function createNiriumAdapter(network) {
+  const agent = new Agent({ network });
+  return {
+    // Nirium plans the x402 payment → unsigned XDR.
+    pay: (p) => agent.x402.buildPayment(p),
+  };
+}
 
 // each adapter fn returns { unsignedTransaction: string }.
 // Pollar then signs + submits with the user's wallet automatically.
@@ -84,7 +87,7 @@ export const useNiriumX402 =
 export default function NiriumX402Page() {
   const { t } = useI18n();
   const s = t.niriumX402;
-  const { wallet, isAuthenticated, tx, openTxModal } = usePollar();
+  const { wallet, isAuthenticated, tx, openTxModal, network } = usePollar();
   const walletAddress = wallet?.address ?? "";
   const nirium = useNiriumX402();
 
@@ -130,13 +133,14 @@ export default function NiriumX402Page() {
 await pay(${p});`;
 
   const core = `import { PollarClient } from '@pollar/core';
-import { niriumAdapter } from './adapter';
+import { createNiriumAdapter } from './adapter';
 
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
 // Nirium assembles the payment → returns an unsigned XDR
-const { unsignedTransaction } = await niriumAdapter.pay(${p});
+const nirium = createNiriumAdapter('${network}');
+const { unsignedTransaction } = await nirium.pay(${p});
 
 // Pollar signs + submits with the connected wallet
 await client.signAndSubmitTx(unsignedTransaction);`;

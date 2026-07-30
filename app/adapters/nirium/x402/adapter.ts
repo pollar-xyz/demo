@@ -19,12 +19,23 @@ import { createPollarAdapterHook } from "@pollar/react";
 // secret key and no API key ever touch the frontend.
 //
 // When the package lands, the body becomes a one-liner:
-//   const agent = new Agent({ network: "testnet" });
+//   const agent = new Agent({ network });
 //   pay: (p) => agent.x402.buildPayment(p),   // → { unsignedTransaction }
 // The adapter contract ({ unsignedTransaction: string }) stays identical, so
 // the page below does not change.
 
-const HORIZON_TESTNET = "https://horizon-testnet.stellar.org";
+type StellarNetwork = "testnet" | "mainnet";
+
+// Horizon + passphrase both follow the session's network: an XDR built against
+// testnet Horizon carries the testnet passphrase and is rejected on pubnet.
+const HORIZON: Record<StellarNetwork, string> = {
+  testnet: "https://horizon-testnet.stellar.org",
+  mainnet: "https://horizon.stellar.org",
+};
+const PASSPHRASE: Record<StellarNetwork, string> = {
+  testnet: Networks.TESTNET,
+  mainnet: Networks.PUBLIC,
+};
 
 // ─── params ───────────────────────────────────────────────────────────────────
 
@@ -58,32 +69,36 @@ export type NiriumAdapter = {
 
 // ─── adapter implementation ───────────────────────────────────────────────────
 
-export const niriumAdapter: NiriumAdapter = {
-  // Plan the payment → return the unsigned XDR. Pollar signs + submits.
-  pay: async ({ to, amount, asset, reference, signer }) => {
-    const server = new Horizon.Server(HORIZON_TESTNET);
-    const source = await server.loadAccount(signer);
+// Built per network by the caller (see Shell), since the network is only known
+// once the API key resolves.
+export function createNiriumAdapter(network: StellarNetwork): NiriumAdapter {
+  return {
+    // Plan the payment → return the unsigned XDR. Pollar signs + submits.
+    pay: async ({ to, amount, asset, reference, signer }) => {
+      const server = new Horizon.Server(HORIZON[network]);
+      const source = await server.loadAccount(signer);
 
-    const builder = new TransactionBuilder(source, {
-      fee: BASE_FEE,
-      networkPassphrase: Networks.TESTNET,
-    })
-      .addOperation(
-        Operation.payment({
-          destination: to,
-          asset: parseAsset(asset),
-          amount,
-        }),
-      )
-      .setTimeout(180);
+      const builder = new TransactionBuilder(source, {
+        fee: BASE_FEE,
+        networkPassphrase: PASSPHRASE[network],
+      })
+        .addOperation(
+          Operation.payment({
+            destination: to,
+            asset: parseAsset(asset),
+            amount,
+          }),
+        )
+        .setTimeout(180);
 
-    // Stellar text memos are capped at 28 bytes — keep the reference short.
-    if (reference) builder.addMemo(Memo.text(reference.slice(0, 28)));
+      // Stellar text memos are capped at 28 bytes — keep the reference short.
+      if (reference) builder.addMemo(Memo.text(reference.slice(0, 28)));
 
-    const tx = builder.build();
-    return { unsignedTransaction: tx.toXDR() };
-  },
-};
+      const tx = builder.build();
+      return { unsignedTransaction: tx.toXDR() };
+    },
+  };
+}
 
 // ─── hook ─────────────────────────────────────────────────────────────────────
 

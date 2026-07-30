@@ -21,18 +21,25 @@ export type NiriumAdapter = {
   pay: AdapterFn<X402PaymentParams>;
 };
 
-const agent = new Agent({ network: 'testnet' });
+// The agent targets one network, so build the adapter per session.
+export function createNiriumAdapter(
+  network: 'testnet' | 'mainnet',
+): NiriumAdapter {
+  const agent = new Agent({ network });
+  return {
+    // Nirium plans the x402 payment → returns { unsignedTransaction }.
+    pay: (p) => agent.x402.buildPayment(p),
+  };
+}`;
 
-export const niriumAdapter: NiriumAdapter = {
-  // Nirium plans the x402 payment → returns { unsignedTransaction }.
-  pay: (p) => agent.x402.buildPayment(p),
-};`;
+const REGISTER = `// 1. build it for the session's network, then register it
+const { network } = usePollar();
+const adapters = useMemo(
+  () => ({ niriumX402: createNiriumAdapter(network) }),
+  [network],
+);
 
-const REGISTER = `// 1. register the adapter on the Pollar provider
-<PollarProvider
-  apiKey={apiKey}
-  adapters={{ niriumX402: niriumAdapter }}
->
+<PollarProvider apiKey={apiKey} adapters={adapters}>
   {children}
 </PollarProvider>
 

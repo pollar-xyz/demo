@@ -2,7 +2,7 @@
 
 import { usePollar } from "@pollar/react";
 import { contract, rpc } from "@stellar/stellar-sdk";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CodePanel, highlight } from "@/app/_components/CodePanels";
 import { FnReference } from "@/app/_components/SdkDocs";
 import { Select } from "@/app/_components/Select";
@@ -57,6 +57,8 @@ type Param = {
 };
 type Method = { name: string; params: Param[] };
 
+type StellarNetwork = "testnet" | "mainnet";
+
 // ─── operation config ─────────────────────────────────────────────────────────
 
 const OPS: Op[] = [
@@ -69,9 +71,17 @@ const OPS: Op[] = [
 
 // ─── soroban helpers ──────────────────────────────────────────────────────────
 
-const SOROBAN_RPC = "https://soroban-testnet.stellar.org";
-const DEFAULT_CONTRACT =
-  "CDKCKHTRKFJXVKLICHPIXAPLIVDRBDQEEGJYDKFOTUV35APVNOGTWZW7";
+// The ABI fetch below reads the deployed wasm straight from Soroban RPC, so
+// both the endpoint and the prefilled contract have to follow the session's
+// network — a testnet contract simply doesn't exist on pubnet (and vice versa).
+const SOROBAN_RPC: Record<StellarNetwork, string> = {
+  testnet: "https://soroban-testnet.stellar.org",
+  mainnet: "https://mainnet.sorobanrpc.com",
+};
+const DEFAULT_CONTRACT: Record<StellarNetwork, string> = {
+  testnet: "CDKCKHTRKFJXVKLICHPIXAPLIVDRBDQEEGJYDKFOTUV35APVNOGTWZW7",
+  mainnet: "CAMYOLBTZVDRWOEIWPFJP5IQIT46YWETF3BFWCSMHBMG64HBTAWYJZQY",
+};
 
 const SPEC_TYPE_MAP: Record<string, ScArgType> = {
   scSpecTypeBool: "bool",
@@ -438,6 +448,7 @@ export default function TransactionsPage() {
     isAuthenticated,
     tx,
     openTxModal,
+    network,
   } = usePollar();
 
   const [op, setOp] = useState<Op>("payment");
@@ -477,7 +488,7 @@ export default function TransactionsPage() {
   const [optMaxFeeStroops, setOptMaxFeeStroops] = useState("");
 
   // ── invoke_contract ────────────────────────────────────────────────────────
-  const [icContractId, setIcContractId] = useState(DEFAULT_CONTRACT);
+  const [icContractId, setIcContractId] = useState(DEFAULT_CONTRACT[network]);
   const [icMethods, setIcMethods] = useState<Method[]>([]);
   const [icMethod, setIcMethod] = useState("");
   const [icFields, setIcFields] = useState<Record<string, string | boolean>>(
@@ -488,6 +499,22 @@ export default function TransactionsPage() {
 
   const currentMethod = icMethods.find((m) => m.name === icMethod);
 
+  // Switching networks invalidates everything under invoke_contract: the
+  // prefilled contract, and any ABI already fetched from the other network's
+  // RPC. Reset back to the new network's default instead of leaving a contract
+  // that can't be built against. Skips the first run so a fresh mount keeps the
+  // initial state above.
+  const lastNetwork = useRef(network);
+  useEffect(() => {
+    if (lastNetwork.current === network) return;
+    lastNetwork.current = network;
+    setIcContractId(DEFAULT_CONTRACT[network]);
+    setIcMethods([]);
+    setIcMethod("");
+    setIcFields({});
+    setIcFetchError(null);
+  }, [network]);
+
   // ── fetch contract methods ─────────────────────────────────────────────────
   async function fetchMethods() {
     setIcFetching(true);
@@ -496,7 +523,7 @@ export default function TransactionsPage() {
     setIcMethod("");
     setIcFields({});
     try {
-      const server = new rpc.Server(SOROBAN_RPC, { allowHttp: false });
+      const server = new rpc.Server(SOROBAN_RPC[network], { allowHttp: false });
       const wasm = await server.getContractWasmByContractId(
         icContractId.trim(),
       );

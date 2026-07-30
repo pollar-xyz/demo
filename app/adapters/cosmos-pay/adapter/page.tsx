@@ -22,41 +22,49 @@ export type CosmosPayAdapter = {
   pay: AdapterFn<PayParams>;
 };
 
-// Stellar SDK injected, network pinned to testnet.
-const webClient = new WebClient({
-  stellarSdk: StellarSdk as never,
-  network: 'testnet',
-});
+// Stellar SDK injected; the network follows the session — Cosmos Pay labels
+// mainnet 'public', Pollar calls it 'mainnet'.
+export function createCosmosPayAdapter(
+  network: 'testnet' | 'mainnet',
+): CosmosPayAdapter {
+  const webClient = new WebClient({
+    stellarSdk: StellarSdk as never,
+    network: network === 'mainnet' ? 'public' : 'testnet',
+  });
 
-export const cosmosPayAdapter: CosmosPayAdapter = {
-  pay: async ({ destination, amount, asset, memo, msg, signer }) => {
-    const intent: Sep7Request = {
-      operation: 'pay',
-      destination: destination.trim(),
-      amount: amount.trim(),
-      ...assetFields(asset),
-      ...(memo?.trim()
-        ? { memo: memo.trim().slice(0, 28), memoType: 'MEMO_TEXT' }
-        : {}),
-      ...(msg?.trim() ? { msg: msg.trim() } : {}),
-    };
+  return {
+    pay: async ({ destination, amount, asset, memo, msg, signer }) => {
+      const intent: Sep7Request = {
+        operation: 'pay',
+        destination: destination.trim(),
+        amount: amount.trim(),
+        ...assetFields(asset),
+        ...(memo?.trim()
+          ? { memo: memo.trim().slice(0, 28), memoType: 'MEMO_TEXT' }
+          : {}),
+        ...(msg?.trim() ? { msg: msg.trim() } : {}),
+      };
 
-    // \`source\` short-circuits wallet detection: builds from \`signer\` and
-    // returns the unsigned XDR without asking a Cosmos Pay wallet to sign.
-    const { xdr } = await webClient.buildTransaction(intent, {
-      source: signer.trim(),
-      amount: amount.trim(),
-    });
+      // \`source\` short-circuits wallet detection: builds from \`signer\` and
+      // returns the unsigned XDR without asking a Cosmos Pay wallet to sign.
+      const { xdr } = await webClient.buildTransaction(intent, {
+        source: signer.trim(),
+        amount: amount.trim(),
+      });
 
-    return { unsignedTransaction: xdr };
-  },
-};`;
+      return { unsignedTransaction: xdr };
+    },
+  };
+}`;
 
-const REGISTER = `// 1. register the adapter on the Pollar provider
-<PollarProvider
-  apiKey={apiKey}
-  adapters={{ cosmosPay: cosmosPayAdapter }}
->
+const REGISTER = `// 1. build it for the session's network, then register it
+const { network } = usePollar();
+const adapters = useMemo(
+  () => ({ cosmosPay: createCosmosPayAdapter(network) }),
+  [network],
+);
+
+<PollarProvider apiKey={apiKey} adapters={adapters}>
   {children}
 </PollarProvider>
 

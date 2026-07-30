@@ -20,13 +20,15 @@ import { WebClient, type Sep7Request } from "@cosmosapp/pay_sdk/web";
 // server-side is optional — for the demo we assemble the SEP-7 `pay` request
 // locally and let the real web client turn it into the XDR.
 
-// One web client for the whole adapter: the Stellar SDK is injected (it's already
-// a dependency) and the network is pinned to testnet, so the XDR is built against
-// testnet Horizon with the testnet passphrase.
-const webClient = new WebClient({
-  stellarSdk: StellarSdk as never,
-  network: "testnet",
-});
+type StellarNetwork = "testnet" | "mainnet";
+
+// Cosmos Pay labels mainnet `public` (the Stellar convention), while Pollar
+// calls it `mainnet` — translate on the way in. The label drives which Horizon
+// and which passphrase the client builds the XDR against.
+const COSMOS_NETWORK: Record<StellarNetwork, "public" | "testnet"> = {
+  testnet: "testnet",
+  mainnet: "public",
+};
 
 // ─── params ───────────────────────────────────────────────────────────────────
 
@@ -64,33 +66,45 @@ export type CosmosPayAdapter = {
 
 // ─── adapter implementation ───────────────────────────────────────────────────
 
-export const cosmosPayAdapter: CosmosPayAdapter = {
-  // Assemble the SEP-7 `pay` intent → let Cosmos Pay build the unsigned XDR from
-  // the connected account as source. Pollar signs + submits.
-  pay: async ({ destination, amount, asset, memo, msg, signer }) => {
-    const intent: Sep7Request = {
-      operation: "pay",
-      destination: destination.trim(),
-      amount: amount.trim(),
-      ...assetFields(asset),
-      // Stellar text memos are capped at 28 bytes — keep the note short.
-      ...(memo?.trim()
-        ? { memo: memo.trim().slice(0, 28), memoType: "MEMO_TEXT" }
-        : {}),
-      ...(msg?.trim() ? { msg: msg.trim() } : {}),
-    };
+// Built per network by the caller (see Shell), since the network is only known
+// once the API key resolves. One web client per adapter: the Stellar SDK is
+// injected (it's already a dependency).
+export function createCosmosPayAdapter(
+  network: StellarNetwork,
+): CosmosPayAdapter {
+  const webClient = new WebClient({
+    stellarSdk: StellarSdk as never,
+    network: COSMOS_NETWORK[network],
+  });
 
-    // `source` short-circuits the web client's wallet detection: it builds the
-    // payment from `signer` and returns the unsigned XDR without ever asking a
-    // Cosmos Pay wallet to sign.
-    const { xdr } = await webClient.buildTransaction(intent, {
-      source: signer.trim(),
-      amount: amount.trim(),
-    });
+  return {
+    // Assemble the SEP-7 `pay` intent → let Cosmos Pay build the unsigned XDR
+    // from the connected account as source. Pollar signs + submits.
+    pay: async ({ destination, amount, asset, memo, msg, signer }) => {
+      const intent: Sep7Request = {
+        operation: "pay",
+        destination: destination.trim(),
+        amount: amount.trim(),
+        ...assetFields(asset),
+        // Stellar text memos are capped at 28 bytes — keep the note short.
+        ...(memo?.trim()
+          ? { memo: memo.trim().slice(0, 28), memoType: "MEMO_TEXT" }
+          : {}),
+        ...(msg?.trim() ? { msg: msg.trim() } : {}),
+      };
 
-    return { unsignedTransaction: xdr };
-  },
-};
+      // `source` short-circuits the web client's wallet detection: it builds the
+      // payment from `signer` and returns the unsigned XDR without ever asking a
+      // Cosmos Pay wallet to sign.
+      const { xdr } = await webClient.buildTransaction(intent, {
+        source: signer.trim(),
+        amount: amount.trim(),
+      });
+
+      return { unsignedTransaction: xdr };
+    },
+  };
+}
 
 // ─── hook ─────────────────────────────────────────────────────────────────────
 

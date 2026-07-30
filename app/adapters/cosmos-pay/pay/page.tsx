@@ -88,7 +88,7 @@ export const useCosmosPay =
 
 export default function CosmosPayPage() {
   const { t } = useI18n();
-  const { wallet, isAuthenticated, tx, openTxModal } = usePollar();
+  const { wallet, isAuthenticated, tx, openTxModal, network } = usePollar();
   const walletAddress = wallet?.address ?? "";
   const cosmosPay = useCosmosPay();
 
@@ -141,14 +141,15 @@ export default function CosmosPayPage() {
 await pay(${p});`;
 
   const core = `import { PollarClient } from '@pollar/core';
-import { cosmosPayAdapter } from './adapter';
+import { createCosmosPayAdapter } from './adapter';
 
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
 // Cosmos Pay adapts the SEP-7 'pay' intent → unsigned XDR
+const cosmosPay = createCosmosPayAdapter('${network}');
 const { unsignedTransaction } =
-  await cosmosPayAdapter.pay(${p});
+  await cosmosPay.pay(${p});
 
 // Pollar signs + submits with the connected wallet
 await client.signAndSubmitTx(unsignedTransaction);`;

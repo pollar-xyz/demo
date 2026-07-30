@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import '@pollar/react/styles.css';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppWalletProvider } from './_AppWalletProvider';
 import { ApiKeyModal } from './_components/ApiKeyModal';
 import { ComingSoon } from './_components/ComingSoon';
@@ -17,8 +17,8 @@ import { useI18n } from './_i18n/LanguageProvider';
 import { useLabUnlocked } from './_LabGateProvider';
 import { SIDEBAR_SECTIONS, visibleGroups } from './_nav';
 import { useApiKeyHref } from './_useApiKeyHref';
-import { cosmosPayAdapter } from './adapters/cosmos-pay/pay/adapter';
-import { niriumAdapter } from './adapters/nirium/x402/adapter';
+import { createCosmosPayAdapter } from './adapters/cosmos-pay/pay/adapter';
+import { createNiriumAdapter } from './adapters/nirium/x402/adapter';
 import { trustlessWorkAdapter } from './adapters/trustless-work/escrow/adapter';
 import { useNekoUnlocked } from './neko/_GateProvider';
 
@@ -251,6 +251,19 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const stellarNetwork: StellarNetwork =
     apiKey.split('_')[1] === 'testnet' ? 'testnet' : 'mainnet';
 
+  // Nirium and Cosmos Pay build their own XDR, so they need the network the
+  // session runs on (Horizon URL + passphrase); Trustless Work builds its XDR
+  // server-side and takes none. Memoized so the adapter identities stay stable
+  // across renders and only change when the network does.
+  const adapters = useMemo(
+    () => ({
+      escrow: trustlessWorkAdapter,
+      niriumX402: createNiriumAdapter(stellarNetwork),
+      cosmosPay: createCosmosPayAdapter(stellarNetwork),
+    }),
+    [ stellarNetwork ],
+  );
+
   const GROUPS = visibleGroups(useNekoUnlocked(), useLabUnlocked());
 
   // The group that owns the current path — matched by its tabs (null on `/`).
@@ -430,11 +443,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       baseUrl={BASE_URL}
       network={stellarNetwork}
       privyDisabled={apiKey === DEFAULT_API_KEY_MAINNET}
-      adapters={{
-        escrow: trustlessWorkAdapter,
-        niriumX402: niriumAdapter,
-        cosmosPay: cosmosPayAdapter,
-      }}
+      adapters={adapters}
     >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
