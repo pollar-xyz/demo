@@ -4,6 +4,13 @@
 
 import { nekoEn, nekoEs, nekoPt, nekoNavLabel } from "@/app/neko/_i18n";
 
+import {
+  abroadEn,
+  abroadEs,
+  abroadPt,
+  abroadNavLabel,
+} from "@/app/pollar/ramp/abroad/_i18n";
+
 import { walletAdaptersNavLabel } from "@/app/wallet-adapters/_i18n";
 
 export const en = {
@@ -40,6 +47,7 @@ export const en = {
     chains: "Chains",
     assets: "Assets",
     ramp: "Ramp",
+    abroad: abroadNavLabel,
     kyc: "KYC",
     escrow: "Escrow",
     payments: "Payments",
@@ -2053,7 +2061,15 @@ export const en = {
       "The adapter returns an unsigned XDR; the core client signs and submits it.",
     coreFns: [
       {
-        fn: "niriumAdapter.pay(params)",
+        fn: "createNiriumAdapter(network)",
+        tag: "sync",
+        params:
+          "network: 'testnet' | 'mainnet' — the agent targets one network, so build the adapter for the session's.",
+        returns:
+          "NiriumAdapter — an object whose pay() plans payments on that network.",
+      },
+      {
+        fn: "nirium.pay(params)",
         tag: "async",
         params:
           "params: { to, amount, asset, reference?, signer }. Nirium plans the payment.",
@@ -2147,7 +2163,15 @@ export const en = {
       "The adapter returns an unsigned XDR; the core client signs and submits it.",
     coreFns: [
       {
-        fn: "cosmosPayAdapter.pay(params)",
+        fn: "createCosmosPayAdapter(network)",
+        tag: "sync",
+        params:
+          "network: 'testnet' | 'mainnet' — pins the web client's Horizon + passphrase (Cosmos Pay labels mainnet 'public').",
+        returns:
+          "CosmosPayAdapter — an object whose pay() builds SEP-7 payments on that network.",
+      },
+      {
+        fn: "cosmosPay.pay(params)",
         tag: "async",
         params:
           "params: { destination, amount, asset, memo?, msg?, signer }. Cosmos Pay builds the SEP-7 payment.",
@@ -2318,6 +2342,7 @@ export const en = {
   },
 
   ...nekoEn,
+  ...abroadEn,
 };
 
 export type Dictionary = typeof en;
@@ -2356,6 +2381,7 @@ export const es: Dictionary = {
     chains: "Cadenas",
     assets: "Activos",
     ramp: "Ramp",
+    abroad: abroadNavLabel,
     kyc: "KYC",
     escrow: "Escrow",
     payments: "Pagos",
@@ -4382,7 +4408,15 @@ export const es: Dictionary = {
       "El adaptador devuelve un XDR sin firmar; el cliente core lo firma y lo envía.",
     coreFns: [
       {
-        fn: "niriumAdapter.pay(params)",
+        fn: "createNiriumAdapter(network)",
+        tag: "sync",
+        params:
+          "network: 'testnet' | 'mainnet'. El agente apunta a una sola red, así que se construye el adaptador con la de la sesión.",
+        returns:
+          "NiriumAdapter: un objeto cuyo pay() planifica los pagos en esa red.",
+      },
+      {
+        fn: "nirium.pay(params)",
         tag: "async",
         params:
           "params: { to, amount, asset, reference?, signer }. Nirium planifica el pago.",
@@ -4476,7 +4510,15 @@ export const es: Dictionary = {
       "El adapter devuelve un XDR sin firmar; el cliente core lo firma y lo envía.",
     coreFns: [
       {
-        fn: "cosmosPayAdapter.pay(params)",
+        fn: "createCosmosPayAdapter(network)",
+        tag: "sync",
+        params:
+          "network: 'testnet' | 'mainnet'. Fija el Horizon y la passphrase del cliente web (Cosmos Pay llama 'public' a mainnet).",
+        returns:
+          "CosmosPayAdapter: un objeto cuyo pay() arma los pagos SEP-7 en esa red.",
+      },
+      {
+        fn: "cosmosPay.pay(params)",
         tag: "async",
         params:
           "params: { destination, amount, asset, memo?, msg?, signer }. Cosmos Pay arma el pago SEP-7.",
@@ -4647,6 +4689,7 @@ export const es: Dictionary = {
   },
 
   ...nekoEs,
+  ...abroadEs,
 };
 
 export const pt: Dictionary = {
@@ -4683,6 +4726,7 @@ export const pt: Dictionary = {
     chains: "Cadeias",
     assets: "Ativos",
     ramp: "Ramp",
+    abroad: abroadNavLabel,
     kyc: "KYC",
     escrow: "Escrow",
     payments: "Pagamentos",
@@ -6708,7 +6752,15 @@ export const pt: Dictionary = {
       "O adaptador retorna um XDR não assinado; o cliente core o assina e envia.",
     coreFns: [
       {
-        fn: "niriumAdapter.pay(params)",
+        fn: "createNiriumAdapter(network)",
+        tag: "sync",
+        params:
+          "network: 'testnet' | 'mainnet'. O agente aponta para uma única rede, então construa o adaptador com a da sessão.",
+        returns:
+          "NiriumAdapter: um objeto cujo pay() planeja os pagamentos nessa rede.",
+      },
+      {
+        fn: "nirium.pay(params)",
         tag: "async",
         params:
           "params: { to, amount, asset, reference?, signer }. A Nirium planeja o pagamento.",
@@ -6803,7 +6855,15 @@ export const pt: Dictionary = {
       "O adapter devolve um XDR não assinado; o cliente core o assina e o envia.",
     coreFns: [
       {
-        fn: "cosmosPayAdapter.pay(params)",
+        fn: "createCosmosPayAdapter(network)",
+        tag: "sync",
+        params:
+          "network: 'testnet' | 'mainnet'. Fixa o Horizon e a passphrase do cliente web (a Cosmos Pay chama a mainnet de 'public').",
+        returns:
+          "CosmosPayAdapter: um objeto cujo pay() monta os pagamentos SEP-7 nessa rede.",
+      },
+      {
+        fn: "cosmosPay.pay(params)",
         tag: "async",
         params:
           "params: { destination, amount, asset, memo?, msg?, signer }. A Cosmos Pay monta o pagamento SEP-7.",
@@ -6974,6 +7034,7 @@ export const pt: Dictionary = {
   },
 
   ...nekoPt,
+  ...abroadPt,
 };
 
 export const LOCALES = ["en", "es", "pt"] as const;
