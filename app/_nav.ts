@@ -28,10 +28,24 @@ export const SIDEBAR_SECTIONS: SidebarSection[] = [
   "builtWith",
 ];
 
+// A single route under a group.
+//   • `hidden` keeps the route fully working but drops it from the tab bar —
+//     an unlisted page you reach by typing the URL. No passcode, no overlay.
+//   • `lab` gates just this tab behind its own passcode (app/_labGate.ts)
+//     without touching the rest of the group.
+// A hidden tab still resolves to its group in Shell, since the group's first
+// tab matches on the path prefix — the tab bar just doesn't list it.
+export type NavTab = {
+  href: string;
+  label: TabLabel;
+  hidden?: boolean;
+  lab?: LabGroupKey;
+};
+
 export type NavGroup = {
   key: keyof Dictionary["nav"]["groups"];
   section: SidebarSection;
-  tabs: { href: string; label: TabLabel }[];
+  tabs: NavTab[];
   // Marks the group as not-yet-live: the sidebar shows a "Soon" badge and the
   // pages blur their content behind the ComingSoon overlay.
   soon?: boolean;
@@ -97,6 +111,9 @@ export const ALL_GROUPS: NavGroup[] = [
     tabs: [
       { href: "/pollar/ramp", label: "overview" },
       { href: "/pollar/ramp/implementation", label: "implementation" },
+      // Abroad is a direct REST integration (not an SDK modal) and isn't ready
+      // to advertise, so it stays off the tab bar — reachable only by URL.
+      { href: "/pollar/ramp/abroad", label: "abroad", hidden: true },
     ],
   },
   {
@@ -252,13 +269,25 @@ export function visibleGroups(
   nekoUnlocked: boolean,
   labUnlocked: LabUnlockState,
 ): NavGroup[] {
-  return ALL_GROUPS.flatMap((g) => {
-    if (g.key === "neko") {
-      // Hidden completely until its passcode is entered.
-      return nekoUnlocked ? [{ ...g, soon: false, isNew: true }] : [];
-    }
-    if (!g.lab) return [g];
-    const unlocked = labUnlocked[g.key as LabGroupKey] ?? false;
-    return [{ ...g, soon: !unlocked, isNew: unlocked }];
-  }).filter((g) => !HIDE_SOON_GROUPS || !g.soon || g.key === "kyc");
+  // Drop the tabs a group shouldn't list: the unlisted ones (Abroad), and any
+  // individually-gated tab whose passcode hasn't been entered. Both stay
+  // routable — this only decides what the tab bar shows.
+  const openTabs = (g: NavGroup): NavGroup => ({
+    ...g,
+    tabs: g.tabs.filter(
+      (tab) => !tab.hidden && (!tab.lab || (labUnlocked[tab.lab] ?? false)),
+    ),
+  });
+
+  return ALL_GROUPS.map(openTabs)
+    .flatMap((g) => {
+      if (g.key === "neko") {
+        // Hidden completely until its passcode is entered.
+        return nekoUnlocked ? [{ ...g, soon: false, isNew: true }] : [];
+      }
+      if (!g.lab) return [g];
+      const unlocked = labUnlocked[g.key as LabGroupKey] ?? false;
+      return [{ ...g, soon: !unlocked, isNew: unlocked }];
+    })
+    .filter((g) => !HIDE_SOON_GROUPS || !g.soon || g.key === "kyc");
 }
