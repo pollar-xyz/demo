@@ -37,7 +37,7 @@ const en: CwTestStrings = {
   installSteps: [
     "Clone github.com/CosmosPay/CosmosPay-Wallet and build the extension.",
     "Load it unpacked in Chrome: open chrome://extensions, turn on Developer mode, click Load unpacked.",
-    "Create or import a wallet in the extension and set its network to match the toggle in this demo's navbar (testnet by default).",
+    "Create or import a wallet in the extension. Matching its network to the toggle in this demo's navbar is optional — it only changes what the extension itself displays.",
     "Reload this page so the content script injects the provider.",
   ],
   providerTitle: "1. Raw provider",
@@ -64,7 +64,8 @@ const en: CwTestStrings = {
   warns: [
     "No signAuthEntry: Soroban auth-entry signing is unavailable.",
     "No SEP-53 message signing: the wallet signs raw bytes, so ownership proofs are not wired up.",
-    "The extension's network is its own setting. connect() blocks the login when it disagrees with the app.",
+    "The extension's network is its own setting. The login works either way — Pollar signs with its own passphrase — but the balances shown inside the extension follow the extension's network.",
+    "The provider never rejects on its own: a request whose reply is lost stays pending forever. The adapter bounds every approval and pings the extension to keep its service worker awake.",
   ],
 };
 
@@ -76,7 +77,7 @@ const es: CwTestStrings = {
   installSteps: [
     "Cloná github.com/CosmosPay/CosmosPay-Wallet y compilá la extensión.",
     "Cargala sin empaquetar en Chrome: abrí chrome://extensions, activá Modo desarrollador, tocá Cargar descomprimida.",
-    "Creá o importá una wallet en la extensión y poné su red igual que el toggle de la navbar de este demo (testnet por defecto).",
+    "Creá o importá una wallet en la extensión. Poner su red igual que el toggle de la navbar de este demo es opcional: solo cambia lo que muestra la extensión.",
     "Recargá esta página para que el content script inyecte el proveedor.",
   ],
   providerTitle: "1. Proveedor crudo",
@@ -103,7 +104,8 @@ const es: CwTestStrings = {
   warns: [
     "Sin signAuthEntry: no hay firma de auth entries de Soroban.",
     "Sin firma de mensajes SEP-53: la wallet firma bytes crudos, así que las pruebas de propiedad no están conectadas.",
-    "La red de la extensión es su propia configuración. connect() bloquea el login cuando no coincide con la app.",
+    "La red de la extensión es su propia configuración. El login funciona igual — Pollar firma con su propio passphrase — pero los balances que se ven dentro de la extensión siguen la red de la extensión.",
+    "El proveedor nunca rechaza por su cuenta: una request que pierde su respuesta queda pendiente para siempre. El adaptador acota cada aprobación y pinguea a la extensión para mantener despierto su service worker.",
   ],
 };
 
@@ -115,7 +117,7 @@ const pt: CwTestStrings = {
   installSteps: [
     "Clone github.com/CosmosPay/CosmosPay-Wallet e compile a extensão.",
     "Carregue sem empacotar no Chrome: abra chrome://extensions, ligue o Modo desenvolvedor, clique em Carregar sem compactação.",
-    "Crie ou importe uma carteira na extensão e ajuste a rede dela para bater com o toggle da navbar deste demo (testnet por padrão).",
+    "Crie ou importe uma carteira na extensão. Ajustar a rede dela para bater com o toggle da navbar deste demo é opcional: só muda o que a própria extensão exibe.",
     "Recarregue esta página para o content script injetar o provedor.",
   ],
   providerTitle: "1. Provedor cru",
@@ -142,7 +144,8 @@ const pt: CwTestStrings = {
   warns: [
     "Sem signAuthEntry: não há assinatura de auth entries do Soroban.",
     "Sem assinatura de mensagens SEP-53: a carteira assina bytes crus, então as provas de posse não estão ligadas.",
-    "A rede da extensão é configuração própria dela. connect() bloqueia o login quando ela discorda do app.",
+    "A rede da extensão é configuração própria dela. O login funciona de qualquer jeito — a Pollar assina com a própria passphrase — mas os saldos exibidos dentro da extensão seguem a rede da extensão.",
+    "O provedor nunca rejeita por conta própria: uma request que perde a resposta fica pendente para sempre. O adaptador limita cada aprovação e faz ping na extensão para manter o service worker acordado.",
   ],
 };
 

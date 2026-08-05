@@ -27,6 +27,13 @@
 //                          ownership proofs the backend rejects. Leaving it out
 //                          makes Pollar treat the wallet like Albedo (no
 //                          message signing), which is correct.
+//
+// UPSTREAM WORKAROUNDS. The provider never rejects on its own: a request that
+// loses its reply stays pending forever (extension-src/inpage.js has no
+// timeout, and neither does Pollar's login flow), so a dropped reply means a
+// login stuck on `signing_wallet_challenge` with no way out. Two guards below
+// exist purely for that — see `keepWorkerAlive` and `withTimeout`. Remove them
+// once the extension resolves its own requests reliably.
 
 import type {
   ConnectWalletResponse,
@@ -70,6 +77,49 @@ type CosmosWalletProvider = {
   requestPayment(uri: string): Promise<{ hash: string; signerAddress: string }>;
 };
 
+// Deadline for any call that can open the extension's approval window. Generous
+// on purpose — the user may be typing a password — but finite, because the
+// provider itself never rejects.
+const APPROVAL_TIMEOUT_MS = 5 * 60_000;
+
+// Keepalive cadence. Chrome terminates an idle MV3 service worker after ~30s,
+// so anything comfortably under that works.
+const KEEPALIVE_MS = 15_000;
+
+function withTimeout<T>(
+  promise: Promise<T>,
+  ms: number,
+  message: string,
+): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(message)), ms);
+    }),
+  ]);
+}
+
+// While an approval window is open, ping the extension so its service worker
+// stays awake.
+//
+// Cosmos Wallet's worker holds the reply port for a pending approval in a plain
+// in-memory Map (extension-src/sw.js). Chrome kills the worker after ~30s
+// without events, and the Map goes with it — the approval result then finds no
+// route back and is dropped in silence (sw.js has no `else` for the missing
+// entry), leaving `signTransaction` pending forever. Typing a password takes
+// longer than 30s often enough that this is the common failure, not the rare
+// one.
+//
+// `getNetwork()` is the right ping: read-only, answered from chrome.storage,
+// opens no UI, and every message over the port resets the worker's idle timer.
+function keepWorkerAlive(wallet: CosmosWalletProvider): () => void {
+  const timer = setInterval(() => {
+    void wallet.getNetwork().catch(() => {});
+  }, KEEPALIVE_MS);
+  return () => clearInterval(timer);
+}
+
 export function getCosmosWallet(): CosmosWalletProvider | null {
   if (typeof window === "undefined") return null;
   const injected = (window as unknown as Record<string, unknown>).cosmosWallet;
@@ -109,9 +159,8 @@ export class CosmosWalletAdapter implements WalletAdapter {
   readonly custody = "external" as const;
 
   // The network the Pollar session runs on (derived from the API key prefix).
-  // The extension keeps its OWN network setting, so we compare the two on
-  // connect and fail with a readable message instead of letting SEP-10 blow up
-  // on a challenge signed against the wrong passphrase.
+  // Used only to warn when the extension is showing another network — never to
+  // block, see `warnOnNetworkMismatch`.
   constructor(private readonly network: StellarNetwork) {}
 
   // "Installed", not "approved". `cosmosWallet.isConnected()` means the current
@@ -123,10 +172,14 @@ export class CosmosWalletAdapter implements WalletAdapter {
 
   async connect(): Promise<ConnectWalletResponse> {
     const wallet = this.require();
-    await this.assertNetwork(wallet);
+    // Fire-and-forget: never gates the login. It also warms the service worker
+    // right before the approval window opens.
+    this.warnOnNetworkMismatch(wallet);
     // Opens the extension's approval window the first time this origin asks;
     // afterwards it resolves straight from the approved-origins list.
-    const { address } = await wallet.getAddress();
+    const { address } = await this.approval(wallet, "connection", () =>
+      wallet.getAddress(),
+    );
     if (!address) {
       throw new Error("Cosmos Wallet returned no address");
     }
@@ -165,7 +218,9 @@ export class CosmosWalletAdapter implements WalletAdapter {
     }
     if (options?.accountToSign) opts.address = options.accountToSign;
 
-    const { signedTxXdr } = await wallet.signTransaction(xdr, opts);
+    const { signedTxXdr } = await this.approval(wallet, "signature", () =>
+      wallet.signTransaction(xdr, opts),
+    );
     if (!signedTxXdr) {
       throw new Error("Cosmos Wallet returned no signed transaction");
     }
@@ -182,22 +237,65 @@ export class CosmosWalletAdapter implements WalletAdapter {
     return wallet;
   }
 
-  private async assertNetwork(wallet: CosmosWalletProvider): Promise<void> {
-    const expected = NETWORK_PASSPHRASE[this.network];
-    let actual: string;
+  // Runs a call that can open the approval window, under both upstream
+  // workarounds: the worker is kept awake for as long as the window is open,
+  // and the wait is bounded so a dropped reply surfaces as a retryable error
+  // instead of a login that hangs forever.
+  private async approval<T>(
+    wallet: CosmosWalletProvider,
+    label: string,
+    run: () => Promise<T>,
+  ): Promise<T> {
+    const stopKeepalive = keepWorkerAlive(wallet);
     try {
-      ({ networkPassphrase: actual } = await wallet.getNetwork());
-    } catch {
-      // The wallet wouldn't report its network — let the login proceed rather
-      // than blocking on a diagnostic call.
-      return;
-    }
-    if (actual && actual !== expected) {
-      throw new Error(
-        `Cosmos Wallet is on a different network than this app (${this.network}). ` +
-          `Switch the network inside the extension and try again.`,
+      return await withTimeout(
+        run(),
+        APPROVAL_TIMEOUT_MS,
+        `Cosmos Wallet never answered the ${label} request. ` +
+          `Reopen the extension and try again.`,
       );
+    } finally {
+      stopKeepalive();
     }
+  }
+
+  // The extension keeps its own network setting, but it is NOT authoritative
+  // for anything Pollar does, so a mismatch must not block the login:
+  //
+  //   • Pollar passes its own passphrase down to every signature
+  //     (`signTransaction(xdr, { networkPassphrase })`), and the wallet honours
+  //     it over its own config — ApprovePopup.tsx picks
+  //     `req.params.networkPassphrase` when present. The challenge is therefore
+  //     always signed for OUR network.
+  //   • A Stellar keypair is the same account on both networks, so the address
+  //     SEP-10 authenticates is correct either way.
+  //
+  // Blocking here was also self-defeating: `getNetwork()` is answered from a
+  // mirror in chrome.storage.local that ONLY the approval window writes
+  // (ApprovePopup.tsx is the single writer in the whole extension), so it goes
+  // stale the moment the user switches networks in the wallet UI — and a fresh
+  // profile with no mirror at all reports TESTNET by default. Refusing to
+  // connect kept the approval window that would refresh the mirror from ever
+  // opening, so the stale value could never heal.
+  //
+  // What a mismatch does mean is that the balances the user sees INSIDE the
+  // extension belong to the other network. That is worth a warning, not a stop.
+  private warnOnNetworkMismatch(wallet: CosmosWalletProvider): void {
+    const expected = NETWORK_PASSPHRASE[this.network];
+    void wallet
+      .getNetwork()
+      .then(({ networkPassphrase }) => {
+        if (!networkPassphrase || networkPassphrase === expected) return;
+        console.warn(
+          `[cosmos-wallet] The extension reports a different network than this ` +
+            `app (${this.network}). Login still works — Pollar signs with its ` +
+            `own passphrase — but balances shown inside the extension belong ` +
+            `to the other network.`,
+        );
+      })
+      .catch(() => {
+        // Diagnostic only; never let it affect the login.
+      });
   }
 }
 

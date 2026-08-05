@@ -42,8 +42,8 @@ const en: AboutSection = {
       desc: "Presence of window.cosmosWallet. NOT isConnected(), which means 'origin already approved'.",
     },
     {
-      title: "Network guard",
-      desc: "The extension keeps its own network. connect() compares passphrases and fails with a readable message.",
+      title: "Resilience",
+      desc: "The provider never rejects on its own, so the adapter bounds every approval and keeps the extension's service worker awake while it is open.",
     },
   ],
   resourcesTitle: "Official resources",
@@ -78,8 +78,8 @@ const es: AboutSection = {
       desc: "La presencia de window.cosmosWallet. NO isConnected(), que significa 'origin ya aprobado'.",
     },
     {
-      title: "Chequeo de red",
-      desc: "La extensión tiene su propia red. connect() compara passphrases y falla con un mensaje legible.",
+      title: "Resiliencia",
+      desc: "El proveedor nunca rechaza por su cuenta, así que el adaptador acota cada aprobación y mantiene despierto al service worker de la extensión mientras está abierta.",
     },
   ],
   resourcesTitle: "Recursos oficiales",
@@ -114,8 +114,8 @@ const pt: AboutSection = {
       desc: "A presença de window.cosmosWallet. NÃO isConnected(), que significa 'origin já aprovado'.",
     },
     {
-      title: "Checagem de rede",
-      desc: "A extensão tem a própria rede. connect() compara as passphrases e falha com uma mensagem legível.",
+      title: "Resiliência",
+      desc: "O provedor nunca rejeita por conta própria, então o adaptador limita cada aprovação e mantém o service worker da extensão acordado enquanto ela está aberta.",
     },
   ],
   resourcesTitle: "Recursos oficiais",

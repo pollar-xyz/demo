@@ -24,8 +24,9 @@ function md(text: string): ReactNode[] {
 }
 
 // The adapter itself — the only thing you actually have to write. Trimmed to
-// the four methods Pollar calls; the full version (network guard, ready-event
-// wait) lives in app/wallet-adapters/cosmos-wallet/adapter.ts.
+// the four methods Pollar calls; the full version (ready-event wait, approval
+// timeout, service-worker keepalive) lives in
+// app/wallet-adapters/cosmos-wallet/adapter.ts.
 const ADAPTER_CODE = `import type {
   ConnectWalletResponse,
   SignTransactionOptions,
