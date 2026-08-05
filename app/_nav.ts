@@ -137,6 +137,16 @@ export const ALL_GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: "cosmosWallet",
+    section: "walletAdapters",
+    isNew: true,
+    tabs: [
+      { href: "/wallet-adapters/cosmos-wallet", label: "overview" },
+      { href: "/wallet-adapters/cosmos-wallet/setup", label: "setup" },
+      { href: "/wallet-adapters/cosmos-wallet/test", label: "test" },
+    ],
+  },
+  {
     key: "acceslyAdapter",
     section: "walletAdapters",
     lab: true,

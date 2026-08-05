@@ -6,7 +6,10 @@
 //     InteractiveAuthAdapter that drives email/Google login as a sub-modal
 //     inside Pollar's own login modal, then runs SEP-10, and
 //   • the Stellar Wallets Kit adapters (xBull, Lobstr, Freighter, Albedo…),
-//     collapsed behind a shared "Wallet" gateway via their meta `group`.
+//     collapsed behind a shared "Wallet" gateway via their meta `group`, and
+//   • the hand-written Cosmos Wallet adapter (the CosmosPay browser extension,
+//     `window.cosmosWallet`) — it has no meta `group`, so it renders as its own
+//     button in the root login view.
 // `<PrivyAdapterProvider>` mounts Privy + its runtime bridge as a SIBLING of
 // `<PollarProvider>` (the bridge renders null and wires the runtime onto the
 // shared adapter); the SAME adapter instance is registered in `walletAdapters`,
@@ -23,6 +26,7 @@ import { PollarProvider } from '@pollar/react';
 import '@pollar/react/styles.css';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
+import { createCosmosWalletAdapter } from './wallet-adapters/cosmos-wallet/adapter';
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
@@ -90,7 +94,12 @@ export function AppWalletProvider({
       network: kitNetwork(network),
       picker: { groupLabel: 'Stellar Wallets Kit' },
     });
-    return privyEnabled ? [ privyAdapter!, ...kit ] : kit;
+    // The extension keeps its own network setting, so the adapter is built per
+    // network and refuses to log in when the two disagree.
+    const cosmos = createCosmosWalletAdapter(network);
+    return privyEnabled
+      ? [ privyAdapter!, cosmos, ...kit ]
+      : [ cosmos, ...kit ];
   }, [ network, privyEnabled ]);
 
   return (

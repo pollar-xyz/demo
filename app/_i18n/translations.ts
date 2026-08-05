@@ -11,7 +11,10 @@ import {
   abroadNavLabel,
 } from "@/app/pollar/ramp/abroad/_i18n";
 
-import { walletAdaptersNavLabel } from "@/app/wallet-adapters/_i18n";
+import {
+  cosmosWalletNavLabel,
+  walletAdaptersNavLabel,
+} from "@/app/wallet-adapters/_i18n";
 
 export const en = {
   langName: "English",
@@ -70,6 +73,7 @@ export const en = {
     setup: "Setup",
     implementation: "Implementation",
     adapter: "Adapter",
+    test: "Test",
     groups: {
       auth: "Authentication",
       pollarWallet: "Wallet",
@@ -90,6 +94,7 @@ export const en = {
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
+      cosmosWallet: cosmosWalletNavLabel,
       neko: nekoNavLabel,
     },
   },
@@ -2404,6 +2409,7 @@ export const es: Dictionary = {
     setup: "Setup",
     implementation: "Implementación",
     adapter: "Adapter",
+    test: "Prueba",
     groups: {
       auth: "Autenticación",
       pollarWallet: "Billetera",
@@ -2424,6 +2430,7 @@ export const es: Dictionary = {
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
+      cosmosWallet: cosmosWalletNavLabel,
       neko: nekoNavLabel,
     },
   },
@@ -4749,6 +4756,7 @@ export const pt: Dictionary = {
     setup: "Setup",
     implementation: "Implementação",
     adapter: "Adapter",
+    test: "Teste",
     groups: {
       auth: "Autenticação",
       pollarWallet: "Carteira",
@@ -4769,6 +4777,7 @@ export const pt: Dictionary = {
       stellarWalletsKit: "Stellar Wallets Kit",
       privy: "Privy",
       acceslyAdapter: "Accesly",
+      cosmosWallet: cosmosWalletNavLabel,
       neko: nekoNavLabel,
     },
   },
