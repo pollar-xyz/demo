@@ -3,7 +3,11 @@
 FROM node:24-alpine AS base
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable
+RUN corepack enable \
+  && corepack install --global pnpm@10.13.1 \
+  && pnpm config set fetch-retries 5 \
+  && pnpm config set fetch-retry-mintimeout 10000 \
+  && pnpm config set fetch-retry-maxtimeout 60000
 WORKDIR /app
 
 FROM base AS dependencies
