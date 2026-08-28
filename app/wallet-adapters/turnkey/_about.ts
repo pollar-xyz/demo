@@ -25,10 +25,10 @@ const en: AboutSection = {
   eyebrow: "Wallet adapter",
   title: "Turnkey",
   tagline:
-    "Email / Google login with an embedded Stellar wallet and enclave-backed Ed25519 signing.",
+    "Email OTP login with an embedded Stellar wallet and enclave-backed Ed25519 signing.",
   body: [
     "Turnkey is non-custodial wallet infrastructure. It creates embedded wallets and authorizes signing through familiar authentication without exposing raw private keys to the application.",
-    "Pollar's interactive adapter renders Turnkey email and Google authentication inside its login flow. It then creates or loads the user's Stellar account and completes a Stellar SEP-10 session.",
+    "Pollar's interactive adapter uses Turnkey Core directly for email OTP authentication and session storage. It then creates or loads the user's Stellar account and completes a Stellar SEP-10 session.",
     "Stellar transactions remain standard XDR transactions. Pollar builds the transaction and Turnkey signs the exact Stellar transaction hash as a raw Ed25519 payload.",
   ],
   whyPollar: {
@@ -53,13 +53,14 @@ const en: AboutSection = {
         desc: "Balances, assets, transfers, history and ramps continue through Pollar's existing Stellar flows.",
       },
     ],
-    punch: "Turnkey secures the signer. Pollar makes it a Stellar wallet experience.",
+    punch:
+      "Turnkey secures the signer. Pollar makes it a Stellar wallet experience.",
   },
   featuresTitle: "What you get",
   features: [
     {
-      title: "Email & Google login",
-      desc: "Authenticate without requiring a browser extension or seed phrase.",
+      title: "Email OTP login",
+      desc: "Authenticate through Turnkey Core without a provider, browser extension or seed phrase.",
     },
     {
       title: "Embedded Stellar account",
@@ -85,10 +86,10 @@ const es: AboutSection = {
   eyebrow: "Wallet adapter",
   title: "Turnkey",
   tagline:
-    "Login con email / Google, una billetera Stellar embebida y firmas Ed25519 protegidas por enclaves.",
+    "Login con OTP por email, una billetera Stellar embebida y firmas Ed25519 protegidas por enclaves.",
   body: [
     "Turnkey es infraestructura no custodial para billeteras. Crea billeteras embebidas y autoriza firmas mediante métodos de autenticación conocidos, sin exponer las llaves privadas a la aplicación.",
-    "El adaptador interactivo de Pollar muestra la autenticación de Turnkey con email y Google dentro de su flujo de login. Luego crea o carga la cuenta Stellar del usuario y completa una sesión SEP-10.",
+    "El adaptador interactivo de Pollar usa Turnkey Core directamente para el OTP por email y el almacenamiento de la sesión. Luego crea o carga la cuenta Stellar del usuario y completa una sesión SEP-10.",
     "Las transacciones Stellar siguen siendo transacciones XDR estándar. Pollar construye la transacción y Turnkey firma exactamente su hash como un payload Ed25519 raw.",
   ],
   whyPollar: {
@@ -119,8 +120,8 @@ const es: AboutSection = {
   featuresTitle: "Qué obtenés",
   features: [
     {
-      title: "Login con email y Google",
-      desc: "Autenticación sin requerir una extensión del navegador ni frase semilla.",
+      title: "Login con OTP por email",
+      desc: "Autenticación mediante Turnkey Core sin provider, extensión del navegador ni frase semilla.",
     },
     {
       title: "Cuenta Stellar embebida",
@@ -146,10 +147,10 @@ const pt: AboutSection = {
   eyebrow: "Wallet adapter",
   title: "Turnkey",
   tagline:
-    "Login com e-mail / Google, uma carteira Stellar embutida e assinaturas Ed25519 protegidas por enclaves.",
+    "Login com OTP por e-mail, uma carteira Stellar embutida e assinaturas Ed25519 protegidas por enclaves.",
   body: [
     "A Turnkey é uma infraestrutura não custodial para carteiras. Ela cria carteiras embutidas e autoriza assinaturas por métodos de autenticação conhecidos, sem expor as chaves privadas ao aplicativo.",
-    "O adaptador interativo da Pollar exibe a autenticação da Turnkey por e-mail e Google dentro do seu fluxo de login. Depois, cria ou carrega a conta Stellar do usuário e conclui uma sessão SEP-10.",
+    "O adaptador interativo da Pollar usa Turnkey Core diretamente para OTP por e-mail e armazenamento da sessão. Depois, cria ou carrega a conta Stellar do usuário e conclui uma sessão SEP-10.",
     "As transações Stellar continuam sendo transações XDR padrão. A Pollar constrói a transação e a Turnkey assina exatamente o hash dela como um payload Ed25519 raw.",
   ],
   whyPollar: {
@@ -180,8 +181,8 @@ const pt: AboutSection = {
   featuresTitle: "O que você ganha",
   features: [
     {
-      title: "Login com e-mail e Google",
-      desc: "Autenticação sem exigir extensão do navegador ou frase-semente.",
+      title: "Login com OTP por e-mail",
+      desc: "Autenticação pelo Turnkey Core sem provider, extensão do navegador ou frase-semente.",
     },
     {
       title: "Conta Stellar embutida",

@@ -1,26 +1,17 @@
-"use client";
-
 import type {
   ConnectWalletResponse,
   InteractiveAuthAdapter,
   SignTransactionOptions,
   SignTransactionResponse,
 } from "@pollar/core";
-import {
-  OtpType,
-  TurnkeyProvider,
-  type TurnkeyProviderConfig,
-  type WalletAccount,
-  useTurnkey,
-} from "@turnkey/react-wallet-kit";
+import { OtpType, TurnkeyClient, type WalletAccount } from "@turnkey/core";
 import {
   FeeBumpTransaction,
   type Transaction,
   TransactionBuilder,
 } from "@stellar/stellar-sdk";
-import { useEffect, useRef } from "react";
 
-type TurnkeyLoginMethod = "email" | "google";
+type TurnkeyLoginMethod = "email";
 
 export type TurnkeyAdapterConfig = {
   organizationId: string;
@@ -56,27 +47,6 @@ function hexToBytes(hex: string): Uint8Array {
   );
 }
 
-type TurnkeyRuntime = {
-  sendEmailCode(email: string): Promise<void>;
-  verifyEmailCode(code: string): Promise<void>;
-  loginWithGoogle(): Promise<void>;
-  connect(): Promise<string>;
-  disconnect(): Promise<void>;
-  account(): WalletAccount | undefined;
-  sign(hash: string, address: string): Promise<Uint8Array>;
-};
-
-const configs = new WeakMap<TurnkeyAdapter, ResolvedConfig>();
-const runtimes = new WeakMap<TurnkeyAdapter, TurnkeyRuntime>();
-
-function getRuntime(adapter: TurnkeyAdapter): TurnkeyRuntime {
-  const runtime = runtimes.get(adapter);
-  if (!runtime) {
-    throw new Error("[turnkey] TurnkeyProvider is not mounted.");
-  }
-  return runtime;
-}
-
 export function createTurnkeyAdapter(
   config: TurnkeyAdapterConfig,
 ): TurnkeyAdapter {
@@ -88,8 +58,52 @@ export function createTurnkeyAdapter(
 
   const resolvedConfig: ResolvedConfig = {
     ...config,
-    loginMethods: config.loginMethods ?? ["email", "google"],
+    loginMethods: config.loginMethods ?? ["email"],
     walletName: config.walletName ?? "Pollar Wallet",
+  };
+  const coreClient = new TurnkeyClient({
+    organizationId: resolvedConfig.organizationId,
+    authProxyConfigId: resolvedConfig.authProxyConfigId,
+  });
+  let coreReady: Promise<TurnkeyClient> | undefined;
+  let connectedAccount: WalletAccount | undefined;
+  let pendingOtp:
+    | {
+        email: string;
+        otpId: string;
+        otpEncryptionTargetBundle: string;
+      }
+    | undefined;
+
+  // Core is browser-only because it initializes secure session storage. Keep
+  // construction synchronous, but defer initialization until Pollar actually
+  // invokes the adapter on the client.
+  const getCoreClient = () => {
+    if (typeof window === "undefined") {
+      throw new Error("[turnkey] The adapter is only available in a browser.");
+    }
+    coreReady ??= coreClient.init().then(() => coreClient);
+    return coreReady;
+  };
+
+  const loadStellarAccount = async () => {
+    const client = await getCoreClient();
+    let wallets = await client.fetchWallets();
+    connectedAccount = findStellarAccount(wallets);
+
+    if (!connectedAccount) {
+      await client.createWallet({
+        walletName: resolvedConfig.walletName,
+        accounts: ["ADDRESS_FORMAT_XLM"],
+      });
+      wallets = await client.fetchWallets();
+      connectedAccount = findStellarAccount(wallets);
+    }
+
+    if (!connectedAccount) {
+      throw new Error("[turnkey] Could not create an Ed25519 XLM account.");
+    }
+    return connectedAccount;
   };
 
   const adapter: TurnkeyAdapter = {
@@ -100,19 +114,46 @@ export function createTurnkeyAdapter(
     chain: "STELLAR",
     isAvailable: async () => true,
     getAuthOptions: () => resolvedConfig.loginMethods,
-    sendEmailCode: (email) => getRuntime(adapter).sendEmailCode(email),
-    verifyEmailCode: (code) => getRuntime(adapter).verifyEmailCode(code),
-    loginWithOAuth: (provider) => {
-      if (provider !== "google") {
-        throw new Error(`[turnkey] Unsupported OAuth provider: ${provider}`);
+    sendEmailCode: async (email) => {
+      const client = await getCoreClient();
+      const result = await client.initOtp({
+        otpType: OtpType.Email,
+        contact: email,
+      });
+      pendingOtp = { email, ...result };
+    },
+    verifyEmailCode: async (code) => {
+      if (!pendingOtp) {
+        throw new Error("[turnkey] Request an email code first.");
       }
-      return getRuntime(adapter).loginWithGoogle();
+
+      const client = await getCoreClient();
+      await client.completeOtp({
+        otpId: pendingOtp.otpId,
+        otpCode: code,
+        otpEncryptionTargetBundle: pendingOtp.otpEncryptionTargetBundle,
+        contact: pendingOtp.email,
+        otpType: OtpType.Email,
+      });
+      pendingOtp = undefined;
+    },
+    loginWithOAuth: async () => {
+      throw new Error("[turnkey] OAuth is not enabled in this Core-only PoC.");
     },
     connect: async (): Promise<ConnectWalletResponse> => ({
-      address: await getRuntime(adapter).connect(),
+      address: (await loadStellarAccount()).address,
     }),
-    disconnect: () => getRuntime(adapter).disconnect(),
-    getPublicKey: async () => getRuntime(adapter).account()?.address ?? null,
+    disconnect: async () => {
+      const client = await getCoreClient();
+      connectedAccount = undefined;
+      await client.clearSession({});
+    },
+    getPublicKey: async () => {
+      if (connectedAccount) return connectedAccount.address;
+      const client = await getCoreClient();
+      if (!(await client.getSession())) return null;
+      return (await loadStellarAccount()).address;
+    },
     signTransaction: async (
       transactionXdr: string,
       options?: SignTransactionOptions,
@@ -121,9 +162,8 @@ export function createTurnkeyAdapter(
         throw new Error("[turnkey] networkPassphrase is required.");
       }
 
-      const runtime = getRuntime(adapter);
-      const account = runtime.account();
-      if (!account) throw new Error("[turnkey] No Stellar account found.");
+      const client = await getCoreClient();
+      const account = connectedAccount ?? (await loadStellarAccount());
 
       const parsed = TransactionBuilder.fromXDR(
         transactionXdr,
@@ -134,10 +174,21 @@ export function createTurnkeyAdapter(
       }
 
       const transaction = parsed as Transaction;
-      const signature = await runtime.sign(
-        transaction.hash().toString("hex"),
-        account.address,
-      );
+      // The React provider creates the authenticated session; from this point
+      // the framework-agnostic adapter uses Core directly for signing.
+      const response = await client.httpClient.signRawPayload({
+        signWith: account.address,
+        payload: transaction.hash().toString("hex"),
+        encoding: "PAYLOAD_ENCODING_HEXADECIMAL",
+        hashFunction: "HASH_FUNCTION_NOT_APPLICABLE",
+      });
+      const result = response.activity.result.signRawPayloadResult;
+      if (!result) throw new Error("[turnkey] No signature returned.");
+
+      const signature = hexToBytes(`${result.r}${result.s}`);
+      if (signature.length !== 64) {
+        throw new Error("[turnkey] Invalid Ed25519 signature.");
+      }
 
       transaction.addSignature(
         account.address,
@@ -148,151 +199,5 @@ export function createTurnkeyAdapter(
     },
   };
 
-  configs.set(adapter, resolvedConfig);
   return adapter;
-}
-
-function RuntimeBridge({ adapter }: { adapter: TurnkeyAdapter }) {
-  const client = useTurnkey();
-  const clientRef = useRef(client);
-
-  useEffect(() => {
-    clientRef.current = client;
-  }, [client]);
-
-  useEffect(() => {
-    const config = configs.get(adapter);
-    if (!config) throw new Error("[turnkey] Invalid adapter instance.");
-
-    let connectedAccount: WalletAccount | undefined;
-    let pendingOtp:
-      | {
-          email: string;
-          otpId: string;
-          otpEncryptionTargetBundle: string;
-        }
-      | undefined;
-
-    const runtime: TurnkeyRuntime = {
-      sendEmailCode: async (email) => {
-        const result = await clientRef.current.initOtp({
-          otpType: OtpType.Email,
-          contact: email,
-        });
-        pendingOtp = { email, ...result };
-      },
-      verifyEmailCode: async (code) => {
-        if (!pendingOtp) {
-          throw new Error("[turnkey] Request an email code first.");
-        }
-
-        await clientRef.current.completeOtp({
-          otpId: pendingOtp.otpId,
-          otpCode: code,
-          otpEncryptionTargetBundle: pendingOtp.otpEncryptionTargetBundle,
-          contact: pendingOtp.email,
-          otpType: OtpType.Email,
-        });
-        pendingOtp = undefined;
-      },
-      loginWithGoogle: () =>
-        new Promise<void>((resolve, reject) => {
-          clientRef.current
-            .handleGoogleOauth({
-              onOauthSuccess: async ({
-                oidcToken,
-                publicKey,
-                providerName,
-              }) => {
-                try {
-                  await clientRef.current.completeOauth({
-                    oidcToken,
-                    publicKey,
-                    providerName,
-                  });
-                  resolve();
-                } catch (error) {
-                  reject(error);
-                }
-              },
-            })
-            .catch(reject);
-        }),
-      connect: async () => {
-        let wallets = await clientRef.current.refreshWallets();
-        connectedAccount = findStellarAccount(wallets);
-
-        if (!connectedAccount) {
-          await clientRef.current.createWallet({
-            walletName: config.walletName,
-            accounts: ["ADDRESS_FORMAT_XLM"],
-          });
-          wallets = await clientRef.current.refreshWallets();
-          connectedAccount = findStellarAccount(wallets);
-        }
-
-        if (!connectedAccount) {
-          throw new Error("[turnkey] Could not create an Ed25519 XLM account.");
-        }
-        return connectedAccount.address;
-      },
-      disconnect: () => clientRef.current.clearSession({}),
-      account: () =>
-        connectedAccount ?? findStellarAccount(clientRef.current.wallets),
-      sign: async (hash, address) => {
-        const httpClient = clientRef.current.httpClient;
-        if (!httpClient) throw new Error("[turnkey] Client is not ready.");
-
-        // Pollar's login challenge is a Stellar XDR. Stellar hashes the
-        // envelope first, so Turnkey must sign these exact 32 bytes without
-        // applying another hash function.
-        const response = await httpClient.signRawPayload({
-          signWith: address,
-          payload: hash,
-          encoding: "PAYLOAD_ENCODING_HEXADECIMAL",
-          hashFunction: "HASH_FUNCTION_NOT_APPLICABLE",
-        });
-        const result = response.activity.result.signRawPayloadResult;
-        if (!result) throw new Error("[turnkey] No signature returned.");
-
-        const signature = hexToBytes(`${result.r}${result.s}`);
-        if (signature.length !== 64) {
-          throw new Error("[turnkey] Invalid Ed25519 signature.");
-        }
-        return signature;
-      },
-    };
-    runtimes.set(adapter, runtime);
-
-    return () => {
-      if (runtimes.get(adapter) === runtime) runtimes.delete(adapter);
-    };
-  }, [adapter]);
-
-  return null;
-}
-
-export function TurnkeyWalletProvider({
-  adapter,
-}: {
-  adapter: TurnkeyAdapter;
-}) {
-  const adapterConfig = configs.get(adapter);
-  if (!adapterConfig) throw new Error("[turnkey] Invalid adapter instance.");
-
-  const config: TurnkeyProviderConfig = {
-    organizationId: adapterConfig.organizationId,
-    authProxyConfigId: adapterConfig.authProxyConfigId,
-  };
-
-  return (
-    <TurnkeyProvider
-      config={config}
-      callbacks={{
-        onError: (error) => console.error("Turnkey error:", error),
-      }}
-    >
-      <RuntimeBridge adapter={adapter} />
-    </TurnkeyProvider>
-  );
 }

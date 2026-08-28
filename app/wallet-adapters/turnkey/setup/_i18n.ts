@@ -15,22 +15,22 @@ type SetupStrings = {
 const en: SetupStrings = {
   title: "Turnkey adapter setup",
   subtitle:
-    "Connect Turnkey email / Google authentication and an embedded Stellar signer to Pollar.",
+    "Connect Turnkey email OTP and an embedded Stellar signer to Pollar using Core only.",
   intro:
-    "This adapter uses `@turnkey/react-wallet-kit` as its browser runtime. Configure Turnkey first, pass the two public identifiers to `createTurnkeyAdapter`, then give that same instance to `<TurnkeyWalletProvider adapter>` and Pollar's `walletAdapters`.",
+    "Create the adapter with `@turnkey/core` and register it in Pollar's `walletAdapters`. The same instance owns email OTP, session storage, wallet access and Stellar signing; no Turnkey React provider or runtime bridge is required.",
   stepsTitle: "Before you run it",
   steps: [
     {
       title: "Configure the Auth Proxy",
-      desc: "In Turnkey, enable email OTP and/or Google OAuth. If you use Pollar's current OTP input, configure numeric email codes.",
+      desc: "In Turnkey, enable email OTP. If you use Pollar's current OTP input, configure numeric email codes.",
     },
     {
       title: "Allow the application origin",
-      desc: "Add your local and deployed origins to the Turnkey configuration so OAuth can return to the application.",
+      desc: "Add your local and deployed origins to the Turnkey Auth Proxy configuration.",
     },
     {
       title: "Register the interactive adapter",
-      desc: "Create the adapter once at module level. Pass that same instance to `<TurnkeyWalletProvider adapter>` and include it in Pollar's `walletAdapters`.",
+      desc: "Create the Core-backed adapter once at module level and include that instance directly in Pollar's `walletAdapters`.",
     },
     {
       title: "Request testnet funds separately",
@@ -50,22 +50,22 @@ const en: SetupStrings = {
 const es: SetupStrings = {
   title: "Setup del adaptador Turnkey",
   subtitle:
-    "Conecta la autenticación con email / Google de Turnkey y un firmante Stellar embebido a Pollar.",
+    "Conecta el OTP por email de Turnkey y un firmante Stellar embebido a Pollar usando únicamente Core.",
   intro:
-    "Este adaptador usa `@turnkey/react-wallet-kit` como runtime del navegador. Primero configurá Turnkey, pasá los dos identificadores públicos a `createTurnkeyAdapter` y luego entregá esa misma instancia a `<TurnkeyWalletProvider adapter>` y a los `walletAdapters` de Pollar.",
+    "Creá el adapter con `@turnkey/core` y registralo en los `walletAdapters` de Pollar. La misma instancia controla el OTP por email, la sesión, las wallets y la firma Stellar; no necesita un provider React de Turnkey ni un runtime bridge.",
   stepsTitle: "Antes de ejecutarlo",
   steps: [
     {
       title: "Configurá el Auth Proxy",
-      desc: "En Turnkey, habilitá OTP por email y/o Google OAuth. Si usás el input OTP actual de Pollar, configurá códigos numéricos.",
+      desc: "En Turnkey, habilitá OTP por email. Si usás el input OTP actual de Pollar, configurá códigos numéricos.",
     },
     {
       title: "Permití el origen de la aplicación",
-      desc: "Agregá tus orígenes locales y de producción a Turnkey para que OAuth pueda volver a la aplicación.",
+      desc: "Agregá tus orígenes locales y de producción a la configuración del Auth Proxy de Turnkey.",
     },
     {
       title: "Registrá el adaptador interactivo",
-      desc: "Creá el adapter una sola vez a nivel de módulo. Pasá esa misma instancia a `<TurnkeyWalletProvider adapter>` e incluila en los `walletAdapters` de Pollar.",
+      desc: "Creá una sola vez el adapter basado en Core a nivel de módulo e incluí esa instancia directamente en los `walletAdapters` de Pollar.",
     },
     {
       title: "Solicitá fondos de testnet aparte",
@@ -85,22 +85,22 @@ const es: SetupStrings = {
 const pt: SetupStrings = {
   title: "Setup do adaptador Turnkey",
   subtitle:
-    "Conecte a autenticação por e-mail / Google da Turnkey e um assinante Stellar embutido à Pollar.",
+    "Conecte o OTP por e-mail da Turnkey e um assinante Stellar embutido à Pollar usando somente Core.",
   intro:
-    "Este adaptador usa `@turnkey/react-wallet-kit` como runtime do navegador. Primeiro configure a Turnkey, passe os dois identificadores públicos para `createTurnkeyAdapter` e depois entregue essa mesma instância a `<TurnkeyWalletProvider adapter>` e aos `walletAdapters` da Pollar.",
+    "Crie o adapter com `@turnkey/core` e registre-o nos `walletAdapters` da Pollar. A mesma instância controla o OTP por e-mail, a sessão, as carteiras e a assinatura Stellar; nenhum provider React da Turnkey ou runtime bridge é necessário.",
   stepsTitle: "Antes de executar",
   steps: [
     {
       title: "Configure o Auth Proxy",
-      desc: "Na Turnkey, habilite OTP por e-mail e/ou Google OAuth. Se usar o input OTP atual da Pollar, configure códigos numéricos.",
+      desc: "Na Turnkey, habilite OTP por e-mail. Se usar o input OTP atual da Pollar, configure códigos numéricos.",
     },
     {
       title: "Permita a origem do aplicativo",
-      desc: "Adicione suas origens locais e de produção à Turnkey para que o OAuth possa retornar ao aplicativo.",
+      desc: "Adicione suas origens locais e de produção à configuração do Auth Proxy da Turnkey.",
     },
     {
       title: "Registre o adaptador interativo",
-      desc: "Crie o adapter uma vez no nível do módulo. Passe essa mesma instância para `<TurnkeyWalletProvider adapter>` e inclua-a nos `walletAdapters` da Pollar.",
+      desc: "Crie uma única vez o adapter baseado em Core no nível do módulo e inclua essa instância diretamente nos `walletAdapters` da Pollar.",
     },
     {
       title: "Solicite fundos de testnet separadamente",

@@ -20,48 +20,39 @@ function md(text: string): ReactNode[] {
   );
 }
 
-const INSTALL_CODE = "pnpm add @turnkey/react-wallet-kit @stellar/stellar-sdk";
+const INSTALL_CODE = "pnpm add @turnkey/core @stellar/stellar-sdk";
 
 const ENV_CODE = `NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID=your-organization-id
 NEXT_PUBLIC_TURNKEY_AUTH_PROXY_CONFIG_ID=your-auth-proxy-config-id`;
 
 const PROVIDER_CODE = `import { PollarProvider } from '@pollar/react';
-import {
-  createTurnkeyAdapter,
-  TurnkeyWalletProvider,
-} from './wallet-adapters/turnkey/adapter';
+import { createTurnkeyAdapter } from './wallet-adapters/turnkey/adapter';
 
-// One stable instance. The application supplies public configuration; the
-// adapter hides authentication, wallet creation and signing details.
+// One stable Core-backed instance owns authentication, wallet access and signing.
 const turnkey = createTurnkeyAdapter({
   organizationId: process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!,
   authProxyConfigId:
     process.env.NEXT_PUBLIC_TURNKEY_AUTH_PROXY_CONFIG_ID!,
-  loginMethods: ['email', 'google'],
+  loginMethods: ['email'],
   walletName: 'Pollar Wallet',
 });
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <>
-      {/* The provider reads Turnkey configuration from this same instance. */}
-      <TurnkeyWalletProvider adapter={turnkey} />
-
-      <PollarProvider
-        client={{
-          apiKey: 'pub_testnet_…',
-          stellarNetwork: 'testnet',
-          walletAdapters: [turnkey],
-        }}
-      >
-        {children}
-      </PollarProvider>
-    </>
+    <PollarProvider
+      client={{
+        apiKey: 'pub_testnet_…',
+        stellarNetwork: 'testnet',
+        walletAdapters: [turnkey],
+      }}
+    >
+      {children}
+    </PollarProvider>
   );
 }
 
 // usePollar().login({ provider: 'turnkey' }) opens the interactive
-// email / Google flow inside Pollar's login modal.`;
+// email OTP flow inside Pollar's login modal.`;
 
 const SIGNING_CODE = `const response = await httpClient.signRawPayload({
   signWith: stellarAddress,

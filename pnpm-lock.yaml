@@ -41,9 +41,9 @@ importers:
       '@stellar/stellar-sdk':
         specifier: ^15.0.0
         version: 15.1.0
-      '@turnkey/react-wallet-kit':
-        specifier: 2.4.1
-        version: 2.4.1(@types/react@19.2.17)(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3)
+      '@turnkey/core':
+        specifier: ^2.7.1
+        version: 2.7.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3)
       jsqr:
         specifier: ^1.4.0
         version: 1.4.0
@@ -366,29 +366,6 @@ packages:
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
 
-  '@fortawesome/fontawesome-common-types@6.7.2':
-    resolution: {integrity: sha512-Zs+YeHUC5fkt7Mg1l6XTniei3k4bwG/yo3iFUtZWd/pMx9g3fdvkSK9E0FOC+++phXOka78uJcYb8JaFkW52Xg==}
-    engines: {node: '>=6'}
-
-  '@fortawesome/fontawesome-svg-core@6.7.2':
-    resolution: {integrity: sha512-yxtOBWDrdi5DD5o1pmVdq3WMCvnobT0LU6R8RyyVXPvFRd2o79/0NCuQoCjNTeZz9EzA9xS3JxNWfv54RIHFEA==}
-    engines: {node: '>=6'}
-
-  '@fortawesome/free-brands-svg-icons@6.7.2':
-    resolution: {integrity: sha512-zu0evbcRTgjKfrr77/2XX+bU+kuGfjm0LbajJHVIgBWNIDzrhpRxiCPNT8DW5AdmSsq7Mcf9D1bH0aSeSUSM+Q==}
-    engines: {node: '>=6'}
-
-  '@fortawesome/free-solid-svg-icons@6.7.2':
-    resolution: {integrity: sha512-GsBrnOzU8uj0LECDfD5zomZJIjrPhIlWU82AHwa2s40FKH+kcxQaBvBo3Z4TxyZHIyX8XTDxsyA33/Vx9eFuQA==}
-    engines: {node: '>=6'}
-
-  '@fortawesome/react-fontawesome@0.2.6':
-    resolution: {integrity: sha512-mtBFIi1UsYQo7rYonYFkjgYKGoL8T+fEH6NGUpvuqtY3ytMsAoDaPo5rk25KuMtKDipY4bGYM/CkmCHA1N3FUg==}
-    deprecated: v0.2.x is no longer supported. Unless you are still using FontAwesome 5, please update to v3.1.1 or greater.
-    peerDependencies:
-      '@fortawesome/fontawesome-svg-core': ~1 || ~6 || ~7
-      react: ^16.3 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   '@gemini-wallet/core@0.3.2':
     resolution: {integrity: sha512-Z4aHi3ECFf5oWYWM3F1rW83GJfB9OvhBYPTmb5q+VyK3uvzvS48lwo+jwh2eOoCRWEuT/crpb9Vwp2QaS5JqgQ==}
     peerDependencies:
@@ -631,11 +608,6 @@ packages:
 
   '@lobstrco/signer-extension-api@2.0.0':
     resolution: {integrity: sha512-jwlVyzMFF296iaNgMWn1lu+EU6BeUD4mgPurEsy8EygYNCrjA8igLpsDlXhfvXhst9tX5w4wRuTDX+FZtpfCug==}
-
-  '@lottiefiles/react-lottie-player@3.6.0':
-    resolution: {integrity: sha512-WK5TriLJT93VF3w4IjSVyveiedraZCnDhKzCPhpbeLgQeMi6zufxa3dXNc4HmAFRXq+LULPAy+Idv1rAfkReMA==}
-    peerDependencies:
-      react: 16 - 19
 
   '@marsidev/react-turnstile@1.5.3':
     resolution: {integrity: sha512-8Dij2jiNGNczq1U4EKpO4do2XepcTPxSMc2ZzvHndO+gcp68tvMULm27z2P99rGkdB89hc3452NZeu2Rti4g6A==}
@@ -2291,21 +2263,6 @@ packages:
   '@turnkey/http@6.2.1':
     resolution: {integrity: sha512-hpgAPWhbFe7vADl3l+X1mCqCvlV/R6pV3ct+sDlobLSlYsmFHMuk9Fe0pbXm3BVGZv3kGW6reB4NIQJndX+7RQ==}
     engines: {node: '>=18.0.0'}
-
-  '@turnkey/iframe-stamper@2.11.1':
-    resolution: {integrity: sha512-S9BoAIyVBH1BurTKsX/YzjVrEhW6Zn0A/9WPfhhC9YA/9RDELP4wNL3jUcijJWgT9OO6BRbRDUs81FrC0ruLww==}
-    engines: {node: '>=18.0.0'}
-
-  '@turnkey/react-wallet-kit@2.4.1':
-    resolution: {integrity: sha512-KB6SVFpAGNKwPj+gL4+mXawtxCr/+yh2cAsljN+OK+/FMb+ssGfTMk4v+XebcyHK0pUEFc+Fqf724VxM2Eb5LA==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      '@types/react': '*'
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-      react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    peerDependenciesMeta:
-      '@types/react':
-        optional: true
 
   '@turnkey/sdk-types@1.5.1':
     resolution: {integrity: sha512-d1A62/4vtaLhtULCML01qeJLKqHCMVLweGWBQ8jTygMuv68/ojtQYeTLl/9o0X9IU08LwQHFBndS4/pa5ZSwRg==}
@@ -4412,9 +4369,6 @@ packages:
     resolution: {integrity: sha512-lyuxPGr/Wfhrlem2CL/UcnUc1zcqKAImBDzukY7Y5F/yQiNdko6+fRLevlw1HgMySw7f611UIY408EtxRSoK3Q==}
     hasBin: true
 
-  lottie-web@5.13.0:
-    resolution: {integrity: sha512-+gfBXl6sxXMPe8tKQm7qzLnUy5DUPJPKIyRHwtpCpyUEYjHYRJC/5gjUvdkuO2c3JllrPtHXH5UJJK8LRYl5yQ==}
-
   lru-cache@11.5.1:
     resolution: {integrity: sha512-RPimw/7aMdv2oqRrxKwvZXcPfwBrn/JZ2xYcY9Hus/6LaS3VOAKVWKWgNLCFSiOm1ESXinjsDlidVU7JlnCN2A==}
     engines: {node: 20 || >=22}
@@ -4933,11 +4887,6 @@ packages:
   qr.js@0.0.0:
     resolution: {integrity: sha512-c4iYnWb+k2E+vYpRimHqSu575b1/wKl4XFeJGpFmrJQz5I88v9aY2czh7s0w36srfCM1sXgC/xpoJz5dJfq+OQ==}
 
-  qrcode.react@4.2.0:
-    resolution: {integrity: sha512-QpgqWi8rD9DsS9EP3z7BT+5lY5SFhsqGjpgW5DY/i3mK4M9DTBNz3ErMi8BWYEfI3L0d8GIbGmcdFAS1uIRGjA==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-
   qrcode@1.5.3:
     resolution: {integrity: sha512-puyri6ApkEHYiVl4CFzo1tDkAZ+ATcnbJrJ6RiBM1Fhctdn/ix9MTE3hRph33omisEbC/2fcfemsseiKgBPKZg==}
     engines: {node: '>=10.13.0'}
@@ -4983,11 +4932,6 @@ packages:
     resolution: {integrity: sha512-yELu4WmLPw5Mr/lmeEpox5rw3RETacE++JgHqQzd2dg+YbJuat3jH4ingc+WPZhxaoFzdv9y33G+F7Nl5O0GBg==}
     peerDependencies:
       react: ^19.2.3
-
-  react-international-phone@4.8.0:
-    resolution: {integrity: sha512-PoyXx8t0OZNZXLupZN5UtmLb8nO6PQ6f6jQvYCAtg7VzxonuBcDs/4YA4+flqZZj5QOVqN4DLY1p39mEtJAwzw==}
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   react-is@16.13.1:
     resolution: {integrity: sha512-24e6ynE2H+OKt4kqsOvNd8kBpV65zoxbA4BVsEOB3ARVWQki/DHzaUoC5KuON/BiccDaCCTZBuOcfZs70kR8bQ==}
@@ -6453,26 +6397,6 @@ snapshots:
 
   '@floating-ui/utils@0.2.11': {}
 
-  '@fortawesome/fontawesome-common-types@6.7.2': {}
-
-  '@fortawesome/fontawesome-svg-core@6.7.2':
-    dependencies:
-      '@fortawesome/fontawesome-common-types': 6.7.2
-
-  '@fortawesome/free-brands-svg-icons@6.7.2':
-    dependencies:
-      '@fortawesome/fontawesome-common-types': 6.7.2
-
-  '@fortawesome/free-solid-svg-icons@6.7.2':
-    dependencies:
-      '@fortawesome/fontawesome-common-types': 6.7.2
-
-  '@fortawesome/react-fontawesome@0.2.6(@fortawesome/fontawesome-svg-core@6.7.2)(react@19.2.3)':
-    dependencies:
-      '@fortawesome/fontawesome-svg-core': 6.7.2
-      prop-types: 15.8.1
-      react: 19.2.3
-
   '@gemini-wallet/core@0.3.2(viem@2.52.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3))':
     dependencies:
       '@metamask/rpc-errors': 7.0.2
@@ -6709,11 +6633,6 @@ snapshots:
       '@lit-labs/ssr-dom-shim': 1.6.0
 
   '@lobstrco/signer-extension-api@2.0.0': {}
-
-  '@lottiefiles/react-lottie-player@3.6.0(react@19.2.3)':
-    dependencies:
-      lottie-web: 5.13.0
-      react: 19.2.3
 
   '@marsidev/react-turnstile@1.5.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
@@ -9739,59 +9658,6 @@ snapshots:
       cross-fetch: 3.2.0
     transitivePeerDependencies:
       - encoding
-
-  '@turnkey/iframe-stamper@2.11.1': {}
-
-  '@turnkey/react-wallet-kit@2.4.1(@types/react@19.2.17)(bufferutil@4.1.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3)':
-    dependencies:
-      '@fortawesome/fontawesome-svg-core': 6.7.2
-      '@fortawesome/free-brands-svg-icons': 6.7.2
-      '@fortawesome/free-solid-svg-icons': 6.7.2
-      '@fortawesome/react-fontawesome': 0.2.6(@fortawesome/fontawesome-svg-core@6.7.2)(react@19.2.3)
-      '@headlessui/react': 2.2.10(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@lottiefiles/react-lottie-player': 3.6.0(react@19.2.3)
-      '@marsidev/react-turnstile': 1.5.3(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
-      '@noble/hashes': 1.8.0
-      '@turnkey/core': 2.7.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3)
-      '@turnkey/iframe-stamper': 2.11.1
-      '@turnkey/sdk-types': 1.5.1
-      buffer: 6.0.3
-      clsx: 2.1.1
-      libphonenumber-js: 1.13.7
-      qrcode.react: 4.2.0(react@19.2.3)
-      react: 19.2.3
-      react-dom: 19.2.3(react@19.2.3)
-      react-international-phone: 4.8.0(react@19.2.3)
-      viem: 2.52.0(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)(zod@4.4.3)
-    optionalDependencies:
-      '@types/react': 19.2.17
-    transitivePeerDependencies:
-      - '@azure/app-configuration'
-      - '@azure/cosmos'
-      - '@azure/data-tables'
-      - '@azure/identity'
-      - '@azure/keyvault-secrets'
-      - '@azure/storage-blob'
-      - '@capacitor/preferences'
-      - '@deno/kv'
-      - '@netlify/blobs'
-      - '@planetscale/database'
-      - '@react-native-async-storage/async-storage'
-      - '@turnkey/react-native-passkey-stamper'
-      - '@upstash/redis'
-      - '@vercel/blob'
-      - '@vercel/functions'
-      - '@vercel/kv'
-      - aws4fetch
-      - bufferutil
-      - db0
-      - encoding
-      - ioredis
-      - react-native-keychain
-      - typescript
-      - uploadthing
-      - utf-8-validate
-      - zod
 
   '@turnkey/sdk-types@1.5.1': {}
 
@@ -13310,8 +13176,6 @@ snapshots:
     dependencies:
       js-tokens: 4.0.0
 
-  lottie-web@5.13.0: {}
-
   lru-cache@11.5.1: {}
 
   lru-cache@5.1.1:
@@ -13930,10 +13794,6 @@ snapshots:
 
   qr.js@0.0.0: {}
 
-  qrcode.react@4.2.0(react@19.2.3):
-    dependencies:
-      react: 19.2.3
-
   qrcode@1.5.3:
     dependencies:
       dijkstrajs: 1.0.3
@@ -13993,10 +13853,6 @@ snapshots:
     dependencies:
       react: 19.2.3
       scheduler: 0.27.0
-
-  react-international-phone@4.8.0(react@19.2.3):
-    dependencies:
-      react: 19.2.3
 
   react-is@16.13.1: {}
 

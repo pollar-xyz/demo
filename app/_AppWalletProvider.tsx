@@ -30,10 +30,7 @@ import "@pollar/react/styles.css";
 import { stellarWalletsKitAdapters } from "@pollar/stellar-wallets-kit-adapter";
 import { useEffect, useMemo, useState } from "react";
 import { createCosmosWalletAdapter } from "./wallet-adapters/cosmos-wallet/adapter";
-import {
-  createTurnkeyAdapter,
-  TurnkeyWalletProvider,
-} from "./wallet-adapters/turnkey/adapter";
+import { createTurnkeyAdapter } from "./wallet-adapters/turnkey/adapter";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 const TURNKEY_ORGANIZATION_ID = process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID;
@@ -60,7 +57,7 @@ export const turnkeyAdapter =
     ? createTurnkeyAdapter({
         organizationId: TURNKEY_ORGANIZATION_ID,
         authProxyConfigId: TURNKEY_AUTH_PROXY_CONFIG_ID,
-        loginMethods: ["email", "google"],
+        loginMethods: ["email"],
         walletName: "Pollar Wallet",
       })
     : null;
@@ -131,7 +128,6 @@ export function AppWalletProvider({
           renders null), wiring the shared adapter without re-parenting — so
           PollarProvider does not remount when Privy turns on. */}
       {privyOn && <PrivyAdapterProvider adapter={privyAdapter!} />}
-      {turnkeyAdapter && <TurnkeyWalletProvider adapter={turnkeyAdapter} />}
       <PollarProvider
         key={apiKey}
         client={{

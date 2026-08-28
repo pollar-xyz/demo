@@ -14,7 +14,6 @@ import {
   LAB_GROUP_KEYS,
   type LabUnlockState,
 } from "@/app/_labGate";
-import "@turnkey/react-wallet-kit/styles.css";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
