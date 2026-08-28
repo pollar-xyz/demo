@@ -31,11 +31,14 @@ import { stellarWalletsKitAdapters } from "@pollar/stellar-wallets-kit-adapter";
 import { useEffect, useMemo, useState } from "react";
 import { createCosmosWalletAdapter } from "./wallet-adapters/cosmos-wallet/adapter";
 import {
-  turnkeyAdapter,
+  createTurnkeyAdapter,
   TurnkeyWalletProvider,
 } from "./wallet-adapters/turnkey/adapter";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+const TURNKEY_ORGANIZATION_ID = process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID;
+const TURNKEY_AUTH_PROXY_CONFIG_ID =
+  process.env.NEXT_PUBLIC_TURNKEY_AUTH_PROXY_CONFIG_ID;
 
 // One shared adapter instance: handed to `<PrivyAdapterProvider>` (which mounts
 // Privy + the bridge) and registered in every Pollar client's `walletAdapters`
@@ -49,6 +52,18 @@ export const privyAdapter = PRIVY_APP_ID
       debug: true,
     })
   : null;
+
+// The application owns the public configuration. Authentication, wallet
+// creation and Stellar signing remain private implementation details.
+export const turnkeyAdapter =
+  TURNKEY_ORGANIZATION_ID && TURNKEY_AUTH_PROXY_CONFIG_ID
+    ? createTurnkeyAdapter({
+        organizationId: TURNKEY_ORGANIZATION_ID,
+        authProxyConfigId: TURNKEY_AUTH_PROXY_CONFIG_ID,
+        loginMethods: ["email", "google"],
+        walletName: "Pollar Wallet",
+      })
+    : null;
 
 type StellarNetwork = "testnet" | "mainnet";
 
@@ -116,7 +131,7 @@ export function AppWalletProvider({
           renders null), wiring the shared adapter without re-parenting — so
           PollarProvider does not remount when Privy turns on. */}
       {privyOn && <PrivyAdapterProvider adapter={privyAdapter!} />}
-      <TurnkeyWalletProvider />
+      {turnkeyAdapter && <TurnkeyWalletProvider adapter={turnkeyAdapter} />}
       <PollarProvider
         key={apiKey}
         client={{

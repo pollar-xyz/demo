@@ -154,6 +154,15 @@ export const ALL_GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: "turnkey",
+    section: "walletAdapters",
+    isNew: true,
+    tabs: [
+      { href: "/wallet-adapters/turnkey", label: "overview" },
+      { href: "/wallet-adapters/turnkey/setup", label: "setup" },
+    ],
+  },
+  {
     key: "cosmosWallet",
     section: "walletAdapters",
     isNew: true,
