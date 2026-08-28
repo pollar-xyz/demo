@@ -25,6 +25,7 @@
     "@pollar/stellar-wallets-kit-adapter": "^0.11.1",
     "@privy-io/react-auth": "3.32.0",
     "@stellar/stellar-sdk": "^15.0.0",
+    "@turnkey/react-wallet-kit": "2.4.1",
     "jsqr": "^1.4.0",
     "next": "16.2.9",
     "react": "19.2.3",

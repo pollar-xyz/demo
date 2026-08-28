@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 // App-wide wallet wiring for the navbar login. Hands the Pollar client a
 // combined `walletAdapters` stack:
@@ -19,14 +19,21 @@
 // client mount, Privy is simply omitted and the navbar offers the kit wallets
 // only.
 
-import { Networks } from '@creit.tech/stellar-wallets-kit';
-import type { PollarAdapters, WalletAdapter } from '@pollar/core';
-import { createPrivyAdapter, PrivyAdapterProvider } from '@pollar/privy-adapter';
-import { PollarProvider } from '@pollar/react';
-import '@pollar/react/styles.css';
-import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
-import { useEffect, useMemo, useState } from 'react';
-import { createCosmosWalletAdapter } from './wallet-adapters/cosmos-wallet/adapter';
+import { Networks } from "@creit.tech/stellar-wallets-kit";
+import type { PollarAdapters, WalletAdapter } from "@pollar/core";
+import {
+  createPrivyAdapter,
+  PrivyAdapterProvider,
+} from "@pollar/privy-adapter";
+import { PollarProvider } from "@pollar/react";
+import "@pollar/react/styles.css";
+import { stellarWalletsKitAdapters } from "@pollar/stellar-wallets-kit-adapter";
+import { useEffect, useMemo, useState } from "react";
+import { createCosmosWalletAdapter } from "./wallet-adapters/cosmos-wallet/adapter";
+import {
+  turnkeyAdapter,
+  TurnkeyWalletProvider,
+} from "./wallet-adapters/turnkey/adapter";
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
@@ -36,17 +43,17 @@ const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 // is configured. Built once at module scope so the instance identity is stable.
 export const privyAdapter = PRIVY_APP_ID
   ? createPrivyAdapter({
-    appId: PRIVY_APP_ID,
-    loginMethods: [ 'email', 'google' ],
-    meta: { label: 'Privy' },
-    debug: true,
-  })
+      appId: PRIVY_APP_ID,
+      loginMethods: ["email", "google"],
+      meta: { label: "Privy" },
+      debug: true,
+    })
   : null;
 
-type StellarNetwork = 'testnet' | 'mainnet';
+type StellarNetwork = "testnet" | "mainnet";
 
 function kitNetwork(network: StellarNetwork): Networks {
-  return network === 'mainnet' ? Networks.PUBLIC : Networks.TESTNET;
+  return network === "mainnet" ? Networks.PUBLIC : Networks.TESTNET;
 }
 
 type StackProps = {
@@ -74,16 +81,16 @@ type StackProps = {
 // PollarProvider never needs PrivyProvider as an ancestor and keeps its identity
 // (and its single client) across the mount transition.
 export function AppWalletProvider({
-                                    apiKey,
-                                    baseUrl,
-                                    network,
-                                    adapters,
-                                    privyDisabled = false,
-                                    children,
-                                  }: StackProps) {
+  apiKey,
+  baseUrl,
+  network,
+  adapters,
+  privyDisabled = false,
+  children,
+}: StackProps) {
   // Privy mounts client-side only; until then the bridge is absent and the
   // registered Privy adapter is simply inert.
-  const [ mounted, setMounted ] = useState(false);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
   const privyEnabled = Boolean(privyAdapter) && !privyDisabled;
@@ -92,15 +99,16 @@ export function AppWalletProvider({
   const walletAdapters = useMemo<WalletAdapter[]>(() => {
     const kit = stellarWalletsKitAdapters({
       network: kitNetwork(network),
-      picker: { groupLabel: 'Stellar Wallets Kit' },
+      picker: { groupLabel: "Stellar Wallets Kit" },
     });
     // The extension keeps its own network setting, so the adapter is built per
     // network and refuses to log in when the two disagree.
     const cosmos = createCosmosWalletAdapter(network);
+    const turnkey = turnkeyAdapter ? [turnkeyAdapter] : [];
     return privyEnabled
-      ? [ privyAdapter!, cosmos, ...kit ]
-      : [ cosmos, ...kit ];
-  }, [ network, privyEnabled ]);
+      ? [privyAdapter!, ...turnkey, cosmos, ...kit]
+      : [...turnkey, cosmos, ...kit];
+  }, [network, privyEnabled]);
 
   return (
     <>
@@ -108,13 +116,14 @@ export function AppWalletProvider({
           renders null), wiring the shared adapter without re-parenting — so
           PollarProvider does not remount when Privy turns on. */}
       {privyOn && <PrivyAdapterProvider adapter={privyAdapter!} />}
+      <TurnkeyWalletProvider />
       <PollarProvider
         key={apiKey}
         client={{
           apiKey,
           baseUrl,
           stellarNetwork: network,
-          logLevel: 'debug',
+          logLevel: "debug",
           walletAdapters,
         }}
         adapters={adapters}
