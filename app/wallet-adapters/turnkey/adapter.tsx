@@ -1,5 +1,6 @@
 import type {
   ConnectWalletResponse,
+  ExternalIdentityAuthProof,
   InteractiveAuthAdapter,
   SignTransactionOptions,
   SignTransactionResponse,
@@ -112,10 +113,24 @@ export function createTurnkeyAdapter(
     meta: { label: config.meta?.label ?? "Turnkey" },
     custody: "external",
     chain: "STELLAR",
+    identityProvider: "turnkey",
     isAvailable: async () => true,
     getAuthOptions: () => resolvedConfig.loginMethods,
     sendEmailCode: async (email) => {
       const client = await getCoreClient();
+
+      // Turnkey persists its active session in browser storage. Internally,
+      // `stampLogin` gives that stored session's organizationId priority over
+      // the organization configured on this client. Starting a fresh OTP while
+      // an older session is still active can therefore combine the old
+      // organization with the new verification token and Turnkey rejects the
+      // request with SIGNATURE_INVALID. A new OTP explicitly starts a new login,
+      // so discard the previous session before Turnkey creates that token.
+      if (await client.getSession()) {
+        connectedAccount = undefined;
+        await client.clearSession({});
+      }
+
       const result = await client.initOtp({
         otpType: OtpType.Email,
         contact: email,
@@ -153,6 +168,47 @@ export function createTurnkeyAdapter(
       const client = await getCoreClient();
       if (!(await client.getSession())) return null;
       return (await loadStellarAccount()).address;
+    },
+    getIdentityAuthProof: async (
+      challenge: string,
+    ): Promise<ExternalIdentityAuthProof> => {
+      const client = await getCoreClient();
+      const session = await client.getSession();
+      if (!session?.publicKey) {
+        throw new Error("[turnkey] An active session is required.");
+      }
+
+      const account = connectedAccount ?? (await loadStellarAccount());
+      const [challengeSignature, accountRequest] = await Promise.all([
+        // This signs locally with the temporary P-256 session key. It does not
+        // invoke the Stellar Ed25519 key or create a Turnkey signing activity.
+        client.signWithApiKey({
+          message: challenge,
+          publicKey: session.publicKey,
+        }),
+        // Produce, but do not execute, a Turnkey-authenticated account query.
+        // Pollar Platform forwards it directly to Turnkey, so it never trusts a
+        // wallet/account relationship merely asserted by this browser.
+        client.httpClient.stampGetWalletAccount({
+          organizationId: session.organizationId,
+          walletId: account.walletId,
+          address: account.address,
+        }),
+      ]);
+
+      if (!accountRequest || accountRequest.stamp.stampHeaderName !== "X-Stamp") {
+        throw new Error("[turnkey] Could not create the account proof.");
+      }
+
+      return {
+        sessionToken: session.token,
+        challengeSignature,
+        accountRequest: {
+          body: accountRequest.body,
+          stampHeaderName: "X-Stamp",
+          stampHeaderValue: accountRequest.stamp.stampHeaderValue,
+        },
+      };
     },
     signTransaction: async (
       transactionXdr: string,
