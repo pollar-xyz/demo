@@ -1,68 +1,69 @@
-'use client';
+"use client";
 
-import { WalletButton } from '@pollar/react';
-import Image from 'next/image';
-import Link from 'next/link';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import '@pollar/react/styles.css';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AppWalletProvider } from './_AppWalletProvider';
-import { ApiKeyModal } from './_components/ApiKeyModal';
-import { ComingSoon } from './_components/ComingSoon';
-import { InvalidApiKeyModal } from './_components/InvalidApiKeyModal';
-import { LanguageSwitcher } from './_components/LanguageSwitcher';
-import { NetworkLockedModal } from './_components/NetworkLockedModal';
-import { OriginNotAllowedModal } from './_components/OriginNotAllowedModal';
-import { useI18n } from './_i18n/LanguageProvider';
-import { useLabUnlocked } from './_LabGateProvider';
-import { SIDEBAR_SECTIONS, visibleGroups } from './_nav';
-import { useApiKeyHref } from './_useApiKeyHref';
-import { createCosmosPayAdapter } from './adapters/cosmos-pay/pay/adapter';
-import { createNiriumAdapter } from './adapters/nirium/x402/adapter';
-import { trustlessWorkAdapter } from './adapters/trustless-work/escrow/adapter';
-import { useNekoUnlocked } from './neko/_GateProvider';
+import { WalletButton } from "@pollar/react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import "@pollar/react/styles.css";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AppWalletProvider } from "./_AppWalletProvider";
+import { ApiKeyModal } from "./_components/ApiKeyModal";
+import { ComingSoon } from "./_components/ComingSoon";
+import { InvalidApiKeyModal } from "./_components/InvalidApiKeyModal";
+import { LanguageSwitcher } from "./_components/LanguageSwitcher";
+import { NetworkLockedModal } from "./_components/NetworkLockedModal";
+import { OriginNotAllowedModal } from "./_components/OriginNotAllowedModal";
+import { useI18n } from "./_i18n/LanguageProvider";
+import { useLabUnlocked } from "./_LabGateProvider";
+import { SIDEBAR_SECTIONS, visibleGroups } from "./_nav";
+import { useApiKeyHref } from "./_useApiKeyHref";
+import { createCosmosPayAdapter } from "./adapters/cosmos-pay/pay/adapter";
+import { createNiriumAdapter } from "./adapters/nirium/x402/adapter";
+import { trustlessWorkAdapter } from "./adapters/trustless-work/escrow/adapter";
+import { useNekoUnlocked } from "./neko/_GateProvider";
 
-const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34'; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
-const DEFAULT_API_KEY_MAINNET = 'pub_mainnet_921399523168e5775276241dc1c786b2';
-const BASE_URL = 'https://sdk.api.pollar.xyz';
+const DEFAULT_API_KEY_TESTNET = "pub_testnet_703470595eb6cb72c18651b1455fdc34"; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
+const DEFAULT_API_KEY_MAINNET = "pub_mainnet_921399523168e5775276241dc1c786b2";
+const BASE_URL =
+  process.env.NEXT_PUBLIC_POLLAR_BASE_URL ?? "https://sdk.api.pollar.xyz";
 
 // The logo that drifts across a locked group's ComingSoon overlay (hover it to
 // peek — see ComingSoon). Keyed by nav group; only groups with an asset show it.
 const GROUP_LOGOS: Record<string, string> = {
-  neko: '/neko.png',
-  cosmosPay: '/cosmos.png',
-  nirium: '/nirium.png',
-  acceslyAdapter: '/accesly.jpg',
+  neko: "/neko.png",
+  cosmosPay: "/cosmos.png",
+  nirium: "/nirium.png",
+  acceslyAdapter: "/accesly.jpg",
 };
 
-type StellarNetwork = 'mainnet' | 'testnet';
+type StellarNetwork = "mainnet" | "testnet";
 
 // Toggle that switches the active Stellar network. Selecting a network swaps
 // in the matching hardcoded default API key (which carries the network prefix),
 // so the SDK client and the derived `stellarNetwork` follow along.
 function NetworkToggle({
-                         network,
-                         onSelect,
-                         block = false,
-                       }: {
+  network,
+  onSelect,
+  block = false,
+}: {
   network: StellarNetwork;
   onSelect: (network: StellarNetwork) => void;
   // When true, the toggle fills its container and its two options split the
   // width evenly — used inside the mobile menu so it doesn't look sparse.
   block?: boolean;
 }) {
-  const options: StellarNetwork[] = [ 'testnet', 'mainnet' ];
+  const options: StellarNetwork[] = ["testnet", "mainnet"];
   return (
     <div
       role="group"
       aria-label="Stellar network"
       className={`items-center rounded-lg border border-border p-0.5 ${
-        block ? 'flex w-full' : 'inline-flex'
+        block ? "flex w-full" : "inline-flex"
       }`}
     >
       {options.map((opt) => {
         const active = network === opt;
-        const isMainnet = opt === 'mainnet';
+        const isMainnet = opt === "mainnet";
         return (
           <button
             key={opt}
@@ -71,22 +72,22 @@ function NetworkToggle({
             aria-pressed={active}
             title={`Stellar ${opt}`}
             className={`inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors ${
-              block ? 'flex-1' : ''
+              block ? "flex-1" : ""
             } ${
               active
                 ? isMainnet
-                  ? 'bg-success-light text-success'
-                  : 'bg-warning-light text-warning'
-                : 'text-muted hover:text-foreground'
+                  ? "bg-success-light text-success"
+                  : "bg-warning-light text-warning"
+                : "text-muted hover:text-foreground"
             }`}
           >
             <span
               className={`inline-block h-1.5 w-1.5 rounded-full ${
                 active
                   ? isMainnet
-                    ? 'bg-success'
-                    : 'bg-warning'
-                  : 'bg-muted-light'
+                    ? "bg-success"
+                    : "bg-warning"
+                  : "bg-muted-light"
               }`}
             />
             {opt}
@@ -99,22 +100,21 @@ function NetworkToggle({
 
 function ThemeToggle() {
   const { t } = useI18n();
-  const [ dark, setDark ] = useState(false);
+  const [dark, setDark] = useState(false);
 
   useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'));
+    setDark(document.documentElement.classList.contains("dark"));
   }, []);
 
   function toggle() {
     // Read from the DOM, not state — two instances render (mobile + desktop)
     // and only the DOM class is shared between them.
-    const next = !document.documentElement.classList.contains('dark');
+    const next = !document.documentElement.classList.contains("dark");
     setDark(next);
-    document.documentElement.classList.toggle('dark', next);
+    document.documentElement.classList.toggle("dark", next);
     try {
-      localStorage.setItem('pollar-demo-theme', next ? 'dark' : 'light');
-    } catch {
-    }
+      localStorage.setItem("pollar-demo-theme", next ? "dark" : "light");
+    } catch {}
   }
 
   return (
@@ -162,16 +162,16 @@ function ThemeToggle() {
 // tab/pill bars on mobile. Backs the group pills and the sub-tab bar so a
 // clipped item (e.g. "KYC") reads as "there's more, scroll".
 function ScrollFadeRow({
-                         wrapperClassName,
-                         className,
-                         children,
-                       }: {
+  wrapperClassName,
+  className,
+  children,
+}: {
   wrapperClassName?: string;
   className?: string;
   children: React.ReactNode;
 }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [ edges, setEdges ] = useState({ left: false, right: false });
+  const [edges, setEdges] = useState({ left: false, right: false });
 
   const update = useCallback(() => {
     const el = ref.current;
@@ -184,9 +184,9 @@ function ScrollFadeRow({
   }, []);
 
   useEffect(() => {
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, [ update ]);
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [update]);
   // Re-measure on every render too, since the tab set can change (e.g. the
   // active group switches out its sub-tabs). `update` no-ops when unchanged.
   useEffect(() => {
@@ -194,12 +194,12 @@ function ScrollFadeRow({
   });
 
   return (
-    <div className={`relative ${wrapperClassName ?? ''}`}>
+    <div className={`relative ${wrapperClassName ?? ""}`}>
       <div
         ref={ref}
         onScroll={update}
         className={`overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden ${
-          className ?? ''
+          className ?? ""
         }`}
       >
         {children}
@@ -207,13 +207,13 @@ function ScrollFadeRow({
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-background to-transparent transition-opacity ${
-          edges.left ? 'opacity-100' : 'opacity-0'
+          edges.left ? "opacity-100" : "opacity-0"
         }`}
       />
       <div
         aria-hidden="true"
         className={`pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-background to-transparent transition-opacity ${
-          edges.right ? 'opacity-100' : 'opacity-0'
+          edges.right ? "opacity-100" : "opacity-0"
         }`}
       />
     </div>
@@ -227,15 +227,15 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const withApiKey = useApiKeyHref();
 
-  const customKey = searchParams.get('apiKey');
+  const customKey = searchParams.get("apiKey");
 
   // Network for the built-in demo keys when no custom key is set. Toggling the
   // network in this mode never touches the URL; we persist the choice in
   // localStorage so it survives a refresh (the custom-key network already does,
   // since it's derived from the key carried in the URL).
-  const [ demoNetwork, setDemoNetwork ] = useState<StellarNetwork>('testnet');
+  const [demoNetwork, setDemoNetwork] = useState<StellarNetwork>("testnet");
   const demoKey =
-    demoNetwork === 'mainnet'
+    demoNetwork === "mainnet"
       ? DEFAULT_API_KEY_MAINNET
       : DEFAULT_API_KEY_TESTNET;
 
@@ -249,7 +249,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // Stellar network is derived from the API key prefix (e.g. `pub_testnet_…`,
   // `pub_mainnet_…`); fall back to mainnet for any unrecognized prefix.
   const stellarNetwork: StellarNetwork =
-    apiKey.split('_')[1] === 'testnet' ? 'testnet' : 'mainnet';
+    apiKey.split("_")[1] === "testnet" ? "testnet" : "mainnet";
 
   // Nirium and Cosmos Pay build their own XDR, so they need the network the
   // session runs on (Horizon URL + passphrase); Trustless Work builds its XDR
@@ -261,7 +261,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       niriumX402: createNiriumAdapter(stellarNetwork),
       cosmosPay: createCosmosPayAdapter(stellarNetwork),
     }),
-    [ stellarNetwork ],
+    [stellarNetwork],
   );
 
   const GROUPS = visibleGroups(useNekoUnlocked(), useLabUnlocked());
@@ -272,32 +272,31 @@ export function Shell({ children }: { children: React.ReactNode }) {
   const activeGroup =
     GROUPS.find((g) =>
       g.tabs.some(
-        (tab) => pathname === tab.href || pathname.startsWith(tab.href + '/'),
+        (tab) => pathname === tab.href || pathname.startsWith(tab.href + "/"),
       ),
     ) ?? null;
 
-  const [ keyModalOpen, setKeyModalOpen ] = useState(false);
-  const [ menuOpen, setMenuOpen ] = useState(false);
+  const [keyModalOpen, setKeyModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // The mobile/tablet page-navigation drawer (the collapsed left sidebar).
-  const [ navOpen, setNavOpen ] = useState(false);
-  const [ originBlocked, setOriginBlocked ] = useState(false);
-  const [ keyInvalid, setKeyInvalid ] = useState(false);
-  const [ networkLocked, setNetworkLocked ] = useState(false);
+  const [navOpen, setNavOpen] = useState(false);
+  const [originBlocked, setOriginBlocked] = useState(false);
+  const [keyInvalid, setKeyInvalid] = useState(false);
+  const [networkLocked, setNetworkLocked] = useState(false);
 
   // Close the mobile menu + nav drawer when navigating to another tab.
   useEffect(() => {
     setMenuOpen(false);
     setNavOpen(false);
-  }, [ pathname ]);
+  }, [pathname]);
 
   // Restore the demo-key network saved on a previous toggle. Read after mount
   // (not in the initializer) to keep the server-rendered markup deterministic.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('pollar-demo-network');
-      if (saved === 'mainnet' || saved === 'testnet') setDemoNetwork(saved);
-    } catch {
-    }
+      const saved = localStorage.getItem("pollar-demo-network");
+      if (saved === "mainnet" || saved === "testnet") setDemoNetwork(saved);
+    } catch {}
   }, []);
 
   // The SDK fetches `/applications/config` internally and doesn't surface its
@@ -309,7 +308,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const controller = new AbortController();
     fetch(`${BASE_URL}/v1/applications/config`, {
-      headers: { 'x-pollar-api-key': apiKey },
+      headers: { "x-pollar-api-key": apiKey },
       signal: controller.signal,
     })
       .then(async (res) => {
@@ -320,22 +319,22 @@ export function Shell({ children }: { children: React.ReactNode }) {
         }
         const body = await res.json().catch(() => null);
         setOriginBlocked(
-          res.status === 403 && body?.code === 'ORIGIN_NOT_ALLOWED',
+          res.status === 403 && body?.code === "ORIGIN_NOT_ALLOWED",
         );
-        setKeyInvalid(res.status === 401 && body?.code === 'API_KEY_NOT_FOUND');
+        setKeyInvalid(res.status === 401 && body?.code === "API_KEY_NOT_FOUND");
       })
       .catch(() => {
         // network/abort errors are unrelated to the config check — ignore.
       });
     return () => controller.abort();
-  }, [ apiKey ]);
+  }, [apiKey]);
 
   // Write the key into the URL so PollarProvider picks it up on remount.
   function applyApiKey(next: string) {
     const params = new URLSearchParams(Array.from(searchParams.entries()));
     const trimmed = next.trim();
-    if (trimmed) params.set('apiKey', trimmed);
-    else params.delete('apiKey');
+    if (trimmed) params.set("apiKey", trimmed);
+    else params.delete("apiKey");
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
     setKeyModalOpen(false);
@@ -352,9 +351,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
     }
     setDemoNetwork(next);
     try {
-      localStorage.setItem('pollar-demo-network', next);
-    } catch {
-    }
+      localStorage.setItem("pollar-demo-network", next);
+    } catch {}
   }
 
   // The grouped nav list — section headers with their group links beneath.
@@ -380,8 +378,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
                   onClick={onNavigate}
                   className={`flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                     active
-                      ? 'bg-primary-light text-primary'
-                      : 'text-muted hover:text-foreground hover:bg-surface'
+                      ? "bg-primary-light text-primary"
+                      : "text-muted hover:text-foreground hover:bg-surface"
                   }`}
                 >
                   <span>{t.nav.groups[g.key]}</span>
@@ -420,8 +418,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
               href={withApiKey(href)}
               className={`shrink-0 whitespace-nowrap text-xs sm:text-sm font-medium py-2.5 border-b-2 transition-colors ${
                 pathname === href
-                  ? 'border-primary text-primary font-semibold'
-                  : 'border-transparent text-muted hover:text-foreground'
+                  ? "border-primary text-primary font-semibold"
+                  : "border-transparent text-muted hover:text-foreground"
               }`}
             >
               {t.nav[label]}
@@ -450,7 +448,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {/* row 1: logo + api key + theme + wallet button */}
           <div className="flex items-center justify-between py-3">
             <Link
-              href={withApiKey('/')}
+              href={withApiKey("/")}
               className="flex items-center gap-2 sm:gap-3"
             >
               <Image
@@ -476,7 +474,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               >
                 <span
                   className={`inline-block h-1.5 w-1.5 rounded-full ${
-                    isCustomKey ? 'bg-success' : 'bg-muted-light'
+                    isCustomKey ? "bg-success" : "bg-muted-light"
                   }`}
                 />
                 {t.shell.apiKey}
@@ -553,7 +551,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
                 >
                   <span
                     className={`inline-block h-1.5 w-1.5 rounded-full ${
-                      isCustomKey ? 'bg-success' : 'bg-muted-light'
+                      isCustomKey ? "bg-success" : "bg-muted-light"
                     }`}
                   />
                   {t.shell.apiKey}
@@ -682,7 +680,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {originBlocked && (
         <OriginNotAllowedModal
-          origin={typeof window !== 'undefined' ? window.location.origin : ''}
+          origin={typeof window !== "undefined" ? window.location.origin : ""}
           onClose={() => setOriginBlocked(false)}
         />
       )}
