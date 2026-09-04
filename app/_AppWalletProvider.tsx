@@ -23,6 +23,7 @@ import { Networks } from '@creit.tech/stellar-wallets-kit';
 import type { PollarAdapters, WalletAdapter } from '@pollar/core';
 import { createPrivyAdapter, PrivyAdapterProvider } from '@pollar/privy-adapter';
 import { PollarProvider } from '@pollar/react';
+import { solanaWalletStandardAdapters } from '@pollar/solana-wallet-standard-adapter';
 import '@pollar/react/styles.css';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
@@ -97,9 +98,10 @@ export function AppWalletProvider({
     // The extension keeps its own network setting, so the adapter is built per
     // network and refuses to log in when the two disagree.
     const cosmos = createCosmosWalletAdapter(network);
+    const solana = solanaWalletStandardAdapters({ groupLabel: 'Solana Wallets' });
     return privyEnabled
-      ? [ privyAdapter!, cosmos, ...kit ]
-      : [ cosmos, ...kit ];
+      ? [ privyAdapter!, cosmos, ...solana, ...kit ]
+      : [ cosmos, ...solana, ...kit ];
   }, [ network, privyEnabled ]);
 
   return (

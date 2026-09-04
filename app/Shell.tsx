@@ -24,7 +24,12 @@ import { useNekoUnlocked } from './neko/_GateProvider';
 
 const DEFAULT_API_KEY_TESTNET = 'pub_testnet_703470595eb6cb72c18651b1455fdc34'; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
 const DEFAULT_API_KEY_MAINNET = 'pub_mainnet_921399523168e5775276241dc1c786b2';
-const BASE_URL = 'https://sdk.api.pollar.xyz';
+const BASE_URL = process.env.NEXT_PUBLIC_POLLAR_BASE_URL ?? 'https://sdk.api.pollar.xyz';
+const HAS_CONFIGURED_DEFAULT_NETWORK =
+  process.env.NEXT_PUBLIC_POLLAR_DEFAULT_NETWORK === 'mainnet' ||
+  process.env.NEXT_PUBLIC_POLLAR_DEFAULT_NETWORK === 'testnet';
+const DEFAULT_NETWORK: StellarNetwork =
+  process.env.NEXT_PUBLIC_POLLAR_DEFAULT_NETWORK === 'mainnet' ? 'mainnet' : 'testnet';
 
 // The logo that drifts across a locked group's ComingSoon overlay (hover it to
 // peek — see ComingSoon). Keyed by nav group; only groups with an asset show it.
@@ -233,7 +238,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // network in this mode never touches the URL; we persist the choice in
   // localStorage so it survives a refresh (the custom-key network already does,
   // since it's derived from the key carried in the URL).
-  const [ demoNetwork, setDemoNetwork ] = useState<StellarNetwork>('testnet');
+  const [ demoNetwork, setDemoNetwork ] = useState<StellarNetwork>(DEFAULT_NETWORK);
   const demoKey =
     demoNetwork === 'mainnet'
       ? DEFAULT_API_KEY_MAINNET
@@ -293,6 +298,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // Restore the demo-key network saved on a previous toggle. Read after mount
   // (not in the initializer) to keep the server-rendered markup deterministic.
   useEffect(() => {
+    if (HAS_CONFIGURED_DEFAULT_NETWORK) return;
     try {
       const saved = localStorage.getItem('pollar-demo-network');
       if (saved === 'mainnet' || saved === 'testnet') setDemoNetwork(saved);
