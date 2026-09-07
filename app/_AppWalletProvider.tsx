@@ -20,7 +20,7 @@
 // only.
 
 import { Networks } from '@creit.tech/stellar-wallets-kit';
-import type { PollarAdapters, WalletAdapter } from '@pollar/core';
+import { PollarClient, type PollarAdapters, type WalletAdapter } from '@pollar/core';
 import { createPrivyAdapter, PrivyAdapterProvider } from '@pollar/privy-adapter';
 import { PollarProvider } from '@pollar/react';
 import { solanaWalletStandardAdapters } from '@pollar/solana-wallet-standard-adapter';
@@ -61,6 +61,17 @@ type StackProps = {
   privyDisabled?: boolean;
   children: React.ReactNode;
 };
+
+const pollarClients = new Map<string, PollarClient>();
+
+function demoClient(apiKey: string, baseUrl: string, network: StellarNetwork, walletAdapters: WalletAdapter[]): PollarClient {
+  const key = `${baseUrl}|${apiKey}`;
+  const existing = pollarClients.get(key);
+  if (existing) return existing;
+  const created = new PollarClient({ apiKey, baseUrl, stellarNetwork: network, logLevel: 'debug', walletAdapters });
+  pollarClients.set(key, created);
+  return created;
+}
 
 // ── Single, always-mounted stack ─────────────────────────────────────────────
 // One PollarProvider for the whole app, mounted once and never swapped — so
@@ -103,6 +114,10 @@ export function AppWalletProvider({
       ? [ privyAdapter!, cosmos, ...solana, ...kit ]
       : [ cosmos, ...solana, ...kit ];
   }, [ network, privyEnabled ]);
+  const pollarClient = useMemo(
+    () => demoClient(apiKey, baseUrl, network, walletAdapters),
+    [apiKey, baseUrl, network, walletAdapters],
+  );
 
   return (
     <>
@@ -112,13 +127,7 @@ export function AppWalletProvider({
       {privyOn && <PrivyAdapterProvider adapter={privyAdapter!} />}
       <PollarProvider
         key={apiKey}
-        client={{
-          apiKey,
-          baseUrl,
-          stellarNetwork: network,
-          logLevel: 'debug',
-          walletAdapters,
-        }}
+        client={pollarClient}
         adapters={adapters}
       >
         {children}

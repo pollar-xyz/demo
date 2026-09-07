@@ -12,22 +12,22 @@ const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
 // 0. venues enabled from the dashboard (Treasury → Swap).
-//    SDK_SWAP_CONFIG → e.g. ['aquarius', 'sdex']; empty = hide swap UI.
+//    SDK_SWAP_CONFIG → e.g. ['aquarius', 'sdex', 'jupiter']; empty = hide swap UI.
 const venues = await client.getSwapConfig();
 
 // 1. quote — routes ranked by output, best first (empty = no route)
 const quotes = await client.getSwapQuote({
-  sellAsset: { type: 'native' },
-  buyAsset: { type: 'credit_alphanum4', code: 'USDC', issuer: 'GA5Z…' },
-  amount: '100',
-  provider: 'auto',   // best of aquarius / soroswap / sdex
+  sellAsset: { type: 'solana', mint: 'So111…', symbol: 'SOL', decimals: 9 },
+  buyAsset: { type: 'solana', mint: 'EPjFW…', symbol: 'USDC', decimals: 6 },
+  amount: '1',
+  provider: 'jupiter',
   slippageBps: 50,    // 0.5% — sets the on-chain minReceived
 });
 
 // 2. execute the best route (adds the buy-asset trustline if needed)
 if (quotes.length) {
   const outcome = await client.swap(quotes[0]);
-  // outcome.hash — follow progress via onTransactionStateChange
+  // Phantom/Backpack signs; Jupiter executes and outcome.hash is the Solana signature.
 }`;
 
 const REACT_CODE = `import { usePollar } from '@pollar/react';
@@ -63,8 +63,8 @@ export default function SwapPage() {
       </div>
 
       {/* Venues come from the operator's dashboard, read at runtime via
-          getSwapConfig() (SDK_SWAP_CONFIG) — Soroswap is now one of these
-          venues rather than a separate tab. */}
+          getSwapConfig() (SDK_SWAP_CONFIG). Jupiter appears on mainnet when
+          its server-side API key and the Solana chain are enabled. */}
       <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
         <div>
           <p className="text-sm font-semibold text-foreground">
@@ -77,7 +77,7 @@ export default function SwapPage() {
         <pre className="overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs font-mono text-muted-light">
           {`GET /swap/config →
 {
-  "content": { "venues": ["aquarius", "sdex"] },
+  "content": { "venues": ["aquarius", "sdex", "jupiter"] },
   "code": "SDK_SWAP_CONFIG",
   "success": true
 }`}
