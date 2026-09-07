@@ -13,33 +13,37 @@ await client.ready();
 
 // 0. providers enabled from the dashboard (Treasury → Earn),
 //    intersected with server capability — Blend needs a pool
-//    address, DeFindex needs an API key. Empty = hide Earn UI.
+//    address, DeFindex/Jupiter need API keys. Empty = hide Earn UI.
 const providers = await client.getEarnProviders();
 
-// 1. list the vaults (DeFindex) / pools (Blend) with live APY
-const opportunities = await client.getEarnOpportunities('defindex');
+// 1. list the vaults/pools/markets with live APY
+const opportunities = await client.getEarnOpportunities('jupiter');
 const best = opportunities[0]; // { id, name, kind, asset, apy, … }
 
 // 2. read the connected wallet's position in that opportunity
 const position = await client.getEarnPosition({
-  provider: 'defindex',
+  provider: 'jupiter',
   opportunity: best.id,
 });
-// position.withdrawUnit → 'shares' (DeFindex) | 'asset' (Blend)
+// position.withdrawUnit → 'shares' (DeFindex) | 'asset' (Blend/Jupiter)
 
-// 3. deposit the underlying asset (signs + submits the built XDR)
-await client.earnDeposit({
-  provider: 'defindex',
+// 3. Jupiter returns a prepared unsigned Solana transaction.
+const deposit = await client.earnDeposit({
+  provider: 'jupiter',
   opportunity: best.id,
   amount: '100',
 });
 
 // 4. withdraw — amount is in position.withdrawUnit
-await client.earnWithdraw({
-  provider: 'defindex',
+const withdrawal = await client.earnWithdraw({
+  provider: 'jupiter',
   opportunity: best.id,
   amount: position.withdrawable,
-});`;
+});
+
+// For Jupiter, deposit/withdraw status is 'prepared'. Your Solana adapter
+// signs unsignedTransaction and your RPC submits it; Pollar never submits it
+// during construction. Stellar providers keep their existing submit flow.`;
 
 const REACT_CODE = `import { usePollar } from '@pollar/react';
 
@@ -48,7 +52,7 @@ export function EarnButton() {
 
   // openEarnModal renders the whole provider → opportunity →
   // deposit / withdraw flow on top of client.earnDeposit /
-  // earnWithdraw (build + sign + submit handled for you).
+  // earnWithdraw (Stellar signs/submits; Jupiter returns a prepared Solana tx).
   return (
     <button
       onClick={openEarnModal}
@@ -76,7 +80,7 @@ export default function EarnPage() {
 
       {/* Providers come from the operator's dashboard, read at runtime via
           getEarnProviders() (SDK_EARN_PROVIDERS) — a provider only appears
-          once it's server-capable (Blend: pool address, DeFindex: API key). */}
+          once it's server-capable (Blend: pool address, DeFindex/Jupiter: API key). */}
       <div className="rounded-2xl border border-border bg-surface p-5 space-y-3">
         <div>
           <p className="text-sm font-semibold text-foreground">
@@ -89,7 +93,7 @@ export default function EarnPage() {
         <pre className="overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs font-mono text-muted-light">
           {`GET /earn/providers →
 {
-  "content": { "providers": ["blend", "defindex"] },
+  "content": { "providers": ["blend", "defindex", "jupiter"] },
   "code": "SDK_EARN_PROVIDERS",
   "success": true
 }`}

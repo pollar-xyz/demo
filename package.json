@@ -9,9 +9,9 @@
     "lint": "eslint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "dev:pull": "rm -rf node_modules/@pollar && yalc add @pollar/react @pollar/core @pollar/stellar-wallets-kit-adapter @pollar/privy-adapter @pollar/accesly-adapter && pnpm add @noble/hashes",
-    "pull": "pnpm remove @noble/hashes; pnpm add @pollar/react@latest @pollar/core@latest @pollar/privy-adapter@latest @pollar/accesly-adapter@latest @pollar/stellar-wallets-kit-adapter@latest",
-    "pullnext": "pnpm remove @noble/hashes; pnpm add @pollar/react@next @pollar/core@next @pollar/privy-adapter@next @pollar/accesly-adapter@next @pollar/stellar-wallets-kit-adapter@next"
+    "dev:pull": "rm -rf node_modules/@pollar && yalc add @pollar/react @pollar/core @pollar/stellar-wallets-kit-adapter @pollar/solana-wallet-standard-adapter @pollar/privy-adapter @pollar/accesly-adapter && pnpm add @noble/hashes",
+    "pull": "pnpm remove @noble/hashes; pnpm add @pollar/react@latest @pollar/core@latest @pollar/privy-adapter@latest @pollar/accesly-adapter@latest @pollar/stellar-wallets-kit-adapter@latest @pollar/solana-wallet-standard-adapter@latest",
+    "pullnext": "pnpm remove @noble/hashes; pnpm add @pollar/react@next @pollar/core@next @pollar/privy-adapter@next @pollar/accesly-adapter@next @pollar/stellar-wallets-kit-adapter@next @pollar/solana-wallet-standard-adapter@next"
   },
   "dependencies": {
     "@accesly/core": "1.8.0",
@@ -22,6 +22,7 @@
     "@pollar/core": "^0.11.1",
     "@pollar/privy-adapter": "^0.11.1",
     "@pollar/react": "^0.11.1",
+    "@pollar/solana-wallet-standard-adapter": "^0.11.2",
     "@pollar/stellar-wallets-kit-adapter": "^0.11.1",
     "@privy-io/react-auth": "3.32.0",
     "@stellar/stellar-sdk": "^15.0.0",
