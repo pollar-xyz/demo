@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
+import path from "node:path";
+
+// Yalc and pnpm can expose different copies of core to the app and adapters.
+// All SDK consumers must use the same, current client implementation.
+const coreModule = path.resolve(process.cwd(), "node_modules/@pollar/core/dist/index.mjs");
 
 const nextConfig: NextConfig = {
+  turbopack: {
+    resolveAlias: { "@pollar/core": "./node_modules/@pollar/core/dist/index.mjs" },
+  },
+  webpack(config) {
+    config.resolve.alias = { ...config.resolve.alias, "@pollar/core$": coreModule };
+    return config;
+  },
   // Allow the Caddy-proxied dev host (https://demo.local.pollar.xyz) to reach
   // the dev server's internal endpoints (HMR, server actions, etc.).
   allowedDevOrigins: ["demo.local.pollar.xyz"],

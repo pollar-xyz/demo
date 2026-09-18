@@ -20,9 +20,10 @@
 // only.
 
 import { Networks } from '@creit.tech/stellar-wallets-kit';
-import type { PollarAdapters, WalletAdapter } from '@pollar/core';
+import { type PollarAdapters, type WalletAdapter } from '@pollar/core';
 import { createPrivyAdapter, PrivyAdapterProvider } from '@pollar/privy-adapter';
 import { PollarProvider } from '@pollar/react';
+import { solanaWalletStandardAdapters } from '@pollar/solana-wallet-standard-adapter';
 import '@pollar/react/styles.css';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
@@ -61,10 +62,8 @@ type StackProps = {
   children: React.ReactNode;
 };
 
-// ── Single, always-mounted stack ─────────────────────────────────────────────
-// One PollarProvider for the whole app, mounted once and never swapped — so
-// exactly one PollarClient is constructed per apiKey (no "Another PollarClient
-// is already active" warning, no doubled OAuth flow).
+// One PollarProvider owns the client for the active backend, key, network and
+// available wallet adapters. Configuration changes remount that provider.
 //
 // Privy can't SSR, so its bridge mounts client-side only. But rather than swap
 // the PollarProvider into a Privy-wrapped subtree (which would tear down the
@@ -84,7 +83,20 @@ export function AppWalletProvider({
   // Privy mounts client-side only; until then the bridge is absent and the
   // registered Privy adapter is simply inert.
   const [ mounted, setMounted ] = useState(false);
+  const [ walletRegistryVersion, setWalletRegistryVersion ] = useState(0);
   useEffect(() => setMounted(true), []);
+
+  // Browser wallet extensions can register with Wallet Standard after the
+  // initial React render. Rebuild the adapter list when the registry changes;
+  // otherwise Phantom is missed permanently until a full page reload.
+  useEffect(() => {
+    if (!mounted) return;
+    const onWalletStandardRegister = () => {
+      setWalletRegistryVersion((version) => version + 1);
+    };
+    window.addEventListener('wallet-standard:register-wallet', onWalletStandardRegister);
+    return () => window.removeEventListener('wallet-standard:register-wallet', onWalletStandardRegister);
+  }, [ mounted ]);
 
   const privyEnabled = Boolean(privyAdapter) && !privyDisabled;
   const privyOn = privyEnabled && mounted;
@@ -97,10 +109,12 @@ export function AppWalletProvider({
     // The extension keeps its own network setting, so the adapter is built per
     // network and refuses to log in when the two disagree.
     const cosmos = createCosmosWalletAdapter(network);
+    const solana = solanaWalletStandardAdapters({ groupLabel: 'Solana Wallets' });
     return privyEnabled
-      ? [ privyAdapter!, cosmos, ...kit ]
-      : [ cosmos, ...kit ];
-  }, [ network, privyEnabled ]);
+      ? [ privyAdapter!, cosmos, ...solana, ...kit ]
+      : [ cosmos, ...solana, ...kit ];
+  }, [ mounted, network, privyEnabled, walletRegistryVersion ]);
+  const walletAdapterKey = walletAdapters.map((adapter) => adapter.type).join('|');
 
   return (
     <>
@@ -109,14 +123,8 @@ export function AppWalletProvider({
           PollarProvider does not remount when Privy turns on. */}
       {privyOn && <PrivyAdapterProvider adapter={privyAdapter!} />}
       <PollarProvider
-        key={apiKey}
-        client={{
-          apiKey,
-          baseUrl,
-          stellarNetwork: network,
-          logLevel: 'debug',
-          walletAdapters,
-        }}
+        key={`${baseUrl}|${apiKey}|${network}|${walletAdapterKey}`}
+        client={{ apiKey, baseUrl, stellarNetwork: network, logLevel: 'debug', walletAdapters }}
         adapters={adapters}
       >
         {children}

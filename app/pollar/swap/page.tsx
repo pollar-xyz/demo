@@ -12,6 +12,7 @@ export default function SwapOverviewPage() {
       links={[
         { label: s.aquariusLabel, href: "https://aqua.network/" },
         { label: s.soroswapLabel, href: "https://soroswap.finance/" },
+        { label: "Jupiter Swap", href: "https://jup.ag/swap" },
       ]}
     />
   );

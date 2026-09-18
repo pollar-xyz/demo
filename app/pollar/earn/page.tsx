@@ -12,6 +12,7 @@ export default function EarnOverviewPage() {
       links={[
         { label: s.defindexLabel, href: "https://defindex.io/" },
         { label: s.blendLabel, href: "https://blend.capital/" },
+        { label: "Jupiter Lend", href: "https://jup.ag/lend/earn" },
       ]}
     />
   );

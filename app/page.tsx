@@ -27,11 +27,13 @@ function tabDesc(t: Dictionary, group: NavGroup, label: TabLabel): string {
     if (label === "overview") {
       if (group.key === "swap") return t.swapAbout.tagline;
       if (group.key === "earn") return t.earnAbout.tagline;
+      if (group.key === "borrow") return t.home.descs.borrow;
       return t.rampAbout.tagline;
     }
     if (label === "implementation") {
       if (group.key === "swap") return t.home.descs.swap;
       if (group.key === "earn") return t.home.descs.earn;
+      if (group.key === "borrow") return t.home.descs.borrow;
       return t.home.descs.ramp;
     }
     return t.home.descs[label as keyof Dictionary["home"]["descs"]];
