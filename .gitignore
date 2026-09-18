@@ -45,6 +45,7 @@ next-env.d.ts
 .idea
 
 .yalc
+yalc.lock
 
 /external-repos
 tmp

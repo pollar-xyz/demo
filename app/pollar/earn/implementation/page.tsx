@@ -27,7 +27,7 @@ const position = await client.getEarnPosition({
 });
 // position.withdrawUnit → 'shares' (DeFindex) | 'asset' (Blend/Jupiter)
 
-// 3. Jupiter returns a prepared unsigned Solana transaction.
+// 3. Deposit: the connected wallet signs and Pollar submits the transaction.
 const deposit = await client.earnDeposit({
   provider: 'jupiter',
   opportunity: best.id,
@@ -41,9 +41,9 @@ const withdrawal = await client.earnWithdraw({
   amount: position.withdrawable,
 });
 
-// For Jupiter, deposit/withdraw status is 'prepared'. Your Solana adapter
-// signs unsignedTransaction and your RPC submits it; Pollar never submits it
-// during construction. Stellar providers keep their existing submit flow.`;
+// External Solana wallets sign through their connected adapter, then Pollar
+// submits the signed transaction. Internal Solana wallets use Pollar's
+// custodial execution flow. Check the returned status for the result.`;
 
 const REACT_CODE = `import { usePollar } from '@pollar/react';
 
@@ -52,7 +52,7 @@ export function EarnButton() {
 
   // openEarnModal renders the whole provider → opportunity →
   // deposit / withdraw flow on top of client.earnDeposit /
-  // earnWithdraw (Stellar signs/submits; Jupiter returns a prepared Solana tx).
+  // earnWithdraw, including signing and submission for Stellar and Solana.
   return (
     <button
       onClick={openEarnModal}
