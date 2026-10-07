@@ -87,6 +87,9 @@ export const ALL_GROUPS: NavGroup[] = [
       { href: "/pollar/wallet/assets", label: "assets" },
       { href: "/pollar/wallet/history", label: "history" },
       { href: "/pollar/wallet/distribution", label: "distribution" },
+      // Testnet-only test bench for the sponsored signer rotation, gated on
+      // the Demo key adapter (app/wallet-adapters/demo-device-key).
+      { href: "/pollar/signer-rotation", label: "signerRotation" },
     ],
   },
   {

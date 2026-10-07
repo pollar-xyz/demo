@@ -9,7 +9,9 @@
 //     collapsed behind a shared "Wallet" gateway via their meta `group`, and
 //   • the hand-written Cosmos Wallet adapter (the CosmosPay browser extension,
 //     `window.cosmosWallet`) — it has no meta `group`, so it renders as its own
-//     button in the root login view.
+//     button in the root login view, and
+//   • the "Demo key" adapter (a browser-held key, for the signer rotation
+//     page) — testnet only, also its own button.
 // `<PrivyAdapterProvider>` mounts Privy + its runtime bridge as a SIBLING of
 // `<PollarProvider>` (the bridge renders null and wires the runtime onto the
 // shared adapter); the SAME adapter instance is registered in `walletAdapters`,
@@ -27,6 +29,7 @@ import '@pollar/react/styles.css';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
 import { createCosmosWalletAdapter } from './wallet-adapters/cosmos-wallet/adapter';
+import { demoDeviceKeyAdapter } from './wallet-adapters/demo-device-key/adapter';
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
@@ -97,9 +100,14 @@ export function AppWalletProvider({
     // The extension keeps its own network setting, so the adapter is built per
     // network and refuses to log in when the two disagree.
     const cosmos = createCosmosWalletAdapter(network);
+    // The demo key lives in plain localStorage, so it never gets near mainnet.
+    // Registered on every testnet start, same `type`, so its session restores.
+    const own = network === 'testnet'
+      ? [ cosmos, demoDeviceKeyAdapter ]
+      : [ cosmos ];
     return privyEnabled
-      ? [ privyAdapter!, cosmos, ...kit ]
-      : [ cosmos, ...kit ];
+      ? [ privyAdapter!, ...own, ...kit ]
+      : [ ...own, ...kit ];
   }, [ network, privyEnabled ]);
 
   return (

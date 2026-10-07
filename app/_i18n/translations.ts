@@ -12,6 +12,13 @@ import {
 } from "@/app/pollar/ramp/abroad/_i18n";
 
 import {
+  signerRotationEn,
+  signerRotationEs,
+  signerRotationNavLabel,
+  signerRotationPt,
+} from "@/app/pollar/signer-rotation/_i18n";
+
+import {
   cosmosWalletNavLabel,
   walletAdaptersNavLabel,
 } from "@/app/wallet-adapters/_i18n";
@@ -59,6 +66,7 @@ export const en = {
     sessions: "Sessions",
     signXdr: "Sign XDR",
     distribution: "Distribution",
+    signerRotation: signerRotationNavLabel.en,
     lumenwipe: "LumenWipe",
     overview: "Overview",
     dashboard: "Dashboard",
@@ -2351,6 +2359,7 @@ export const en = {
 
   ...nekoEn,
   ...abroadEn,
+  ...signerRotationEn,
 };
 
 export type Dictionary = typeof en;
@@ -2398,6 +2407,7 @@ export const es: Dictionary = {
     sessions: "Sesiones",
     signXdr: "Firmar XDR",
     distribution: "Distribución",
+    signerRotation: signerRotationNavLabel.es,
     lumenwipe: "LumenWipe",
     overview: "Resumen",
     dashboard: "Panel",
@@ -4703,6 +4713,7 @@ export const es: Dictionary = {
 
   ...nekoEs,
   ...abroadEs,
+  ...signerRotationEs,
 };
 
 export const pt: Dictionary = {
@@ -4748,6 +4759,7 @@ export const pt: Dictionary = {
     sessions: "Sessões",
     signXdr: "Assinar XDR",
     distribution: "Distribuição",
+    signerRotation: signerRotationNavLabel.pt,
     lumenwipe: "LumenWipe",
     overview: "Visão geral",
     dashboard: "Painel",
@@ -7053,6 +7065,7 @@ export const pt: Dictionary = {
 
   ...nekoPt,
   ...abroadPt,
+  ...signerRotationPt,
 };
 
 export const LOCALES = ["en", "es", "pt"] as const;
