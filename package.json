@@ -11,7 +11,13 @@
     "format:check": "prettier --check .",
     "dev:pull": "rm -rf node_modules/@pollar && yalc add @pollar/react @pollar/core @pollar/stellar-wallets-kit-adapter @pollar/privy-adapter @pollar/accesly-adapter && pnpm add @noble/hashes",
     "pull": "pnpm remove @noble/hashes; pnpm add @pollar/react@latest @pollar/core@latest @pollar/privy-adapter@latest @pollar/accesly-adapter@latest @pollar/stellar-wallets-kit-adapter@latest",
-    "pullnext": "pnpm remove @noble/hashes; pnpm add @pollar/react@next @pollar/core@next @pollar/privy-adapter@next @pollar/accesly-adapter@next @pollar/stellar-wallets-kit-adapter@next"
+    "pullnext": "pnpm remove @noble/hashes; pnpm add @pollar/react@next @pollar/core@next @pollar/privy-adapter@next @pollar/accesly-adapter@next @pollar/stellar-wallets-kit-adapter@next",
+    "prepare:sdk": "node scripts/prepare-sdk.mjs",
+    "bootstrap": "node scripts/prepare-sdk.mjs && pnpm install --frozen-lockfile",
+    "check:sdk": "node scripts/check-sdk.mjs",
+    "predev": "node scripts/check-sdk.mjs",
+    "prebuild": "node scripts/check-sdk.mjs",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@accesly/core": "1.8.0",
@@ -19,9 +25,9 @@
     "@cosmosapp/pay_sdk": "^1.1.0",
     "@creit.tech/stellar-wallets-kit": "^2.3.0",
     "@pollar/accesly-adapter": "^0.10.1",
-    "@pollar/core": "^0.11.3",
+    "@pollar/core": "file:.pollar-sdk/packages/core",
     "@pollar/privy-adapter": "^0.11.1",
-    "@pollar/react": "^0.11.3",
+    "@pollar/react": "file:.pollar-sdk/packages/react",
     "@pollar/stellar-wallets-kit-adapter": "^0.11.2",
     "@privy-io/react-auth": "3.32.0",
     "@stellar/stellar-sdk": "^15.0.0",
@@ -43,5 +49,6 @@
     "prettier": "^3.8.4",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "packageManager": "pnpm@11.8.0"
 }

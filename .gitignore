@@ -48,3 +48,6 @@ next-env.d.ts
 
 /external-repos
 tmp
+
+# SDK build pinned by pollar-sdk-source.json
+/.pollar-sdk/
