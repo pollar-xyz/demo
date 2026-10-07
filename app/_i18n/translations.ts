@@ -1112,18 +1112,27 @@ export const en = {
     title: "KYC",
     desc: "Verify the user's identity. Pollar renders the entire provider-selection and verification flow inside a modal.",
     countryLabel: "Country (ISO 3166-1 alpha-2)",
-    levelLabel: "Level",
-    levelFromDashboard: "Choose a named KYC option in the modal. Available workflows are configured for your application in the dashboard.",
     currentStatus: "current status",
     start: "Start KYC",
+    corridorLabel: "Ramp corridor ID (optional)",
+    corridorPlaceholder: "Corridor ID from Admin or Dashboard",
+    corridorHint:
+      "When set, the modal offers only the KYC this corridor requires, and an approval of any option the corridor accepts counts. Leave empty for standalone KYC.",
+    checkStatus: "Check status",
+    statusError: "Could not read the KYC status.",
+    reviewDuplicate:
+      "Held for manual review: this document is already linked to another account.",
+    reviewPending: "Held for manual review.",
+    expiredHint: "The approval expired. Start KYC again to renew it.",
     coreFnsTitle: "@pollar/core — functions used",
     coreFnsIntro:
       "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
     coreFns: [
       {
-        fn: "getKycProviders(country)",
+        fn: "getKycProviders(country, corridorId?)",
         tag: "async",
-        params: "country: string — an ISO 3166-1 alpha-2 code (e.g. 'MX').",
+        params:
+          "country: string — an ISO 3166-1 alpha-2 code (e.g. 'MX'); corridorId?: string — scope to the one option a ramp corridor asks for.",
         returns:
           "Promise<{ providers }> — the KYC providers available in that country.",
       },
@@ -1131,23 +1140,25 @@ export const en = {
         fn: "startKyc(body)",
         tag: "async",
         params:
-          "body: KycStartBody — { providerId: string; level: 'basic' | 'intermediate' | 'enhanced' }.",
+          "body: KycStartBody — { providerId: string; country?: string; corridorId?: string; idempotencyKey?: string }. Reuse idempotencyKey on retries to get the same session back.",
         returns:
           "Promise<KycStartResponse> — the verification session to hand off to the provider.",
       },
       {
-        fn: "pollKycStatus(providerId, opts?)",
+        fn: "pollKycDecision(providerId, opts?)",
         tag: "async",
         params:
-          "providerId: string; opts?: { intervalMs?, timeoutMs? } polling controls.",
+          "providerId: string; opts?: { intervalMs?, timeoutMs?, corridorId? } polling controls.",
         returns:
-          "Promise — resolves once the status settles to 'approved' | 'rejected' (from 'none' | 'pending').",
+          "Promise<{ status, decisionStatus?, reviewReason? }> — resolves once the decision settles: 'approved' | 'rejected' | 'expired', or held for manual review (decisionStatus 'manual_review').",
       },
       {
-        fn: "getKycStatus(providerId?)",
+        fn: "getKycStatus(providerId?, corridorId?)",
         tag: "async",
-        params: "providerId?: string — omit to read the user's overall status.",
-        returns: "Promise<{ status, level?, providerId }> — a one-shot read.",
+        params:
+          "providerId?: string — omit to read the user's overall status; corridorId?: string — 'approved' when any option the corridor accepts is satisfied.",
+        returns:
+          "Promise<{ status, providerId?, decisionStatus?, reviewReason?, level?, expiresAt? }> — a one-shot read.",
       },
     ],
     reactFnsTitle: "@pollar/react — hook & values used",
@@ -1166,14 +1177,14 @@ export const en = {
         fn: "openKycModal(options?)",
         tag: "sync",
         params:
-          "options?: { country?: string; level?: 'basic' | 'intermediate' | 'enhanced'; onApproved?: () => void } — wraps getKycProviders / startKyc / pollKycStatus.",
+          "options?: { country?: string; corridorId?: string; providerId?: string; onApproved?: () => void } — wraps getKycProviders / startKyc / pollKycDecision.",
         returns: "void — opens the prebuilt modal; there is nothing to await.",
       },
       {
         fn: "<KycStatus status={…} />",
         tag: "component",
         params:
-          "status: 'none' | 'pending' | 'approved' | 'rejected' — the badge to render.",
+          "status: 'none' | 'pending' | 'approved' | 'rejected' | 'expired' — the badge to render.",
         returns:
           "A ready-made status badge component, exported from @pollar/react.",
       },
@@ -3456,18 +3467,27 @@ export const es: Dictionary = {
     title: "KYC",
     desc: "Verifica la identidad del usuario. Pollar renderiza todo el flujo de selección de proveedor y verificación dentro de un modal.",
     countryLabel: "País (ISO 3166-1 alfa-2)",
-    levelLabel: "Nivel",
-    levelFromDashboard: "Elige una opción KYC con nombre propio en el modal. Los workflows disponibles se configuran para tu aplicación en dashboard.",
     currentStatus: "estado actual",
     start: "Iniciar KYC",
+    corridorLabel: "ID del corredor de rampa (opcional)",
+    corridorPlaceholder: "ID del corredor desde Admin o Dashboard",
+    corridorHint:
+      "Si lo indicas, el modal ofrece solo el KYC que exige ese corredor, y cuenta la aprobación de cualquier opción que el corredor acepte. Déjalo vacío para un KYC independiente.",
+    checkStatus: "Consultar estado",
+    statusError: "No se pudo leer el estado de KYC.",
+    reviewDuplicate:
+      "En revisión manual: este documento ya está vinculado a otra cuenta.",
+    reviewPending: "En revisión manual.",
+    expiredHint: "La aprobación venció. Inicia el KYC de nuevo para renovarla.",
     coreFnsTitle: "@pollar/core — funciones utilizadas",
     coreFnsIntro:
       "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
     coreFns: [
       {
-        fn: "getKycProviders(country)",
+        fn: "getKycProviders(country, corridorId?)",
         tag: "async",
-        params: "country: string — un código ISO 3166-1 alfa-2 (p. ej. 'MX').",
+        params:
+          "country: string — un código ISO 3166-1 alfa-2 (p. ej. 'MX'); corridorId?: string — limita a la única opción que pide un corredor de rampa.",
         returns:
           "Promise<{ providers }>: los proveedores de KYC disponibles en ese país.",
       },
@@ -3475,25 +3495,25 @@ export const es: Dictionary = {
         fn: "startKyc(body)",
         tag: "async",
         params:
-          "body: KycStartBody — { providerId: string; level: 'basic' | 'intermediate' | 'enhanced' }.",
+          "body: KycStartBody — { providerId: string; country?: string; corridorId?: string; idempotencyKey?: string }. Reutiliza idempotencyKey en los reintentos para recuperar la misma sesión.",
         returns:
           "Promise<KycStartResponse>: la sesión de verificación para entregar al proveedor.",
       },
       {
-        fn: "pollKycStatus(providerId, opts?)",
+        fn: "pollKycDecision(providerId, opts?)",
         tag: "async",
         params:
-          "providerId: string; opts?: { intervalMs?, timeoutMs? } controles de polling.",
+          "providerId: string; opts?: { intervalMs?, timeoutMs?, corridorId? } controles de polling.",
         returns:
-          "Promise: se resuelve cuando el estado llega a 'approved' | 'rejected' (desde 'none' | 'pending').",
+          "Promise<{ status, decisionStatus?, reviewReason? }>: se resuelve cuando la decisión se asienta: 'approved' | 'rejected' | 'expired', o retenida en revisión manual (decisionStatus 'manual_review').",
       },
       {
-        fn: "getKycStatus(providerId?)",
+        fn: "getKycStatus(providerId?, corridorId?)",
         tag: "async",
         params:
-          "providerId?: string — omítelo para leer el estado general del usuario.",
+          "providerId?: string — omítelo para leer el estado general del usuario; corridorId?: string — 'approved' si se cumple cualquier opción que el corredor acepta.",
         returns:
-          "Promise<{ status, level?, providerId }>: una lectura puntual.",
+          "Promise<{ status, providerId?, decisionStatus?, reviewReason?, level?, expiresAt? }>: una lectura puntual.",
       },
     ],
     reactFnsTitle: "@pollar/react — hook y valores utilizados",
@@ -3512,14 +3532,14 @@ export const es: Dictionary = {
         fn: "openKycModal(options?)",
         tag: "sync",
         params:
-          "options?: { country?: string; level?: 'basic' | 'intermediate' | 'enhanced'; onApproved?: () => void } — envuelve getKycProviders / startKyc / pollKycStatus.",
+          "options?: { country?: string; corridorId?: string; providerId?: string; onApproved?: () => void } — envuelve getKycProviders / startKyc / pollKycDecision.",
         returns: "void: abre el modal prearmado; no hay nada que esperar.",
       },
       {
         fn: "<KycStatus status={…} />",
         tag: "component",
         params:
-          "status: 'none' | 'pending' | 'approved' | 'rejected' — el badge a renderizar.",
+          "status: 'none' | 'pending' | 'approved' | 'rejected' | 'expired' — el badge a renderizar.",
         returns:
           "Un componente de badge de estado ya hecho, exportado desde @pollar/react.",
       },
@@ -5805,18 +5825,27 @@ export const pt: Dictionary = {
     title: "KYC",
     desc: "Verifique a identidade do usuário. A Pollar renderiza todo o fluxo de seleção de provedor e verificação dentro de um modal.",
     countryLabel: "País (ISO 3166-1 alfa-2)",
-    levelLabel: "Nível",
-    levelFromDashboard: "Escolha uma opção KYC com nome próprio no modal. Os workflows disponíveis são configurados para sua aplicação no dashboard.",
     currentStatus: "status atual",
     start: "Iniciar KYC",
+    corridorLabel: "ID do corredor de rampa (opcional)",
+    corridorPlaceholder: "ID do corredor no Admin ou Dashboard",
+    corridorHint:
+      "Se preenchido, o modal oferece só o KYC que esse corredor exige, e vale a aprovação de qualquer opção que o corredor aceite. Deixe vazio para um KYC independente.",
+    checkStatus: "Consultar status",
+    statusError: "Não foi possível ler o status de KYC.",
+    reviewDuplicate:
+      "Em revisão manual: este documento já está vinculado a outra conta.",
+    reviewPending: "Em revisão manual.",
+    expiredHint: "A aprovação venceu. Inicie o KYC de novo para renová-la.",
     coreFnsTitle: "@pollar/core — funções utilizadas",
     coreFnsIntro:
       "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
     coreFns: [
       {
-        fn: "getKycProviders(country)",
+        fn: "getKycProviders(country, corridorId?)",
         tag: "async",
-        params: "country: string — um código ISO 3166-1 alfa-2 (ex. 'MX').",
+        params:
+          "country: string — um código ISO 3166-1 alfa-2 (ex. 'MX'); corridorId?: string — limita à única opção que um corredor de rampa pede.",
         returns:
           "Promise<{ providers }>: os provedores de KYC disponíveis nesse país.",
       },
@@ -5824,24 +5853,25 @@ export const pt: Dictionary = {
         fn: "startKyc(body)",
         tag: "async",
         params:
-          "body: KycStartBody — { providerId: string; level: 'basic' | 'intermediate' | 'enhanced' }.",
+          "body: KycStartBody — { providerId: string; country?: string; corridorId?: string; idempotencyKey?: string }. Reutilize idempotencyKey nas novas tentativas para recuperar a mesma sessão.",
         returns:
           "Promise<KycStartResponse>: a sessão de verificação para entregar ao provedor.",
       },
       {
-        fn: "pollKycStatus(providerId, opts?)",
+        fn: "pollKycDecision(providerId, opts?)",
         tag: "async",
         params:
-          "providerId: string; opts?: { intervalMs?, timeoutMs? } controles de polling.",
+          "providerId: string; opts?: { intervalMs?, timeoutMs?, corridorId? } controles de polling.",
         returns:
-          "Promise: resolve quando o status chega a 'approved' | 'rejected' (a partir de 'none' | 'pending').",
+          "Promise<{ status, decisionStatus?, reviewReason? }>: resolve quando a decisão se assenta: 'approved' | 'rejected' | 'expired', ou retida em revisão manual (decisionStatus 'manual_review').",
       },
       {
-        fn: "getKycStatus(providerId?)",
+        fn: "getKycStatus(providerId?, corridorId?)",
         tag: "async",
         params:
-          "providerId?: string — omita para ler o status geral do usuário.",
-        returns: "Promise<{ status, level?, providerId }>: uma leitura única.",
+          "providerId?: string — omita para ler o status geral do usuário; corridorId?: string — 'approved' se qualquer opção que o corredor aceita for cumprida.",
+        returns:
+          "Promise<{ status, providerId?, decisionStatus?, reviewReason?, level?, expiresAt? }>: uma leitura única.",
       },
     ],
     reactFnsTitle: "@pollar/react — hook e valores utilizados",
@@ -5860,14 +5890,14 @@ export const pt: Dictionary = {
         fn: "openKycModal(options?)",
         tag: "sync",
         params:
-          "options?: { country?: string; level?: 'basic' | 'intermediate' | 'enhanced'; onApproved?: () => void } — envolve getKycProviders / startKyc / pollKycStatus.",
+          "options?: { country?: string; corridorId?: string; providerId?: string; onApproved?: () => void } — envolve getKycProviders / startKyc / pollKycDecision.",
         returns: "void: abre o modal pré-montado; não há nada para aguardar.",
       },
       {
         fn: "<KycStatus status={…} />",
         tag: "component",
         params:
-          "status: 'none' | 'pending' | 'approved' | 'rejected' — o badge a renderizar.",
+          "status: 'none' | 'pending' | 'approved' | 'rejected' | 'expired' — o badge a renderizar.",
         returns:
           "Um componente de badge de status pronto, exportado de @pollar/react.",
       },

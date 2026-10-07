@@ -19,19 +19,48 @@ const btn =
 
 export default function KycPage() {
   const { t } = useI18n();
-  const { openKycModal, isAuthenticated } = usePollar();
+  const { openKycModal, isAuthenticated, getClient } = usePollar();
 
   const [status, setStatus] = useState<KycStatusValue>("none");
+  const [statusNote, setStatusNote] = useState<string | null>(null);
+  const [checking, setChecking] = useState(false);
   const [country, setCountry] = useState("MX");
   const [corridorId, setCorridorId] = useState("");
+
+  // A status read only: it never opens a vendor session.
+  async function handleCheckStatus() {
+    setChecking(true);
+    setStatusNote(null);
+    try {
+      const read = await getClient().getKycStatus(
+        undefined,
+        corridorId.trim() || undefined,
+      );
+      setStatus(read.status);
+      if (read.decisionStatus === "manual_review") {
+        setStatusNote(
+          read.reviewReason === "DUPLICATE_DOCUMENT"
+            ? t.kyc.reviewDuplicate
+            : t.kyc.reviewPending,
+        );
+      } else if (read.status === "expired") {
+        setStatusNote(t.kyc.expiredHint);
+      }
+    } catch {
+      setStatusNote(t.kyc.statusError);
+    } finally {
+      setChecking(false);
+    }
+  }
 
   function handleStart() {
     openKycModal({
       country,
-      ...(corridorId.trim()
-        ? { corridorId: corridorId.trim() }
-        : {}),
-      onApproved: () => setStatus("approved"),
+      ...(corridorId.trim() ? { corridorId: corridorId.trim() } : {}),
+      onApproved: () => {
+        setStatus("approved");
+        setStatusNote(null);
+      },
     });
   }
 
@@ -44,15 +73,17 @@ await client.ready();
 // 1. list providers for a country
 const { providers } = await client.getKycProviders('${country || "MX"}'${corridorId.trim() ? ", " + JSON.stringify(corridorId.trim()) : ""});
 
-// 2. start verification with a provider
+// 2. start verification with a provider (reuse the key on retries)
 const session = await client.startKyc({
   country: '${country || "MX"}',
   providerId: providers[0].id,
-${corridorId.trim() ? "  corridorId: " + JSON.stringify(corridorId.trim()) + ",\n" : ""}});
+${corridorId.trim() ? "  corridorId: " + JSON.stringify(corridorId.trim()) + ",\n" : ""}  idempotencyKey: crypto.randomUUID(),
+});
 
-// 3. poll until resolved
-const status = await client.pollKycStatus(providers[0].id${corridorId.trim() ? ", { corridorId: " + JSON.stringify(corridorId.trim()) + " }" : ""});
-// status: 'none' | 'pending' | 'approved' | 'rejected'`;
+// 3. poll until the decision settles
+const decision = await client.pollKycDecision(providers[0].id${corridorId.trim() ? ", { corridorId: " + JSON.stringify(corridorId.trim()) + " }" : ""});
+// decision.status: 'none' | 'pending' | 'approved' | 'rejected' | 'expired'
+// decision.decisionStatus === 'manual_review' -> held for review (decision.reviewReason)`;
 
   const reactCode = `import { usePollar, KycStatus } from '@pollar/react';
 
@@ -97,21 +128,19 @@ ${corridorId.trim() ? "  corridorId: " + JSON.stringify(corridorId.trim()) + ",\
           </div>
 
           <div>
-            <label className={lbl}>Ramp corridor ID (optional)</label>
+            <label className={lbl}>{t.kyc.corridorLabel}</label>
             <input
               className={inp}
               value={corridorId}
               onChange={(event) => {
                 setCorridorId(event.target.value);
                 setStatus("none");
+                setStatusNote(null);
               }}
-              placeholder="Corridor ID from Admin or Dashboard"
+              placeholder={t.kyc.corridorPlaceholder}
               spellCheck={false}
             />
-            <p className="text-xs text-muted mt-2">
-              When set, only this corridor’s required KYC is offered. Leave empty
-              for standalone KYC.
-            </p>
+            <p className="text-xs text-muted mt-2">{t.kyc.corridorHint}</p>
           </div>
 
           <div className="flex items-center gap-3 pt-1">
@@ -119,7 +148,15 @@ ${corridorId.trim() ? "  corridorId: " + JSON.stringify(corridorId.trim()) + ",\
               {t.kyc.currentStatus}
             </span>
             <KycStatus status={status} />
+            <button
+              onClick={handleCheckStatus}
+              disabled={!isAuthenticated || checking}
+              className="text-xs font-mono text-primary hover:underline disabled:opacity-40"
+            >
+              {t.kyc.checkStatus}
+            </button>
           </div>
+          {statusNote && <p className="text-xs text-muted">{statusNote}</p>}
 
           <button
             onClick={handleStart}
