@@ -891,65 +891,84 @@ export const en = {
 
   ramp: {
     title: "Ramp",
-    desc: "Buy and sell crypto with local payment methods (SPEI, PIX, PSE, ACH) through anchors like Anclap. Pollar renders the entire quote-and-payment flow inside a modal.",
+    desc: "Buy and sell crypto using the routes enabled for your application. Review exact totals, complete verification and explicitly authorize each required step.",
     open: "Open Ramp modal",
-    note: "takes no arguments — country, currency and direction are picked inside the modal.",
+    note: "No arguments: select the available country, currency, asset, rail and direction in the modal.",
     reactDesc:
-      "Drop-in button that opens a prebuilt modal — the whole quote → payment → settle flow is rendered for you.",
+      "The shared widget renders saved verification steps, payment instructions, authorization and receipts.",
     coreDesc:
-      "Drive the on/off-ramp yourself: quote, create the ramp, then poll until it settles.",
+      "Read enabled routes, request a quote, review its exact terms and required fields, then render the saved transaction actions.",
     coreFnsTitle: "Functions used",
     coreFnsIntro:
-      "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
+      "Methods on the authenticated PollarClient returned by getClient().",
     coreFns: [
+      {
+        fn: "getRampRoutes()",
+        tag: "async",
+        params: "No arguments.",
+        returns:
+          "Enabled routes with capabilities, asset precision and stable route IDs.",
+      },
       {
         fn: "getRampsQuote(query)",
         tag: "async",
         params:
-          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+          "RampsQuoteQuery: routeId, chain, country, currency, direction, amount and amountExact; amountDenomination is fiat or crypto.",
         returns:
-          "Promise<RampsQuoteResponse> — the available quotes for the request.",
+          "Quotes with exact terms, a public 15-minute expiry and required fields.",
       },
       {
-        fn: "createOnRamp(body)",
-        tag: "async",
-        params: "body: RampsOnrampBody — a chosen quote selection.",
-        returns:
-          "Promise<RampsOnrampResponse> — content.id and content.paymentInstructions.",
-      },
-      {
-        fn: "createOffRamp(body)",
-        tag: "async",
-        params: "body: RampsOfframpBody — a chosen quote selection.",
-        returns: "Promise<RampsOfframpResponse> — the off-ramp payout details.",
-      },
-      {
-        fn: "pollRampTransaction(txId, opts?)",
+        fn: "createOnRamp(body) / createOffRamp(body)",
         tag: "async",
         params:
-          "txId: string (from the created ramp); opts?: polling options (interval, signal, …).",
+          "Selected quoteId, saved amount/currency/country and user-provided fields.",
         returns:
-          "Promise<RampsTransactionResponse> — resolves once the ramp reaches a terminal status.",
+          "Saved transaction with txId, terms, version and nextAction. SDK methods return content directly.",
+      },
+      {
+        fn: "getRampTransaction(txId)",
+        tag: "async",
+        params: "The saved transaction ID.",
+        returns:
+          "Saved lifecycle, next action, exact terms, reconciliation state and verified milestones; does not authorize a payment.",
+      },
+      {
+        fn: "continueRamp(txId, body)",
+        tag: "async",
+        params:
+          "actionId and transactionVersion from the saved action; optional fields or signedPayload.",
+        returns: "Latest saved transaction. Call from an explicit user action.",
+      },
+      {
+        fn: "signRampAction(txId, saved)",
+        tag: "async",
+        params: "Saved snapshot of a current signing action.",
+        returns:
+          "Signs for the declared chain/encoding after checking the latest action. Backend owns submission.",
+      },
+      {
+        fn: "registerRampSigningHandler(chain, encoding, handler)",
+        tag: "sync",
+        params: "Exact chain ID, payload encoding and signing handler.",
+        returns:
+          "An unregister function. Unsupported chains cannot use another chain’s signer.",
       },
     ],
-    reactFnsTitle: "Hook & values used",
-    reactFnsIntro:
-      "All of these come from the usePollar() hook — the react layer built on top of getClient().",
+    reactFnsTitle: "Hook and modal",
+    reactFnsIntro: "Use the React hook to open the same ramp workflow.",
     reactFns: [
       {
         fn: "usePollar()",
         tag: "hook",
-        params:
-          "No arguments. Call it at the top level of a component — it reads React context, so it must run during render.",
-        returns:
-          "PollarContextValue — the whole SDK surface: reactive state values, modal openers, and getClient() to drop down to core.",
+        params: "Call at the top level of a React component.",
+        returns: "Reactive state, getClient() and modal openers.",
       },
       {
         fn: "openRampModal()",
         tag: "sync",
         params:
-          "No arguments — country, currency and direction are picked inside the modal.",
-        returns: "void — opens the prebuilt modal; there is nothing to await.",
+          "No arguments: select the available country, currency, asset, rail and direction in the modal.",
+        returns: "void",
       },
     ],
   },
@@ -1944,39 +1963,38 @@ export const en = {
   },
 
   rampAbout: {
-    eyebrow: "Integration",
-    title: "On/off-ramp with local payment methods",
-    tagline:
-      "Buy and sell crypto through regional anchors — one modal, one flow.",
+    eyebrow: "Ramp",
+    title: "Shared ramp workflow",
+    tagline: "Enabled routes, exact totals and one saved workflow.",
     body: [
-      "Ramp connects your users to fiat: they buy crypto with a local payment method (SPEI, PIX, PSE, ACH) or cash out the other way. Pollar quotes the anchor, creates the on/off-ramp and surfaces the payment instructions inside a single modal.",
-      "Which anchors and rails are available is decided in your dashboard — the SDK reads that selection at runtime from the app config, so enabling a new anchor is a dashboard toggle, not a redeploy. If nothing is enabled, the ramp UI stays hidden.",
-      "Under the hood the flow is quote → create ramp → poll until it settles, all through @pollar/core. See the Implementation tab for the live demo and the exact calls.",
+      "Choose an enabled route to buy or sell crypto. Each route identifies its country, currency, asset, chain and payment rail. The available choices come from the backend.",
+      "Review the saved quote totals and expiry, then provide the required fields. Verification may have several steps; a payment or signature requires your explicit authorization.",
+      "Status checks read the saved transaction. Background reconciliation continues without the browser. Completion appears only after the backend verifies the required settlement evidence.",
     ],
-    featuresTitle: "Anchors & status",
+    featuresTitle: "Shared ramp workflow",
     features: [
       {
-        title: "Anclap — live",
-        desc: "On/off-ramp local currency across regional rails (SPEI, PIX, PSE…), settled on Stellar.",
+        title: "Routes and assets",
+        desc: "Currencies, assets, chains and rails come from enabled routes. New integrations must pass enrollment checks before appearing.",
       },
       {
-        title: "More anchors — in progress",
-        desc: "Additional regional anchors and payment rails are being wired in; enable them from the dashboard as they ship.",
+        title: "Verification and authorization",
+        desc: "The widget displays required fields, verification steps, hosted links and chain-specific signing actions.",
       },
       {
-        title: "Configured in your dashboard",
-        desc: "Toggle anchors under Treasury — the SDK reads your selection at runtime, with no code change.",
+        title: "Saved progress",
+        desc: "Reopening a transaction reads its latest version and exact totals. Polling never repeats signing or payment.",
       },
       {
-        title: "One modal, core or React",
-        desc: "openRampModal() renders the whole quote → payment → settle flow; or drive it yourself with @pollar/core.",
+        title: "Verified receipts",
+        desc: "The receipt shows saved lifecycle progress and verified milestones. Readiness or a provider report alone cannot prove completion.",
       },
     ],
     resourcesTitle: "Resources",
     anclapLabel: "Anclap",
     docsLabel: "Stellar anchors & SEPs",
     disclaimer:
-      "Anchor availability depends on your dashboard configuration and each anchor's coverage. Anclap is a third party — all credit to their team.",
+      "Provider availability depends on application configuration, route enrollment and settlement verification. Unavailable routes stay disabled.",
   },
 
   swapAbout: {
@@ -3236,66 +3254,84 @@ export const es: Dictionary = {
 
   ramp: {
     title: "Ramp",
-    desc: "Compra y vende cripto con métodos de pago locales (SPEI, PIX, PSE, ACH) a través de anchors como Anclap. Pollar renderiza todo el flujo de cotización y pago dentro de un modal.",
+    desc: "Compra y vende cripto usando las rutas habilitadas para tu aplicación. Revisa los totales exactos, completa la verificación y autoriza explícitamente cada paso requerido.",
     open: "Abrir modal de ramp",
-    note: "no recibe argumentos: el país, la moneda y el tipo de operación se eligen dentro del modal.",
+    note: "Sin argumentos: elige el país, moneda, activo, riel y dirección disponibles en el modal.",
     reactDesc:
-      "Botón listo que abre un modal prearmado: todo el flujo cotización → pago → liquidación ya viene renderizado.",
+      "El widget compartido muestra pasos de verificación guardados, instrucciones de pago, autorización y recibos.",
     coreDesc:
-      "Controla el on/off-ramp tú mismo: cotiza, crea el ramp y luego haz polling hasta que se liquide.",
+      "Consulta las rutas habilitadas, solicita una cotización, revisa sus términos exactos y campos requeridos, y muestra las acciones de la transacción guardada.",
     coreFnsTitle: "Funciones utilizadas",
     coreFnsIntro:
-      "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
+      "Métodos del PollarClient autenticado que devuelve getClient().",
     coreFns: [
+      {
+        fn: "getRampRoutes()",
+        tag: "async",
+        params: "No arguments.",
+        returns:
+          "Enabled routes with capabilities, asset precision and stable route IDs.",
+      },
       {
         fn: "getRampsQuote(query)",
         tag: "async",
         params:
-          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+          "RampsQuoteQuery: routeId, chain, country, currency, direction, amount and amountExact; amountDenomination is fiat or crypto.",
         returns:
-          "Promise<RampsQuoteResponse>: las cotizaciones disponibles para la solicitud.",
+          "Quotes with exact terms, a public 15-minute expiry and required fields.",
       },
       {
-        fn: "createOnRamp(body)",
-        tag: "async",
-        params: "body: RampsOnrampBody — una cotización elegida.",
-        returns:
-          "Promise<RampsOnrampResponse>: content.id y content.paymentInstructions.",
-      },
-      {
-        fn: "createOffRamp(body)",
-        tag: "async",
-        params: "body: RampsOfframpBody — una cotización elegida.",
-        returns:
-          "Promise<RampsOfframpResponse>: los detalles del pago del off-ramp.",
-      },
-      {
-        fn: "pollRampTransaction(txId, opts?)",
+        fn: "createOnRamp(body) / createOffRamp(body)",
         tag: "async",
         params:
-          "txId: string (del ramp creado); opts?: opciones de polling (intervalo, signal, …).",
+          "Selected quoteId, saved amount/currency/country and user-provided fields.",
         returns:
-          "Promise<RampsTransactionResponse>: se resuelve cuando el ramp llega a un estado terminal.",
+          "Saved transaction with txId, terms, version and nextAction. SDK methods return content directly.",
+      },
+      {
+        fn: "getRampTransaction(txId)",
+        tag: "async",
+        params: "The saved transaction ID.",
+        returns:
+          "Saved lifecycle, next action, exact terms, reconciliation state and verified milestones; does not authorize a payment.",
+      },
+      {
+        fn: "continueRamp(txId, body)",
+        tag: "async",
+        params:
+          "actionId and transactionVersion from the saved action; optional fields or signedPayload.",
+        returns: "Latest saved transaction. Call from an explicit user action.",
+      },
+      {
+        fn: "signRampAction(txId, saved)",
+        tag: "async",
+        params: "Saved snapshot of a current signing action.",
+        returns:
+          "Signs for the declared chain/encoding after checking the latest action. Backend owns submission.",
+      },
+      {
+        fn: "registerRampSigningHandler(chain, encoding, handler)",
+        tag: "sync",
+        params: "Exact chain ID, payload encoding and signing handler.",
+        returns:
+          "An unregister function. Unsupported chains cannot use another chain’s signer.",
       },
     ],
-    reactFnsTitle: "Hook y valores utilizados",
-    reactFnsIntro:
-      "Todos vienen del hook usePollar(): la capa de react construida sobre getClient().",
+    reactFnsTitle: "Hook y modal",
+    reactFnsIntro: "Usa el hook de React para abrir el mismo flujo de ramp.",
     reactFns: [
       {
         fn: "usePollar()",
         tag: "hook",
-        params:
-          "Sin argumentos. Llámalo en el nivel superior de un componente: lee el contexto de React, así que debe ejecutarse durante el render.",
-        returns:
-          "PollarContextValue: toda la superficie del SDK: valores de estado reactivo, abridores de modales y getClient() para bajar a core.",
+        params: "Call at the top level of a React component.",
+        returns: "Reactive state, getClient() and modal openers.",
       },
       {
         fn: "openRampModal()",
         tag: "sync",
         params:
-          "Sin argumentos: el país, la moneda y el tipo de operación se eligen dentro del modal.",
-        returns: "void: abre el modal prearmado; no hay nada que esperar.",
+          "Sin argumentos: elige el país, moneda, activo, riel y dirección disponibles en el modal.",
+        returns: "void",
       },
     ],
   },
@@ -4296,39 +4332,38 @@ export const es: Dictionary = {
   },
 
   rampAbout: {
-    eyebrow: "Integración",
-    title: "On/off-ramp con métodos de pago locales",
-    tagline:
-      "Compra y vende cripto vía anchors regionales — un modal, un flujo.",
+    eyebrow: "Ramp",
+    title: "Flujo compartido de ramp",
+    tagline: "Rutas habilitadas, totales exactos y un flujo guardado.",
     body: [
-      "Ramp conecta a tus usuarios con el fiat: compran cripto con un método de pago local (SPEI, PIX, PSE, ACH) o hacen el cash-out al revés. Pollar cotiza el anchor, crea el on/off-ramp y muestra las instrucciones de pago dentro de un solo modal.",
-      "Qué anchors y rieles están disponibles se decide en tu dashboard — el SDK lee esa selección en tiempo de ejecución desde la config de la app, así que habilitar un nuevo anchor es un toggle del dashboard, no un redeploy. Si no hay nada habilitado, la UI de ramp queda oculta.",
-      "Por dentro el flujo es cotizar → crear ramp → hacer polling hasta que liquida, todo con @pollar/core. Mirá la pestaña Implementación para el demo en vivo y las llamadas exactas.",
+      "Elige una ruta habilitada para comprar o vender cripto. Cada ruta identifica su país, moneda, activo, cadena y riel de pago. Las opciones disponibles vienen del backend.",
+      "Revisa los totales guardados y la vigencia de la cotización, y completa los campos requeridos. La verificación puede tener varios pasos; un pago o firma requiere tu autorización explícita.",
+      "Las consultas de estado leen la transacción guardada. La reconciliación continúa en segundo plano sin el navegador. La operación solo se completa cuando el backend verifica la evidencia requerida de liquidación.",
     ],
-    featuresTitle: "Anchors y estado",
+    featuresTitle: "Flujo compartido de ramp",
     features: [
       {
-        title: "Anclap — activo",
-        desc: "On/off-ramp de moneda local sobre rieles regionales (SPEI, PIX, PSE…), liquidado en Stellar.",
+        title: "Rutas y activos",
+        desc: "Las monedas, activos, cadenas y rieles vienen de las rutas habilitadas. Una integración nueva debe pasar los requisitos de habilitación antes de aparecer.",
       },
       {
-        title: "Más anchors — en proceso",
-        desc: "Se están integrando más anchors y rieles de pago regionales; habilitalos desde el dashboard a medida que salen.",
+        title: "Verificación y autorización",
+        desc: "El widget muestra campos requeridos, pasos de verificación, enlaces externos y acciones de firma específicas de cada cadena.",
       },
       {
-        title: "Configurado desde tu dashboard",
-        desc: "Activá anchors en Treasury — el SDK lee tu selección en tiempo de ejecución, sin cambiar código.",
+        title: "Progreso guardado",
+        desc: "Al reabrir una transacción se leen su última versión y totales exactos. El polling nunca repite una firma ni un pago.",
       },
       {
-        title: "Un modal, core o React",
-        desc: "openRampModal() renderiza todo el flujo cotización → pago → liquidación; o controlalo vos con @pollar/core.",
+        title: "Recibos verificados",
+        desc: "El recibo muestra el progreso guardado y los hitos verificados. Estar listo o recibir un reporte del proveedor no demuestra que la operación terminó.",
       },
     ],
     resourcesTitle: "Recursos",
     anclapLabel: "Anclap",
-    docsLabel: "Anchors y SEPs de Stellar",
+    docsLabel: "Stellar anchors & SEPs",
     disclaimer:
-      "La disponibilidad de anchors depende de tu configuración del dashboard y de la cobertura de cada anchor. Anclap es un tercero; todo el crédito es de su equipo.",
+      "La disponibilidad depende de la configuración de la aplicación, la habilitación de rutas y la verificación de liquidación. Las rutas no disponibles permanecen deshabilitadas.",
   },
 
   swapAbout: {
@@ -5587,66 +5622,84 @@ export const pt: Dictionary = {
 
   ramp: {
     title: "Ramp",
-    desc: "Compre e venda cripto com métodos de pagamento locais (SPEI, PIX, PSE, ACH) através de anchors como a Anclap. A Pollar renderiza todo o fluxo de cotação e pagamento dentro de um modal.",
+    desc: "Compre e venda cripto usando as rotas habilitadas para seu aplicativo. Confira os totais exatos, conclua a verificação e autorize explicitamente cada etapa necessária.",
     open: "Abrir modal de ramp",
-    note: "não recebe argumentos — o país, a moeda e o tipo de operação são escolhidos dentro do modal.",
+    note: "Sem argumentos: escolha o país, moeda, ativo, trilho e direção disponíveis no modal.",
     reactDesc:
-      "Botão pronto que abre um modal pré-montado: todo o fluxo cotação → pagamento → liquidação já vem renderizado.",
+      "O widget compartilhado mostra etapas de verificação salvas, instruções de pagamento, autorização e recibos.",
     coreDesc:
-      "Controle o on/off-ramp você mesmo: cote, crie o ramp e então faça polling até liquidar.",
+      "Consulte as rotas habilitadas, solicite uma cotação, confira seus termos exatos e campos necessários, e mostre as ações da transação salva.",
     coreFnsTitle: "Funções utilizadas",
     coreFnsIntro:
-      "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
+      "Métodos do PollarClient autenticado retornado por getClient().",
     coreFns: [
+      {
+        fn: "getRampRoutes()",
+        tag: "async",
+        params: "No arguments.",
+        returns:
+          "Enabled routes with capabilities, asset precision and stable route IDs.",
+      },
       {
         fn: "getRampsQuote(query)",
         tag: "async",
         params:
-          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+          "RampsQuoteQuery: routeId, chain, country, currency, direction, amount and amountExact; amountDenomination is fiat or crypto.",
         returns:
-          "Promise<RampsQuoteResponse>: as cotações disponíveis para a solicitação.",
+          "Quotes with exact terms, a public 15-minute expiry and required fields.",
       },
       {
-        fn: "createOnRamp(body)",
-        tag: "async",
-        params: "body: RampsOnrampBody — uma cotação escolhida.",
-        returns:
-          "Promise<RampsOnrampResponse>: content.id e content.paymentInstructions.",
-      },
-      {
-        fn: "createOffRamp(body)",
-        tag: "async",
-        params: "body: RampsOfframpBody — uma cotação escolhida.",
-        returns:
-          "Promise<RampsOfframpResponse>: os detalhes de pagamento do off-ramp.",
-      },
-      {
-        fn: "pollRampTransaction(txId, opts?)",
+        fn: "createOnRamp(body) / createOffRamp(body)",
         tag: "async",
         params:
-          "txId: string (do ramp criado); opts?: opções de polling (intervalo, signal, …).",
+          "Selected quoteId, saved amount/currency/country and user-provided fields.",
         returns:
-          "Promise<RampsTransactionResponse>: resolve quando o ramp atinge um estado terminal.",
+          "Saved transaction with txId, terms, version and nextAction. SDK methods return content directly.",
+      },
+      {
+        fn: "getRampTransaction(txId)",
+        tag: "async",
+        params: "The saved transaction ID.",
+        returns:
+          "Saved lifecycle, next action, exact terms, reconciliation state and verified milestones; does not authorize a payment.",
+      },
+      {
+        fn: "continueRamp(txId, body)",
+        tag: "async",
+        params:
+          "actionId and transactionVersion from the saved action; optional fields or signedPayload.",
+        returns: "Latest saved transaction. Call from an explicit user action.",
+      },
+      {
+        fn: "signRampAction(txId, saved)",
+        tag: "async",
+        params: "Saved snapshot of a current signing action.",
+        returns:
+          "Signs for the declared chain/encoding after checking the latest action. Backend owns submission.",
+      },
+      {
+        fn: "registerRampSigningHandler(chain, encoding, handler)",
+        tag: "sync",
+        params: "Exact chain ID, payload encoding and signing handler.",
+        returns:
+          "An unregister function. Unsupported chains cannot use another chain’s signer.",
       },
     ],
-    reactFnsTitle: "Hook e valores utilizados",
-    reactFnsIntro:
-      "Todos vêm do hook usePollar() — a camada do react construída sobre getClient().",
+    reactFnsTitle: "Hook e modal",
+    reactFnsIntro: "Use o hook do React para abrir o mesmo fluxo de ramp.",
     reactFns: [
       {
         fn: "usePollar()",
         tag: "hook",
-        params:
-          "Sem argumentos. Chame-o no nível superior de um componente: ele lê o contexto do React, então precisa rodar durante o render.",
-        returns:
-          "PollarContextValue: toda a superfície do SDK: valores de estado reativo, abridores de modais e getClient() para descer ao core.",
+        params: "Call at the top level of a React component.",
+        returns: "Reactive state, getClient() and modal openers.",
       },
       {
         fn: "openRampModal()",
         tag: "sync",
         params:
-          "Sem argumentos: o país, a moeda e o tipo de operação são escolhidos dentro do modal.",
-        returns: "void: abre o modal pré-montado; não há nada para aguardar.",
+          "Sem argumentos: escolha o país, moeda, ativo, trilho e direção disponíveis no modal.",
+        returns: "void",
       },
     ],
   },
@@ -6644,39 +6697,38 @@ export const pt: Dictionary = {
   },
 
   rampAbout: {
-    eyebrow: "Integração",
-    title: "On/off-ramp com métodos de pagamento locais",
-    tagline:
-      "Compre e venda cripto via anchors regionais — um modal, um fluxo.",
+    eyebrow: "Ramp",
+    title: "Fluxo compartilhado de ramp",
+    tagline: "Rotas habilitadas, totais exatos e um fluxo salvo.",
     body: [
-      "O Ramp conecta seus usuários ao fiat: eles compram cripto com um método de pagamento local (SPEI, PIX, PSE, ACH) ou fazem o cash-out no sentido inverso. A Pollar cota o anchor, cria o on/off-ramp e mostra as instruções de pagamento dentro de um único modal.",
-      "Quais anchors e trilhos estão disponíveis é decidido no seu dashboard — o SDK lê essa seleção em tempo de execução a partir da config da app, então habilitar um novo anchor é um toggle no dashboard, não um redeploy. Se nada estiver habilitado, a UI de ramp fica oculta.",
-      "Por baixo, o fluxo é cotar → criar ramp → fazer polling até liquidar, tudo com @pollar/core. Veja a aba Implementação para o demo ao vivo e as chamadas exatas.",
+      "Escolha uma rota habilitada para comprar ou vender cripto. Cada rota identifica seu país, moeda, ativo, rede e trilho de pagamento. As opções disponíveis vêm do backend.",
+      "Confira os totais salvos e a validade da cotação e preencha os campos necessários. A verificação pode ter várias etapas; um pagamento ou assinatura exige sua autorização explícita.",
+      "As consultas de status leem a transação salva. A reconciliação continua em segundo plano sem o navegador. A operação só é concluída quando o backend verifica a evidência necessária de liquidação.",
     ],
-    featuresTitle: "Anchors e status",
+    featuresTitle: "Fluxo compartilhado de ramp",
     features: [
       {
-        title: "Anclap — ativo",
-        desc: "On/off-ramp de moeda local sobre trilhos regionais (SPEI, PIX, PSE…), liquidado na Stellar.",
+        title: "Rotas e ativos",
+        desc: "Moedas, ativos, redes e trilhos vêm das rotas habilitadas. Novas integrações precisam passar pelas verificações de habilitação antes de aparecer.",
       },
       {
-        title: "Mais anchors — em andamento",
-        desc: "Mais anchors e trilhos de pagamento regionais estão sendo integrados; habilite-os pelo dashboard conforme forem lançados.",
+        title: "Verificação e autorização",
+        desc: "O widget mostra campos necessários, etapas de verificação, links externos e ações de assinatura específicas de cada rede.",
       },
       {
-        title: "Configurado no seu dashboard",
-        desc: "Ative anchors em Treasury — o SDK lê sua seleção em tempo de execução, sem alterar código.",
+        title: "Progresso salvo",
+        desc: "Ao reabrir uma transação, são lidos sua última versão e totais exatos. O polling nunca repete uma assinatura ou pagamento.",
       },
       {
-        title: "Um modal, core ou React",
-        desc: "openRampModal() renderiza todo o fluxo cotação → pagamento → liquidação; ou controle você mesmo com @pollar/core.",
+        title: "Recibos verificados",
+        desc: "O recibo mostra o progresso salvo e os marcos verificados. Estar pronto ou receber um relatório do provedor não comprova a conclusão.",
       },
     ],
     resourcesTitle: "Recursos",
     anclapLabel: "Anclap",
-    docsLabel: "Anchors e SEPs da Stellar",
+    docsLabel: "Stellar anchors & SEPs",
     disclaimer:
-      "A disponibilidade de anchors depende da sua configuração no dashboard e da cobertura de cada anchor. A Anclap é um terceiro — todo o crédito é da equipe deles.",
+      "A disponibilidade depende da configuração do aplicativo, da habilitação de rotas e da verificação de liquidação. Rotas indisponíveis permanecem desabilitadas.",
   },
 
   swapAbout: {

@@ -1,38 +1,19 @@
 "use client";
 
+import { CORE_CODE } from "./example";
 import { usePollar } from "@pollar/react";
 import { SdkModalTab } from "@/app/_components/SdkDocs";
 import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
-const CORE_CODE = `import { PollarClient } from '@pollar/core';
-
-const client = new PollarClient({ apiKey, baseUrl });
-await client.ready();
-
-// 1. quote
-const quote = await client.getRampsQuote({
-  direction: 'onramp',
-  amount: '100',
-  fiatCurrency: 'MXN',
-  country: 'MX',
-});
-
-// 2. create the ramp from a chosen quote
-const onramp = await client.createOnRamp({ /* quote selection */ });
-// onramp.content.paymentInstructions, onramp.content.id
-
-// 3. poll until it settles
-const status = await client.pollRampTransaction(onramp.content.id);`;
-
 const REACT_CODE = `import { usePollar } from '@pollar/react';
 
 export function BuyCryptoButton() {
   const { openRampModal, isAuthenticated } = usePollar();
 
-  // openRampModal renders the whole quote-and-payment flow on top
-  // of client.getRampsQuote / createOnRamp / pollRampTransaction.
+  // The SDK renders enabled routes, exact totals and saved actions.
+  // Continue and signing require an explicit click; polling only reads.
   return (
     <button
       onClick={openRampModal}
