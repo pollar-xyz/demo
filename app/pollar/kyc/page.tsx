@@ -1,7 +1,7 @@
 "use client";
 
 import { usePollar, KycStatus } from "@pollar/react";
-import type { KycStatus as KycStatusValue, KycLevel } from "@pollar/core";
+import type { KycStatus as KycStatusValue } from "@pollar/core";
 import { useState } from "react";
 import { DualCode } from "@/app/_components/CodePanels";
 import { FnReference } from "@/app/_components/SdkDocs";
@@ -15,8 +15,6 @@ const lbl = "block text-xs font-mono text-muted mb-1";
 const btn =
   "rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white hover:bg-primary-hover disabled:opacity-40 transition-colors";
 
-const LEVELS: KycLevel[] = ["basic", "intermediate", "enhanced"];
-
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default function KycPage() {
@@ -25,12 +23,14 @@ export default function KycPage() {
 
   const [status, setStatus] = useState<KycStatusValue>("none");
   const [country, setCountry] = useState("MX");
-  const [level, setLevel] = useState<KycLevel>("basic");
+  const [corridorId, setCorridorId] = useState("");
 
   function handleStart() {
     openKycModal({
       country,
-      level,
+      ...(corridorId.trim()
+        ? { corridorId: corridorId.trim() }
+        : {}),
       onApproved: () => setStatus("approved"),
     });
   }
@@ -42,16 +42,16 @@ const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
 // 1. list providers for a country
-const { providers } = await client.getKycProviders('${country || "MX"}');
+const { providers } = await client.getKycProviders('${country || "MX"}'${corridorId.trim() ? ", " + JSON.stringify(corridorId.trim()) : ""});
 
 // 2. start verification with a provider
 const session = await client.startKyc({
+  country: '${country || "MX"}',
   providerId: providers[0].id,
-  level: '${level}',
-});
+${corridorId.trim() ? "  corridorId: " + JSON.stringify(corridorId.trim()) + ",\n" : ""}});
 
 // 3. poll until resolved
-const status = await client.pollKycStatus(providers[0].id);
+const status = await client.pollKycStatus(providers[0].id${corridorId.trim() ? ", { corridorId: " + JSON.stringify(corridorId.trim()) + " }" : ""});
 // status: 'none' | 'pending' | 'approved' | 'rejected'`;
 
   const reactCode = `import { usePollar, KycStatus } from '@pollar/react';
@@ -61,8 +61,7 @@ const { openKycModal } = usePollar();
 // openKycModal wraps getKycProviders / startKyc / pollKycStatus.
 openKycModal({
   country: '${country || "MX"}',
-  level: '${level}',
-  onApproved: () => {
+${corridorId.trim() ? "  corridorId: " + JSON.stringify(corridorId.trim()) + ",\n" : ""}  onApproved: () => {
     // unlock features for verified users
   },
 });
@@ -73,8 +72,6 @@ openKycModal({
   // ── render ──────────────────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-5xl space-y-5">
-      {/* The whole group is marked `soon` in _nav, so the Shell blurs this body
-          behind the ComingSoon overlay — no local wrapper needed here. */}
       <div>
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           {t.kyc.title}
@@ -100,23 +97,21 @@ openKycModal({
           </div>
 
           <div>
-            <label className={lbl}>{t.kyc.levelLabel}</label>
-            <div className="flex gap-2 flex-wrap">
-              {LEVELS.map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLevel(l)}
-                  className={`text-xs px-3 py-1.5 rounded border transition-colors ${
-                    level === l
-                      ? "bg-primary border-primary text-white font-medium"
-                      : "border-border text-muted hover:bg-surface"
-                  }`}
-                >
-                  {l}
-                </button>
-              ))}
-            </div>
+            <label className={lbl}>Ramp corridor ID (optional)</label>
+            <input
+              className={inp}
+              value={corridorId}
+              onChange={(event) => {
+                setCorridorId(event.target.value);
+                setStatus("none");
+              }}
+              placeholder="Corridor ID from Admin or Dashboard"
+              spellCheck={false}
+            />
+            <p className="text-xs text-muted mt-2">
+              When set, only this corridor’s required KYC is offered. Leave empty
+              for standalone KYC.
+            </p>
           </div>
 
           <div className="flex items-center gap-3 pt-1">

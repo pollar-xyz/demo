@@ -101,7 +101,7 @@ export const ALL_GROUPS: NavGroup[] = [
   {
     key: "kyc",
     section: "integrations",
-    soon: true,
+    isNew: true,
     tabs: [{ href: "/pollar/kyc", label: "kyc" }],
   },
   {
