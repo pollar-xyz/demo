@@ -12,6 +12,13 @@ import {
 } from "@/app/pollar/ramp/abroad/_i18n";
 
 import {
+  signerRotationEn,
+  signerRotationEs,
+  signerRotationNavLabel,
+  signerRotationPt,
+} from "@/app/pollar/signer-rotation/_i18n";
+
+import {
   cosmosWalletNavLabel,
   walletAdaptersNavLabel,
 } from "@/app/wallet-adapters/_i18n";
@@ -59,6 +66,7 @@ export const en = {
     sessions: "Sessions",
     signXdr: "Sign XDR",
     distribution: "Distribution",
+    signerRotation: signerRotationNavLabel.en,
     lumenwipe: "LumenWipe",
     overview: "Overview",
     dashboard: "Dashboard",
@@ -229,6 +237,9 @@ export const en = {
       amountLabel: "Amount",
       amountPh: "10",
       available: "Available",
+      memoLabel: "Memo",
+      memoPhText: "Text memo (max 28 bytes)",
+      memoPhId: "Numeric ID",
       run: "Run payment",
       running: "Submitting…",
       stateIdle: "Fill in destination, asset and amount, then run the payment.",
@@ -2360,6 +2371,7 @@ export const en = {
 
   ...nekoEn,
   ...abroadEn,
+  ...signerRotationEn,
 };
 
 export type Dictionary = typeof en;
@@ -2407,6 +2419,7 @@ export const es: Dictionary = {
     sessions: "Sesiones",
     signXdr: "Firmar XDR",
     distribution: "Distribución",
+    signerRotation: signerRotationNavLabel.es,
     lumenwipe: "LumenWipe",
     overview: "Resumen",
     dashboard: "Panel",
@@ -2579,6 +2592,9 @@ export const es: Dictionary = {
       amountLabel: "Monto",
       amountPh: "10",
       available: "Disponible",
+      memoLabel: "Memo",
+      memoPhText: "Memo de texto (máx. 28 bytes)",
+      memoPhId: "ID numérico",
       run: "Ejecutar pago",
       running: "Enviando…",
       stateIdle: "Completa destino, activo y monto, y luego ejecuta el pago.",
@@ -4719,6 +4735,7 @@ export const es: Dictionary = {
 
   ...nekoEs,
   ...abroadEs,
+  ...signerRotationEs,
 };
 
 export const pt: Dictionary = {
@@ -4764,6 +4781,7 @@ export const pt: Dictionary = {
     sessions: "Sessões",
     signXdr: "Assinar XDR",
     distribution: "Distribuição",
+    signerRotation: signerRotationNavLabel.pt,
     lumenwipe: "LumenWipe",
     overview: "Visão geral",
     dashboard: "Painel",
@@ -4938,6 +4956,9 @@ export const pt: Dictionary = {
       amountLabel: "Valor",
       amountPh: "10",
       available: "Disponível",
+      memoLabel: "Memo",
+      memoPhText: "Memo de texto (máx. 28 bytes)",
+      memoPhId: "ID numérico",
       run: "Executar pagamento",
       running: "Enviando…",
       stateIdle: "Preencha destino, ativo e valor e então execute o pagamento.",
@@ -7077,6 +7098,7 @@ export const pt: Dictionary = {
 
   ...nekoPt,
   ...abroadPt,
+  ...signerRotationPt,
 };
 
 export const LOCALES = ["en", "es", "pt"] as const;

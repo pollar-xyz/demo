@@ -85,18 +85,23 @@ function coreSnippet(
   destination: string,
   asset: PaymentAsset,
   amount: string,
+  options: PaymentOptions,
 ): string {
+  const memoArg = options
+    ? `,\n  { memo: { type: '${options.memo.type}', value: '${options.memo.value}' } }`
+    : "";
   return `import { PollarClient } from '@pollar/core';
 
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
 // "Send" is a payment operation: build → sign → submit in one call.
+// The optional third argument carries build options such as the memo.
 const res = await client.runTx('payment', {
   destination: '${destination || "G..."}',
   asset: ${assetLiteral(asset)},
   amount: '${amount || "10"}',
-});
+}${memoArg});
 // res.status: 'success' | 'pending' | 'error'
 // res.hash`;
 }
@@ -584,6 +589,45 @@ export default function SendPage() {
     </div>
   );
 
+  // Core tab only — runTx's memo option. Shares the memo state the scan tab
+  // fills, stored as a SEP-7 memoType so memoOption() maps both the same way.
+  const memoIsId = memoType.trim().toUpperCase() === "MEMO_ID";
+  const memoField = (
+    <div>
+      <label className={lbl}>
+        {t.send.form.memoLabel}{" "}
+        <span className="text-muted-light">{t.common.optional}</span>
+      </label>
+      <div className="mb-2 flex flex-wrap gap-2">
+        {(["MEMO_TEXT", "MEMO_ID"] as const).map((type) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => setMemoType(type)}
+            className={`${btn(
+              (type === "MEMO_ID") === memoIsId ? "primary" : "secondary",
+            )} text-xs`}
+          >
+            {type === "MEMO_ID" ? "id" : "text"}
+          </button>
+        ))}
+      </div>
+      <input
+        className={inp}
+        value={memo}
+        onChange={(e) => setMemo(e.target.value)}
+        placeholder={memoIsId ? t.send.form.memoPhId : t.send.form.memoPhText}
+        inputMode={memoIsId ? "numeric" : undefined}
+        spellCheck={false}
+      />
+      {memo.trim() && !memoSupported && (
+        <p className="mt-1 text-xs font-mono text-warning">
+          {t.send.scan.memoUnsupported}
+        </p>
+      )}
+    </div>
+  );
+
   // ── render ──────────────────────────────────────────────────────────────────
   return (
     <div className="w-full max-w-5xl">
@@ -653,6 +697,7 @@ export default function SendPage() {
               )}
 
               {isStellar ? paymentFields : nonStellarFields}
+              {isStellar && memoField}
 
               <div className="space-y-2 pt-1">
                 {coreError && (
@@ -785,7 +830,12 @@ export default function SendPage() {
               <CodePanel
                 sdk="@pollar/core"
                 note="framework-agnostic"
-                code={coreSnippet(destination, selectedAsset, amount)}
+                code={coreSnippet(
+                  destination,
+                  selectedAsset,
+                  amount,
+                  memoOption(memo, memoType),
+                )}
               />
             ) : (
               <CodePanel
