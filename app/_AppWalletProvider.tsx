@@ -58,9 +58,8 @@ type StackProps = {
   baseUrl: string;
   network: StellarNetwork;
   adapters: PollarAdapters;
-  // Leaves Privy out of the stack entirely (kit wallets only), even when
-  // NEXT_PUBLIC_PRIVY_APP_ID is set — the demo mainnet key has no Privy app
-  // behind it.
+  // Optional host override; otherwise the environment's Privy App ID controls
+  // whether the adapter is registered.
   privyDisabled?: boolean;
   children: React.ReactNode;
 };
