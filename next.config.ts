@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // The parent folder holds a pnpm-lock.yaml of its own; without a fixed root
   // Turbopack picks that one and watches every sibling repo.
   turbopack: { root: __dirname },

@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.yalc
+*.log
+# NEXT_PUBLIC_* come in as build args and the rest as runtime env, so a local
+# .env never gets baked into the image.
+.env
+.env.*
