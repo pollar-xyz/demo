@@ -858,9 +858,12 @@ export default function EscrowPage() {
       const { unsignedTransaction } = await fn(params);
       const signed = await signTx(unsignedTransaction);
       if (signed.status !== "signed") {
-        throw new Error(
-          signed.details ?? signed.message ?? t.common.unknownError,
-        );
+        // A co-signed wallet answers with the request it opened, not a reason.
+        const reason =
+          signed.status === "cosign_pending"
+            ? undefined
+            : (signed.details ?? signed.message);
+        throw new Error(reason ?? t.common.unknownError);
       }
       setResult(await sendTransaction(signed.signedXdr));
     } catch (e) {
