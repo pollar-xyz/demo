@@ -25,6 +25,7 @@ import { Networks } from '@creit.tech/stellar-wallets-kit';
 import type { PollarAdapters, WalletAdapter } from '@pollar/core';
 import { createPrivyAdapter, PrivyAdapterProvider } from '@pollar/privy-adapter';
 import { PollarProvider } from '@pollar/react';
+import { RampSigningBridge } from './_components/RampSigningBridge';
 import '@pollar/react/styles.css';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
@@ -127,6 +128,7 @@ export function AppWalletProvider({
         }}
         adapters={adapters}
       >
+        <RampSigningBridge />
         {children}
       </PollarProvider>
     </>

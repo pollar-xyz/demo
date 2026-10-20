@@ -859,7 +859,9 @@ export default function EscrowPage() {
       const signed = await signTx(unsignedTransaction);
       if (signed.status !== "signed") {
         throw new Error(
-          signed.details ?? signed.message ?? t.common.unknownError,
+          signed.status === "cosign_pending"
+            ? "Approve the pending signature on your device, then retry."
+            : signed.details ?? signed.message ?? t.common.unknownError,
         );
       }
       setResult(await sendTransaction(signed.signedXdr));
