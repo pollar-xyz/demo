@@ -913,33 +913,36 @@ export const en = {
       "All of these are methods on the client returned by getClient() — the underlying PollarClient instance.",
     coreFns: [
       {
-        fn: "getRampsQuote(query)",
+        fn: "quoteRamp(body)",
         tag: "async",
         params:
-          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+          "body: RampQuoteRequest — { direction: 'ONRAMP' | 'OFFRAMP', fiat: { currency, rail, country }, asset: { code, identifier, chain }, amount: { value, denomination } }.",
         returns:
-          "Promise<RampsQuoteResponse> — the available quotes for the request.",
+          "Promise<RampQuotesResponse> — quotes (best first) and the rejected routes with their reason.",
       },
       {
-        fn: "createOnRamp(body)",
-        tag: "async",
-        params: "body: RampsOnrampBody — a chosen quote selection.",
-        returns:
-          "Promise<RampsOnrampResponse> — content.id and content.paymentInstructions.",
-      },
-      {
-        fn: "createOffRamp(body)",
-        tag: "async",
-        params: "body: RampsOfframpBody — a chosen quote selection.",
-        returns: "Promise<RampsOfframpResponse> — the off-ramp payout details.",
-      },
-      {
-        fn: "pollRampTransaction(txId, opts?)",
+        fn: "createRampOrder(body)",
         tag: "async",
         params:
-          "txId: string (from the created ramp); opts?: polling options (interval, signal, …).",
+          "body: RampOrderRequest — { quoteId, payee }; payee answers rampQuoteFields(quote).",
         returns:
-          "Promise<RampsTransactionResponse> — resolves once the ramp reaches a terminal status.",
+          "Promise<RampOrder> — the order with its legs and the first pendingAction (FIAT_PAYMENT, SIGNATURE, COSIGN_APPROVAL, KYC).",
+      },
+      {
+        fn: "signRampLeg(orderId, actionId)",
+        tag: "async",
+        params:
+          "orderId: string; actionId: string (from order.pendingAction). Call it from the user's explicit Authorize.",
+        returns:
+          "Promise<RampOrder> — the order after the signed leg is sent.",
+      },
+      {
+        fn: "pollRampOrder(id, opts?)",
+        tag: "async",
+        params:
+          "id: string (the order id); opts?: { onUpdate, onError, until, signal }.",
+        returns:
+          "Promise<RampOrder> — resolves once the order settles.",
       },
     ],
     reactFnsTitle: "Hook & values used",
@@ -3372,34 +3375,36 @@ export const es: Dictionary = {
       "Todas son métodos del cliente que devuelve getClient(): la instancia subyacente de PollarClient.",
     coreFns: [
       {
-        fn: "getRampsQuote(query)",
+        fn: "quoteRamp(body)",
         tag: "async",
         params:
-          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+          "body: RampQuoteRequest — { direction: 'ONRAMP' | 'OFFRAMP', fiat: { currency, rail, country }, asset: { code, identifier, chain }, amount: { value, denomination } }.",
         returns:
-          "Promise<RampsQuoteResponse>: las cotizaciones disponibles para la solicitud.",
+          "Promise<RampQuotesResponse>: las cotizaciones (la mejor primero) y las rutas descartadas con su motivo.",
       },
       {
-        fn: "createOnRamp(body)",
-        tag: "async",
-        params: "body: RampsOnrampBody — una cotización elegida.",
-        returns:
-          "Promise<RampsOnrampResponse>: content.id y content.paymentInstructions.",
-      },
-      {
-        fn: "createOffRamp(body)",
-        tag: "async",
-        params: "body: RampsOfframpBody — una cotización elegida.",
-        returns:
-          "Promise<RampsOfframpResponse>: los detalles del pago del off-ramp.",
-      },
-      {
-        fn: "pollRampTransaction(txId, opts?)",
+        fn: "createRampOrder(body)",
         tag: "async",
         params:
-          "txId: string (del ramp creado); opts?: opciones de polling (intervalo, signal, …).",
+          "body: RampOrderRequest — { quoteId, payee }; payee responde a rampQuoteFields(quote).",
         returns:
-          "Promise<RampsTransactionResponse>: se resuelve cuando el ramp llega a un estado terminal.",
+          "Promise<RampOrder>: la orden con sus tramos y el primer pendingAction (FIAT_PAYMENT, SIGNATURE, COSIGN_APPROVAL, KYC).",
+      },
+      {
+        fn: "signRampLeg(orderId, actionId)",
+        tag: "async",
+        params:
+          "orderId: string; actionId: string (de order.pendingAction). Llámalo desde el Authorize explícito del usuario.",
+        returns:
+          "Promise<RampOrder>: la orden tras enviar el tramo firmado.",
+      },
+      {
+        fn: "pollRampOrder(id, opts?)",
+        tag: "async",
+        params:
+          "id: string (el id de la orden); opts?: { onUpdate, onError, until, signal }.",
+        returns:
+          "Promise<RampOrder>: se resuelve cuando la orden se liquida.",
       },
     ],
     reactFnsTitle: "Hook y valores utilizados",
@@ -5835,34 +5840,36 @@ export const pt: Dictionary = {
       "Todas são métodos do cliente que getClient() retorna — a instância subjacente de PollarClient.",
     coreFns: [
       {
-        fn: "getRampsQuote(query)",
+        fn: "quoteRamp(body)",
         tag: "async",
         params:
-          "query: RampsQuoteQuery — { direction: 'onramp' | 'offramp', amount, fiatCurrency, country, … }.",
+          "body: RampQuoteRequest — { direction: 'ONRAMP' | 'OFFRAMP', fiat: { currency, rail, country }, asset: { code, identifier, chain }, amount: { value, denomination } }.",
         returns:
-          "Promise<RampsQuoteResponse>: as cotações disponíveis para a solicitação.",
+          "Promise<RampQuotesResponse>: as cotações (a melhor primeiro) e as rotas descartadas com o motivo.",
       },
       {
-        fn: "createOnRamp(body)",
-        tag: "async",
-        params: "body: RampsOnrampBody — uma cotação escolhida.",
-        returns:
-          "Promise<RampsOnrampResponse>: content.id e content.paymentInstructions.",
-      },
-      {
-        fn: "createOffRamp(body)",
-        tag: "async",
-        params: "body: RampsOfframpBody — uma cotação escolhida.",
-        returns:
-          "Promise<RampsOfframpResponse>: os detalhes de pagamento do off-ramp.",
-      },
-      {
-        fn: "pollRampTransaction(txId, opts?)",
+        fn: "createRampOrder(body)",
         tag: "async",
         params:
-          "txId: string (do ramp criado); opts?: opções de polling (intervalo, signal, …).",
+          "body: RampOrderRequest — { quoteId, payee }; payee responde a rampQuoteFields(quote).",
         returns:
-          "Promise<RampsTransactionResponse>: resolve quando o ramp atinge um estado terminal.",
+          "Promise<RampOrder>: a ordem com suas etapas e o primeiro pendingAction (FIAT_PAYMENT, SIGNATURE, COSIGN_APPROVAL, KYC).",
+      },
+      {
+        fn: "signRampLeg(orderId, actionId)",
+        tag: "async",
+        params:
+          "orderId: string; actionId: string (de order.pendingAction). Chame-o a partir do Authorize explícito do usuário.",
+        returns:
+          "Promise<RampOrder>: a ordem depois de enviar a etapa assinada.",
+      },
+      {
+        fn: "pollRampOrder(id, opts?)",
+        tag: "async",
+        params:
+          "id: string (o id da ordem); opts?: { onUpdate, onError, until, signal }.",
+        returns:
+          "Promise<RampOrder>: resolve quando a ordem é liquidada.",
       },
     ],
     reactFnsTitle: "Hook e valores utilizados",
