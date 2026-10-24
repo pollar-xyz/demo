@@ -22,22 +22,22 @@ importers:
         version: 2.7.1(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(near-api-js@5.1.1)(react@19.2.3)(supports-color@7.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5)
       '@pollar/accesly-adapter':
         specifier: 0.10.1
-        version: 0.10.1(@pollar/core@0.12.0-rc.5)
+        version: 0.10.1(@pollar/core@0.12.0)
       '@pollar/core':
-        specifier: 0.12.0-rc.5
-        version: 0.12.0-rc.5
+        specifier: 0.12.0
+        version: 0.12.0
       '@pollar/privy-adapter':
         specifier: 0.11.1
-        version: 0.11.1(@pollar/core@0.12.0-rc.5)(@privy-io/react-auth@3.32.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(typescript@5.9.3))(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.2.3))(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@7.2.0)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@stellar/stellar-sdk@15.1.0(debug@4.4.3(supports-color@7.2.0)))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        version: 0.11.1(@pollar/core@0.12.0)(@privy-io/react-auth@3.32.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(typescript@5.9.3))(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.2.3))(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@7.2.0)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@stellar/stellar-sdk@15.1.0(debug@4.4.3(supports-color@7.2.0)))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@pollar/react':
-        specifier: 0.12.0-rc.5
-        version: 0.12.0-rc.5(@pollar/core@0.12.0-rc.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
+        specifier: 0.12.0
+        version: 0.12.0(@pollar/core@0.12.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@pollar/solana-wallet-standard-adapter':
         specifier: 0.12.0-rc.5
-        version: 0.12.0-rc.5(@pollar/core@0.12.0-rc.5)
+        version: 0.12.0-rc.5(@pollar/core@0.12.0)
       '@pollar/stellar-wallets-kit-adapter':
         specifier: 0.12.0-rc.5
-        version: 0.12.0-rc.5(@creit.tech/stellar-wallets-kit@2.7.1(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(near-api-js@5.1.1)(react@19.2.3)(supports-color@7.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@pollar/core@0.12.0-rc.5)
+        version: 0.12.0-rc.5(@creit.tech/stellar-wallets-kit@2.7.1(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(near-api-js@5.1.1)(react@19.2.3)(supports-color@7.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@pollar/core@0.12.0)
       '@privy-io/react-auth':
         specifier: 3.32.0
         version: 3.32.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(typescript@5.9.3))(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.2.3))(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@7.2.0)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5)
@@ -973,8 +973,8 @@ packages:
     peerDependencies:
       '@pollar/core': ^0.10.1
 
-  '@pollar/core@0.12.0-rc.5':
-    resolution: {integrity: sha512-0awN3YMPI+CT7CKtQPWMOhRu847f9j8YgwrX9XxD2WkjpVVMclJ/6hfWrsdIyRKfIVIhSf/AxamBC1SZNWSBjw==}
+  '@pollar/core@0.12.0':
+    resolution: {integrity: sha512-qCxvWksi49El6Cu50HEkA1WwAN9TfNwSALRbAHzNVKpceeVckVHJyWXX17v6ZGyjpb/l29phGjPHFTNniB/dTg==}
     engines: {node: '>=20'}
     peerDependencies:
       expo-secure-store: '>=12'
@@ -1009,11 +1009,11 @@ packages:
       react-native-webview:
         optional: true
 
-  '@pollar/react@0.12.0-rc.5':
-    resolution: {integrity: sha512-a+TTzYb7ywZgCu624L8oeMXLwmVIfzF9JD67iIpWR+MW5Oi6fOaXFFe+hK+W2FO3saEDie+jM6/C1fKDEJbHOw==}
+  '@pollar/react@0.12.0':
+    resolution: {integrity: sha512-Ao+CovKzWwG9yiLlnGBI5nAF0vbXXDF7o2yhBJGy6rE8lXC1EDKLfSRUQx2fS/6mNdJdm7hw3ahZ2sW6mOwUCQ==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@pollar/core': ^0.12.0 || ^0.12.0-rc.5
+      '@pollar/core': ^0.12.0
       react: '>=18'
       react-dom: '>=18'
 
@@ -6598,11 +6598,11 @@ snapshots:
     dependencies:
       lit: 3.3.0
 
-  '@pollar/accesly-adapter@0.10.1(@pollar/core@0.12.0-rc.5)':
+  '@pollar/accesly-adapter@0.10.1(@pollar/core@0.12.0)':
     dependencies:
-      '@pollar/core': 0.12.0-rc.5
+      '@pollar/core': 0.12.0
 
-  '@pollar/core@0.12.0-rc.5':
+  '@pollar/core@0.12.0':
     dependencies:
       '@noble/ciphers': 1.3.0
       '@noble/curves': 1.9.7
@@ -6611,35 +6611,35 @@ snapshots:
       '@turnkey/crypto': 2.13.3
       openapi-fetch: 0.17.0
 
-  '@pollar/privy-adapter@0.11.1(@pollar/core@0.12.0-rc.5)(@privy-io/react-auth@3.32.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(typescript@5.9.3))(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.2.3))(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@7.2.0)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@stellar/stellar-sdk@15.1.0(debug@4.4.3(supports-color@7.2.0)))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@pollar/privy-adapter@0.11.1(@pollar/core@0.12.0)(@privy-io/react-auth@3.32.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(typescript@5.9.3))(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.2.3))(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@7.2.0)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@stellar/stellar-sdk@15.1.0(debug@4.4.3(supports-color@7.2.0)))(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@pollar/core': 0.12.0-rc.5
+      '@pollar/core': 0.12.0
       '@stellar/stellar-sdk': 15.1.0(debug@4.4.3(supports-color@7.2.0))
       react: 19.2.3
     optionalDependencies:
       '@privy-io/react-auth': 3.32.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@5.9.3)(utf-8-validate@6.0.6))(@solana/sysvars@5.5.1(typescript@5.9.3))(@tanstack/query-core@5.104.1)(@tanstack/react-query@5.104.1(react@19.2.3))(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)(supports-color@7.2.0)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5)
       react-dom: 19.2.3(react@19.2.3)
 
-  '@pollar/react@0.12.0-rc.5(@pollar/core@0.12.0-rc.5)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
+  '@pollar/react@0.12.0(@pollar/core@0.12.0)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@pollar/core': 0.12.0-rc.5
+      '@pollar/core': 0.12.0
       '@simplewebauthn/browser': 13.3.0
       qr.js: 0.0.0
       react: 19.2.3
       react-dom: 19.2.3(react@19.2.3)
 
-  '@pollar/solana-wallet-standard-adapter@0.12.0-rc.5(@pollar/core@0.12.0-rc.5)':
+  '@pollar/solana-wallet-standard-adapter@0.12.0-rc.5(@pollar/core@0.12.0)':
     dependencies:
-      '@pollar/core': 0.12.0-rc.5
+      '@pollar/core': 0.12.0
       '@solana/wallet-standard-features': 1.5.0
       '@wallet-standard/app': 1.1.1
       '@wallet-standard/base': 1.1.1
       '@wallet-standard/features': 1.1.1
 
-  '@pollar/stellar-wallets-kit-adapter@0.12.0-rc.5(@creit.tech/stellar-wallets-kit@2.7.1(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(near-api-js@5.1.1)(react@19.2.3)(supports-color@7.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@pollar/core@0.12.0-rc.5)':
+  '@pollar/stellar-wallets-kit-adapter@0.12.0-rc.5(@creit.tech/stellar-wallets-kit@2.7.1(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(near-api-js@5.1.1)(react@19.2.3)(supports-color@7.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5))(@pollar/core@0.12.0)':
     dependencies:
       '@creit.tech/stellar-wallets-kit': 2.7.1(@types/react@19.3.0)(bufferutil@4.1.0)(debug@4.4.3(supports-color@7.2.0))(immer@11.1.21)(near-api-js@5.1.1)(react@19.2.3)(supports-color@7.2.0)(tslib@2.8.1)(typescript@5.9.3)(use-sync-external-store@1.4.0(react@19.2.3))(utf-8-validate@6.0.6)(zod@4.6.5)
-      '@pollar/core': 0.12.0-rc.5
+      '@pollar/core': 0.12.0
 
   '@preact/signals-core@1.14.4': {}
 
