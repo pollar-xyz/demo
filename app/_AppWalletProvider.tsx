@@ -7,6 +7,9 @@
 //     inside Pollar's own login modal, then runs SEP-10, and
 //   • the Stellar Wallets Kit adapters (xBull, Lobstr, Freighter, Albedo…),
 //     collapsed behind a shared "Wallet" gateway via their meta `group`, and
+//   • the Solana Wallet Standard adapters (Phantom, Backpack, Solflare…), one
+//     per installed extension, collapsed behind their own "Solana Wallet"
+//     gateway and logging in with SIWS instead of SEP-10, and
 //   • the hand-written Cosmos Wallet adapter (the CosmosPay browser extension,
 //     `window.cosmosWallet`) — it has no meta `group`, so it renders as its own
 //     button in the root login view, and
@@ -27,6 +30,7 @@ import { createPrivyAdapter, PrivyAdapterProvider } from '@pollar/privy-adapter'
 import { PollarProvider } from '@pollar/react';
 import { RampSigningBridge } from './_components/RampSigningBridge';
 import '@pollar/react/styles.css';
+import { solanaWalletStandardAdapters } from '@pollar/solana-wallet-standard-adapter';
 import { stellarWalletsKitAdapters } from '@pollar/stellar-wallets-kit-adapter';
 import { useEffect, useMemo, useState } from 'react';
 import { createCosmosWalletAdapter } from './wallet-adapters/cosmos-wallet/adapter';
@@ -97,6 +101,9 @@ export function AppWalletProvider({
       network: kitNetwork(network),
       picker: { groupLabel: 'Stellar Wallets Kit' },
     });
+    // Empty during SSR: extensions register in the browser only. The client is
+    // built on the client render, so this still sees every installed wallet.
+    const solana = solanaWalletStandardAdapters();
     // The extension keeps its own network setting, so the adapter is built per
     // network and refuses to log in when the two disagree.
     const cosmos = createCosmosWalletAdapter(network);
@@ -106,8 +113,8 @@ export function AppWalletProvider({
       ? [ cosmos, demoDeviceKeyAdapter ]
       : [ cosmos ];
     return privyEnabled
-      ? [ privyAdapter!, ...own, ...kit ]
-      : [ ...own, ...kit ];
+      ? [ privyAdapter!, ...own, ...kit, ...solana ]
+      : [ ...own, ...kit, ...solana ];
   }, [ network, privyEnabled ]);
 
   return (

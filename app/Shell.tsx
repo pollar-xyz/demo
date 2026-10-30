@@ -318,7 +318,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!apiKey) return;
     const controller = new AbortController();
-    fetch(`${BASE_URL}/v1/applications/config`, {
+    fetch(`${BASE_URL}/v3/applications/config`, {
       headers: { "x-pollar-api-key": apiKey },
       signal: controller.signal,
     })
