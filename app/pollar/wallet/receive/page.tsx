@@ -105,7 +105,7 @@ export default function ReceivePage() {
           {sdk === "react" ? (
             <div className="space-y-1">
               <button
-                onClick={openReceiveModal}
+                onClick={() => openReceiveModal()}
                 disabled={!isAuthenticated}
                 className={`${btn("primary")} w-full sm:w-auto`}
               >
