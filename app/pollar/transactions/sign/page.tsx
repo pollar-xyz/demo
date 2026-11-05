@@ -60,8 +60,12 @@ export default function SignXdrPage() {
     try {
       const res = await signTx(trimmed);
       if (res.status === "signed") setSignedXdr(res.signedXdr);
-      else if (res.status === "cosign_pending") setError(t.common.unknownError);
-      else setError(res.message ?? res.details ?? t.common.unknownError);
+      else
+        setError(
+          res.status === "cosign_pending"
+            ? "Approve the pending signature on your device, then retry."
+            : (res.message ?? res.details ?? t.common.unknownError),
+        );
     } catch (e) {
       setError(e instanceof Error ? e.message : t.common.unknownError);
     } finally {

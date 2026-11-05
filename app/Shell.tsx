@@ -22,10 +22,19 @@ import { createNiriumAdapter } from "./adapters/nirium/x402/adapter";
 import { trustlessWorkAdapter } from "./adapters/trustless-work/escrow/adapter";
 import { useNekoUnlocked } from "./neko/_GateProvider";
 
-const DEFAULT_API_KEY_TESTNET = "pub_testnet_703470595eb6cb72c18651b1455fdc34"; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
-const DEFAULT_API_KEY_MAINNET = "pub_mainnet_921399523168e5775276241dc1c786b2";
+const DEFAULT_API_KEY_TESTNET =
+  process.env.NEXT_PUBLIC_POLLAR_TESTNET_API_KEY || "";
+const DEFAULT_API_KEY_MAINNET =
+  process.env.NEXT_PUBLIC_POLLAR_MAINNET_API_KEY ||
+  process.env.NEXT_PUBLIC_POLLAR_API_KEY_MAINNET ||
+  "";
 const BASE_URL =
   process.env.NEXT_PUBLIC_POLLAR_BASE_URL || "https://sdk.api.pollar.xyz";
+const NETWORK_STORAGE_KEY = `pollar-demo-network:${BASE_URL}`;
+const DEFAULT_NETWORK =
+  process.env.NEXT_PUBLIC_POLLAR_DEFAULT_NETWORK === "mainnet"
+    ? "mainnet"
+    : "testnet";
 
 // The logo that drifts across a locked group's ComingSoon overlay (hover it to
 // peek — see ComingSoon). Keyed by nav group; only groups with an asset show it.
@@ -229,17 +238,18 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
   const customKey = searchParams.get("apiKey");
 
-  // Network for the built-in demo keys when no custom key is set. Toggling the
+  // Network for the environment's demo keys when no custom key is set. Toggling the
   // network in this mode never touches the URL; we persist the choice in
   // localStorage so it survives a refresh (the custom-key network already does,
   // since it's derived from the key carried in the URL).
-  const [demoNetwork, setDemoNetwork] = useState<StellarNetwork>("testnet");
+  const [demoNetwork, setDemoNetwork] =
+    useState<StellarNetwork>(DEFAULT_NETWORK);
   const demoKey =
     demoNetwork === "mainnet"
       ? DEFAULT_API_KEY_MAINNET
       : DEFAULT_API_KEY_TESTNET;
 
-  const apiKey = customKey ?? demoKey;
+  const apiKey = customKey?.trim() || demoKey;
 
   // "Custom" means a user-supplied key that isn't one of the demo defaults
   // (the green dot lights up only for these).
@@ -294,7 +304,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // (not in the initializer) to keep the server-rendered markup deterministic.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem("pollar-demo-network");
+      const saved = localStorage.getItem(NETWORK_STORAGE_KEY);
       if (saved === "mainnet" || saved === "testnet") setDemoNetwork(saved);
     } catch {}
   }, []);
@@ -306,6 +316,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
   // means the key itself isn't recognized — prompt the user to fix whichever
   // applies in the dashboard.
   useEffect(() => {
+    if (!apiKey) return;
     const controller = new AbortController();
     fetch(`${BASE_URL}/v3/applications/config`, {
       headers: { "x-pollar-api-key": apiKey },
@@ -351,7 +362,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     }
     setDemoNetwork(next);
     try {
-      localStorage.setItem("pollar-demo-network", next);
+      localStorage.setItem(NETWORK_STORAGE_KEY, next);
     } catch {}
   }
 
@@ -432,6 +443,21 @@ export function Shell({ children }: { children: React.ReactNode }) {
     </>
   );
 
+  if (!apiKey) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-12" role="alert">
+        <h1 className="text-lg font-semibold">Demo API key is missing</h1>
+        <p className="mt-2 text-sm text-muted">
+          Configure{" "}
+          {demoNetwork === "mainnet"
+            ? "NEXT_PUBLIC_POLLAR_MAINNET_API_KEY"
+            : "NEXT_PUBLIC_POLLAR_TESTNET_API_KEY"}{" "}
+          for this environment and restart the demo.
+        </p>
+      </div>
+    );
+  }
+
   return (
     // Mounts the global PrivyProvider + the Pollar client, wired with a combined
     // wallet stack (Privy adapter + Stellar Wallets Kit) for the navbar login.
@@ -440,7 +466,6 @@ export function Shell({ children }: { children: React.ReactNode }) {
       apiKey={apiKey}
       baseUrl={BASE_URL}
       network={stellarNetwork}
-      privyDisabled={apiKey === DEFAULT_API_KEY_MAINNET}
       adapters={adapters}
     >
       <header className="bg-background/80 backdrop-blur-sm sticky top-0 z-50 border-b border-border">
