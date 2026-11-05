@@ -22,7 +22,8 @@ import { createNiriumAdapter } from "./adapters/nirium/x402/adapter";
 import { trustlessWorkAdapter } from "./adapters/trustless-work/escrow/adapter";
 import { useNekoUnlocked } from "./neko/_GateProvider";
 
-const DEFAULT_API_KEY_TESTNET = "pub_testnet_703470595eb6cb72c18651b1455fdc34"; // pub_testnet_ef0660c44a72d909af99f5b09b53935b
+const DEFAULT_API_KEY_TESTNET =
+  process.env.NEXT_PUBLIC_POLLAR_TESTNET_API_KEY || "pub_testnet_703470595eb6cb72c18651b1455fdc34";
 const DEFAULT_API_KEY_MAINNET = "pub_mainnet_921399523168e5775276241dc1c786b2";
 const BASE_URL =
   process.env.NEXT_PUBLIC_POLLAR_BASE_URL || "https://sdk.api.pollar.xyz";
