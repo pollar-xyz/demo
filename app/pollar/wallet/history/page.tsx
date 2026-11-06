@@ -93,7 +93,7 @@ export default function HistoryPage() {
           {sdk === "react" ? (
             <div className="space-y-1">
               <button
-                onClick={openTxHistoryModal}
+                onClick={() => openTxHistoryModal()}
                 disabled={!isAuthenticated}
                 className={`${btn} w-full sm:w-auto`}
               >

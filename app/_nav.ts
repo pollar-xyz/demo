@@ -157,6 +157,18 @@ export const ALL_GROUPS: NavGroup[] = [
     ],
   },
   {
+    key: "solanaWalletStandard",
+    section: "walletAdapters",
+    isNew: true,
+    tabs: [
+      { href: "/wallet-adapters/solana-wallet-standard", label: "overview" },
+      {
+        href: "/wallet-adapters/solana-wallet-standard/setup",
+        label: "setup",
+      },
+    ],
+  },
+  {
     key: "privy",
     section: "walletAdapters",
     isNew: true,

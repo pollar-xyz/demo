@@ -6,25 +6,25 @@ import { useI18n } from "@/app/_i18n/LanguageProvider";
 
 // ─── code previews ────────────────────────────────────────────────────────────
 
-const CORE_CODE = `import { PollarClient } from '@pollar/core';
+const CORE_CODE = `import { PollarClient, rampQuoteFields } from '@pollar/core';
 
 const client = new PollarClient({ apiKey, baseUrl });
 await client.ready();
 
-// 1. quote
-const quote = await client.getRampsQuote({
-  direction: 'onramp',
-  amount: '100',
-  fiatCurrency: 'MXN',
-  country: 'MX',
+// 1. quote every route between the fiat and the asset, best first
+const { quotes } = await client.quoteRamp({
+  direction: 'ONRAMP',
+  fiat: { currency: 'MXN', rail: 'SPEI', country: 'MX' },
+  asset: { code: 'USDC', identifier: null, chain: 'STELLAR' },
+  amount: { value: '100', denomination: 'in' },
 });
 
-// 2. create the ramp from a chosen quote
-const onramp = await client.createOnRamp({ /* quote selection */ });
-// onramp.content.paymentInstructions, onramp.content.id
+// 2. turn the chosen quote into an order; payee answers rampQuoteFields(quote)
+const order = await client.createRampOrder({ quoteId: quotes[0].quoteId, payee });
+// order.pendingAction: FIAT_PAYMENT | SIGNATURE | COSIGN_APPROVAL | KYC
 
 // 3. poll until it settles
-const status = await client.pollRampTransaction(onramp.content.id);`;
+const done = await client.pollRampOrder(order.id, { onUpdate: render });`;
 
 const REACT_CODE = `import { usePollar } from '@pollar/react';
 
@@ -32,7 +32,7 @@ export function BuyCryptoButton() {
   const { openRampModal, isAuthenticated } = usePollar();
 
   // openRampModal renders the whole quote-and-payment flow on top
-  // of client.getRampsQuote / createOnRamp / pollRampTransaction.
+  // of client.quoteRamp / createRampOrder / pollRampOrder.
   return (
     <button
       onClick={openRampModal}

@@ -88,7 +88,7 @@ export default function CardsPage() {
           </p>
         </div>
         <pre className="overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs font-mono text-muted-light">
-          {`GET /v2/cards/providers →
+          {`GET /v3/cards/providers →
 {
   "content": {
     "providers": [{

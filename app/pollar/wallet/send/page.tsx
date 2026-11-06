@@ -658,7 +658,7 @@ export default function SendPage() {
           {tab === "react" && (
             <div className="space-y-1">
               <button
-                onClick={openSendModal}
+                onClick={() => openSendModal()}
                 disabled={!isAuthenticated}
                 className={`${btn("primary")} w-full sm:w-auto`}
               >
